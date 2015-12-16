@@ -1,0 +1,65 @@
+$NHDT-Branch$:$NHDT-Revision$ $NHDT-Date$
+
+General Fixes and Modified Features
+-----------------------------------
+doc/*.6 man pages and corresponding doc/*.txt text copies were out of date
+data.base entry for "lava" had wrong first name for Don Woods' attribution
+cursed genocide of "none" sent in monsters, but "that's enough tries" didn't
+update MAXPLAYERS documentation in sysconf file and allow 0 for it
+wizard mode: don't include feedback about named fruit for ^X and enlightenment
+looking at distant objects while wearing the Eyes of the Overworld made their
+	up-close descriptions known when not intended
+message when cursed wand zapped by a monster happens to explode was suppressed
+	if hero was deaf, even though that message has no audible component
+support explicit 'symset:default' and 'symset:Default symbols' in options
+crash during startup if player name set as 'player' in defaults
+any existing vampire shape-shifted into critter (fog cloud, bat, wolf) became
+	an unkillable critter if vampires were genocided
+unlike in previous versions, an uncursed scroll of enchant armor failed to
+	uncurse the piece of armor being enchanted (change was unintentional)
+slice of {pizza,cake,&} pluralized as "slouse of ..." due to false match
+	with "lice" (discovered pre-3.6.0-release)
+change dipping prompt to not ignore 'called' and 'named' attributes of item
+	to be dipped
+avoid 'the unlabeled {scroll,spellbook} fades' when blank item is hit by water
+wrong message given when high priest on astral plane rejects being assigned a
+	name (got the one for unique monsters instead of the one for priests)
+negative intrinsic protection shouldn't confer MC=1, "you are warded" (not
+	possible from divine protection but is possible from eating rings)
+make a slight adjustment to the quickmimic() sense wording
+fix typo in passage 1 of The Colour of Magic
+falling asleep when reading dull spellbook ignored sleep resistance
+getpos() complaint about invalid movement keystroke didn't describe meta-chars
+	accurately
+'realtime' value in xlogfile was incorrect if 'checkpoint' option was active
+
+
+Platform- and/or Interface-Specific Fixes
+-----------------------------------------
+tty: M-N gave "Unknown command 'M-" with "'." finishing the sentence on the
+	line below it, leaving bogus '.' displayed on the top row of the map
+unix/X11: in top level Makefile, some commented out definitions of VARDATND
+	misspelled pilemark.xbm (as pilemark.xpm)
+win32gui: getversionstring() was overflowing the provided Help About buffer
+win32gui: guard against buffer overflow in in mswin_getlin()
+MacOSX: initial binary release was built from out of date source code that
+	had 'BETA' and 'DEBUG' inappropriately enabled
+X11: core bug for '`' (backtick) command was only noticed by X11 interface,
+	which issued impossible message "add_menu: called before start_menu"
+
+
+General New Features
+--------------------
+naming Sting or Orcrist now breaks illiterate conduct
+
+
+Platform- and/or Interface-Specific New Features
+------------------------------------------------
+
+
+NetHack Community Patches (or Variation) Included
+-------------------------------------------------
+
+
+Code Cleanup and Reorganization
+-------------------------------
