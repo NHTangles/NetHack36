@@ -4,6 +4,11 @@
 
 #include "hack.h"
 
+//BEGIN WALDO CHALLENGE CODE
+#include <pwd.h>
+//END WALDO CHALLENGE CODE
+ 
+
 STATIC_DCL int NDECL(pet_type);
 
 void
@@ -865,6 +870,102 @@ tamedog(mtmp, obj)
 register struct monst *mtmp;
 register struct obj *obj;
 {
+
+//BEGIN WALDO CHALLENGE CODE 
+    FILE            *Waldo_flag = NULL;
+    char            Waldo_ignore[255];
+    char            Waldo_accept[255];
+    char            Waldo_success[255];
+    struct passwd   *NH_passwd;
+
+    if((!u.waldochallenge_skip) && (!u.waldochallenge_ignore)) {
+        NH_passwd = getpwnam("nhadmin");
+
+        sprintf(Waldo_ignore, "%s/challenge/Waldo-%s-ignore", NH_passwd->pw_dir, plname);
+        sprintf(Waldo_accept, "%s/challenge/Waldo-%s-accept", NH_passwd->pw_dir, plname);
+        sprintf(Waldo_success, "%s/challenge/Waldo-%s-success", NH_passwd->pw_dir, plname);
+
+        Waldo_flag = fopen(Waldo_ignore, "r");
+        if(NULL == Waldo_flag) {
+            Waldo_flag = fopen(Waldo_success, "r");
+
+            if(NULL != Waldo_flag) {
+                fclose(Waldo_flag);
+
+                /* SUCCEEDED: proceed */
+
+                if(!u.waldochallenge_successmsgd) {
+                    pline("With warm fuzzies in your heart from reuniting Waldo and Woof, you try to tame %s.\n\n", Monnam(mtmp));
+                    u.waldochallenge_successmsgd = 1;
+                }
+            } else {  
+                Waldo_flag = fopen(Waldo_accept, "r");
+
+                if(NULL != Waldo_flag) {
+                    fclose(Waldo_flag);
+
+                    /* OLD ACCEPT: exit */
+
+                    pline("Woof's mournful howl from the aether as he searches for the lost Waldo distracts you.  I guess you'll have to find Waldo first.\n\n");
+
+                    //return((struct monst *)0);
+                    return FALSE;
+                } else {
+                    /* UNKNOWN: offer */
+
+                    pline("A Tournament Administrator appears in front of %s and asks if you wish to accept a Challenge.\n\n", Monnam(mtmp));
+
+                    if(yn("Do you accept this Challenge? ") == 'y') {
+                        Waldo_flag = fopen(Waldo_accept, "w");
+
+                        if(NULL != Waldo_flag) {
+                            fclose(Waldo_flag);
+
+                            /* NEW ACCEPT: exit */
+
+                            pline("Very Well.\n\nKnow then, adventurer, that long, long ago Waldo the Red (and White), known to some as Wally the White (and Red), vanished without a trace.\n\n");
+                            pline("His friend and faithful pet Woof waited many long years for his Master to return, though he never did.  At long last he set out himself to seek his lost Master and has never been seen again, though many have reported hearing his mournful howling down through the centuries.\n\n");
+                            pline("You must find the lost Waldo the Red (and White) and convince him to return so he can be reunited with his faithful companion; it is possible that he can be found in this very Dungeon, so that's convenient.\n\n");
+
+                            pline("The Administrator has noted that you have accepted the Challenge and fades away with a smirk.\n\n");
+                            pline("Now, what were you trying to do again?\n\n");
+
+                            //return((struct monst *)0);
+                            return FALSE;
+                        } else {
+                            pline("ERROR: I am unable to log your Challenge acceptance; please email the Tournament administrators.\n\n");
+                        }
+                    } else {
+                        pline("Suit yourself.\n\n");
+
+                        if(yn("Would you like to block this Challenge from being offered again for the duration of the Tournament? ") == 'y') {
+                            Waldo_flag = fopen(Waldo_ignore, "w");
+
+                            if(NULL != Waldo_flag) {
+                                fclose(Waldo_flag);
+                            } else {
+                                pline("ERROR: I am unable to log your decision to ignore this Challenge; please email the Tournament administrators.\n\n");
+                            }
+                        } else {
+                            u.waldochallenge_ignore = 1;
+                            pline("This Challenge will only be blocked until the end of the current game.\n\n");
+                        }
+
+                        /* REJECTED: continue */
+                    }
+                }
+            }
+        } else {
+            if(NULL != Waldo_flag) {
+                fclose(Waldo_flag);
+            }
+            /* PERM IGNORED: continue */
+        }
+    } else {
+        /* TEMP IGNORED: continue */
+    }
+//END WALDO CHALLENGE CODE
+
     /* The Wiz, Medusa and the quest nemeses aren't even made peaceful. */
     if (mtmp->iswiz || mtmp->data == &mons[PM_MEDUSA]
         || (mtmp->data->mflags3 & M3_WANTSARTI))

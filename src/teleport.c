@@ -4,6 +4,10 @@
 
 #include "hack.h"
 
+//BEGIN GRUE/PACMAN/DIGDUG/JOUST CHALLENGE CODE
+#include <pwd.h>
+//END GRUE/PACMAN/DIGDUG/JOUST CHALLENGE CODE
+
 STATIC_DCL boolean FDECL(tele_jump_ok, (int, int, int, int));
 STATIC_DCL boolean FDECL(teleok, (int, int, BOOLEAN_P));
 STATIC_DCL void NDECL(vault_tele);
@@ -820,6 +824,27 @@ domagicportal(ttmp)
 register struct trap *ttmp;
 {
     struct d_level target_level;
+//BEGIN GRUE/PACMAN/DIGDUG/JOUST CHALLENGE CODE
+    FILE            *Grue_flag = NULL;
+    char            Grue_ignore[255];
+    char            Grue_accept[255];
+    char            Grue_success[255];
+    FILE            *PacMan_flag = NULL;
+    char            PacMan_ignore[255];
+    char            PacMan_accept[255];
+    char            PacMan_success[255];
+    FILE            *DigDug_flag = NULL;
+    char            DigDug_ignore[255];
+    char            DigDug_accept[255];
+    char            DigDug_success[255];
+    FILE            *Joust_flag = NULL;
+    char            Joust_ignore[255];
+    char            Joust_accept[255];
+    char            Joust_success[255];
+
+    struct passwd   *NH_passwd;
+//END GRUE/PACMAN/DIGDUG/JOUST CHALLENGE CODE
+
 
     if (u.utrap && u.utraptype == TT_BURIEDBALL)
         buried_ball_to_punishment();
@@ -846,6 +871,248 @@ register struct trap *ttmp;
     }
 
     target_level = ttmp->dst;
+
+//BEGIN GRUE/PACMAN/DIGDUG/JOUST CHALLENGE CODE
+   if(Is_dmaze_level(&target_level)) {
+           u.digdugchallenge_returndungeon = u.uz.dnum;
+           u.digdugchallenge_returnlevel = u.uz.dlevel;
+   }
+
+   if(Is_pmaze_level(&u.uz)) {
+       if(292 == u.pacmanchallenge_clearspaces) {
+           NH_passwd = getpwnam("nhadmin");
+
+           sprintf(PacMan_success, "%s/challenge/PacMan-%s-success", NH_passwd->pw_dir, plname);
+
+           PacMan_flag = fopen(PacMan_success, "w");
+
+           if(NULL != PacMan_flag) {
+               fclose(PacMan_flag);
+
+               pline("Congratulations!  You have cleared your way out of this maze.\n\n");
+           } else {
+               pline("ERROR: I am unable to log your Challenge success; please email the Tournament administrators.\n\n");
+           }
+       } else {
+           if(yn("Are you sure you're ready to cede this Challenge? ") == 'y') {
+               You("abandon the Challenge; maybe in a future life you'll succeeed, but not in this one.");
+               u.pacmanchallenge_cantry = 0;
+           } else {
+               You("will have to find another way out of this maze.");
+               return;
+           }
+       }
+   } else if(Is_dmaze_level(&u.uz)) {
+       if(4 == u.digdugchallenge_killed) {
+           NH_passwd = getpwnam("nhadmin");
+
+           sprintf(DigDug_success, "%s/challenge/DigDug-%s-success", NH_passwd->pw_dir, plname);
+
+           DigDug_flag = fopen(DigDug_success, "w");
+
+           if(NULL != DigDug_flag) {
+               fclose(DigDug_flag);
+
+               pline("Congratulations!  You have defeated the villainous Fygar and his terrible Pookas.\n\n");
+           } else {
+               pline("ERROR: I am unable to log your Challenge success; please email the Tournament administrators.\n\n");
+           }
+       } else {
+           if(yn("Are you sure you're ready to cede this Challenge? ") == 'y') {
+               You("abandon the Challenge; maybe in a future life you'll succeeed, but not in this one.");
+               u.digdugchallenge_cantry = 0;
+           } else {
+               You("really need to deal with Fygar and his Pookas.");
+               return;
+           }
+       }
+   } else if(Is_joust_level(&u.uz)) {
+       if(3 == u.joustchallenge_killed) {
+           NH_passwd = getpwnam("nhadmin");
+
+           sprintf(Joust_success, "%s/challenge/Joust-%s-success", NH_passwd->pw_dir, plname);
+
+           Joust_flag = fopen(Joust_success, "w");
+
+           if(NULL != Joust_flag) {
+               fclose(Joust_flag);
+
+               pline("Congratulations!  You have defeated the villainous Shadow Lord with his dastardly Hunter and Bounder.\n\n");
+           } else {
+               pline("ERROR: I am unable to log your Challenge success; please email the Tournament administrators.\n\n");
+           }
+       } else {
+           if(yn("Are you sure you're ready to cede this Challenge? ") == 'y') {
+               You("abandon the Challenge; maybe in a future life you'll succeeed, but not in this one.");
+               u.joustchallenge_cantry = 0;
+           } else {
+               You("really need to deal with the Shadow Lord with his Hunter and Bounder.");
+               return;
+           }
+       }
+
+       if(u.usteed) {
+           u.usteed->mtame = 0;
+           dismount_steed(DISMOUNT_BYCHOICE);
+       }
+   } else if(Is_gruelair_level(&target_level)) {
+       if(u.gruechallenge_ignore) {
+           You("are ignoring that Challenge for this game.");
+           return;
+       }
+
+       NH_passwd = getpwnam("nhadmin");
+
+       sprintf(Grue_ignore, "%s/challenge/Grue-%s-ignore", NH_passwd->pw_dir, plname);
+       sprintf(Grue_accept, "%s/challenge/Grue-%s-accept", NH_passwd->pw_dir, plname);
+       sprintf(Grue_success, "%s/challenge/Grue-%s-success", NH_passwd->pw_dir, plname);
+
+       Grue_flag = fopen(Grue_ignore, "r");
+       if(NULL != Grue_flag) {
+           fclose(Grue_flag);
+
+           You("are ignoring that Challenge this year.");
+           return;
+       }
+
+       Grue_flag = fopen(Grue_success, "r");
+       if(NULL != Grue_flag) {
+           fclose(Grue_flag);
+
+           You("have already completed the Grue Challenge this year.");
+           return;
+       }
+
+       Grue_flag = fopen(Grue_accept, "r");
+       if(NULL == Grue_flag) {
+           You("aren't really up to that Challenge right now.");
+           return;
+       } else {
+           fclose(Grue_flag);
+       }
+   } else if(Is_pmaze_level(&target_level)) {
+       if(u.pacmanchallenge_ignore) {
+           You("are ignoring that Challenge for this game.");
+           return;
+       }
+
+       if(!u.pacmanchallenge_cantry) {
+           You("don't have enough lives remaining to continue that Challenge in this game.");
+           return;
+       }
+
+       NH_passwd = getpwnam("nhadmin");
+
+       sprintf(PacMan_ignore, "%s/challenge/PacMan-%s-ignore", NH_passwd->pw_dir, plname);
+       sprintf(PacMan_accept, "%s/challenge/PacMan-%s-accept", NH_passwd->pw_dir, plname);
+       sprintf(PacMan_success, "%s/challenge/PacMan-%s-success", NH_passwd->pw_dir, plname);
+
+       PacMan_flag = fopen(PacMan_ignore, "r");
+       if(NULL != PacMan_flag) {
+           fclose(PacMan_flag);
+
+           You("are ignoring that Challenge this year.");
+           return;
+       }
+       PacMan_flag = fopen(PacMan_success, "r");
+       if(NULL != PacMan_flag) {
+           fclose(PacMan_flag);
+
+           You("have already completed the PacMan Challenge this year.");
+           return;
+       }
+
+       PacMan_flag = fopen(PacMan_accept, "r");
+       if(NULL == PacMan_flag) {
+           You("aren't really up to that Challenge right now.");
+           return;
+       } else {
+           fclose(PacMan_flag);
+       }
+   } else if(Is_dmaze_level(&target_level)) {
+       if(u.digdugchallenge_ignore) {
+           You("are ignoring that Challenge for this game.");
+           return;
+       }
+
+       if(!u.digdugchallenge_cantry) {
+           You("don't have enough lives remaining to continue that Challenge in this game.");
+           return;
+       }
+
+       NH_passwd = getpwnam("nhadmin");
+
+       sprintf(DigDug_ignore, "%s/challenge/DigDug-%s-ignore", NH_passwd->pw_dir, plname);
+       sprintf(DigDug_accept, "%s/challenge/DigDug-%s-accept", NH_passwd->pw_dir, plname);
+       sprintf(DigDug_success, "%s/challenge/DigDug-%s-success", NH_passwd->pw_dir, plname);
+
+       DigDug_flag = fopen(DigDug_ignore, "r");
+       if(NULL != DigDug_flag) {
+           fclose(DigDug_flag);
+
+           You("are ignoring that Challenge this year.");
+           return;
+       }
+
+       DigDug_flag = fopen(DigDug_success, "r");
+       if(NULL != DigDug_flag) {
+           fclose(DigDug_flag);
+
+           You("have already completed the DigDug Challenge this year.");
+           return;
+       }
+
+       DigDug_flag = fopen(DigDug_accept, "r");
+       if(NULL == DigDug_flag) {
+           You("aren't really up to that Challenge right now.");
+           return;
+       } else {
+           fclose(DigDug_flag);
+       }
+   } else if(Is_joust_level(&target_level)) {
+       if(u.joustchallenge_ignore) {
+           You("are ignoring that Challenge for this game.");
+           return;
+       }
+
+       if(!u.joustchallenge_cantry) {
+           You("don't have enough lives remaining to continue that Challenge in this game.");
+           return;
+       }
+
+       NH_passwd = getpwnam("nhadmin");
+
+       sprintf(Joust_ignore, "%s/challenge/Joust-%s-ignore", NH_passwd->pw_dir, plname);
+       sprintf(Joust_accept, "%s/challenge/Joust-%s-accept", NH_passwd->pw_dir, plname);
+       sprintf(Joust_success, "%s/challenge/Joust-%s-success", NH_passwd->pw_dir, plname);
+
+       Joust_flag = fopen(Joust_ignore, "r");
+       if(NULL != Joust_flag) {
+           fclose(Joust_flag);
+
+           You("are ignoring that Challenge this year.");
+           return;
+       }
+
+       Joust_flag = fopen(Joust_success, "r");
+       if(NULL != Joust_flag) {
+           fclose(Joust_flag);
+
+           You("have already completed the Joust Challenge this year.");
+           return;
+       }
+
+       Joust_flag = fopen(Joust_accept, "r");
+       if(NULL == Joust_flag) {
+           You("aren't really up to that Challenge right now.");
+           return;
+       } else {
+           fclose(Joust_flag);
+       }
+}
+//END GRUE/PACMAN/DIGDUG/JOUST CHALLENGE CODE
+
+
     schedule_goto(&target_level, FALSE, FALSE, 1,
                   "You feel dizzy for a moment, but the sensation passes.",
                   (char *) 0);
@@ -1147,8 +1414,21 @@ int in_sight;
                 get_level(&tolevel, depth(&u.uz) + 1);
             }
         } else if (tt == MAGIC_PORTAL) {
-            if (In_endgame(&u.uz)
-                && (mon_has_amulet(mtmp) || is_home_elemental(mptr))) {
+//BEGIN GRUE/PACMAN/DIGDUG/JOUST CHALLENGE CODE
+            if ((Is_gruelair_level(&u.uz))
+                 || (Is_gruelair_level(&trap->dst))
+                 || (Is_pmaze_level(&u.uz))
+                 || (Is_pmaze_level(&trap->dst))
+                 || (Is_dmaze_level(&u.uz))
+                 || (Is_dmaze_level(&trap->dst))
+                 || (Is_joust_level(&u.uz))
+                 || (Is_joust_level(&trap->dst))
+                 || (In_endgame(&u.uz) &&
+                    (mon_has_amulet(mtmp) || is_home_elemental(mptr)))) {
+//            if (In_endgame(&u.uz) &&
+//                (mon_has_amulet(mtmp) || is_home_elemental(mptr))) {
+//END GRUE/PACMAN/DIGDUG/JOUST CHALLENGE CODE
+
                 if (in_sight && mptr->mlet != S_ELEMENTAL) {
                     pline("%s seems to shimmer for a moment.", Monnam(mtmp));
                     seetrap(trap);

@@ -2,6 +2,10 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
+//BEGIN GRUE CHALLENGE CODE
+#include <pwd.h>
+//END GRUE CHALLENGE CODE
+
 #include "hack.h"
 #include "func_tab.h"
 
@@ -544,7 +548,10 @@ enter_explore_mode(VOID_ARGS)
         }
 #endif
 #endif
-        pline(
+//BEGIN TOURNAMENT CODE
+        pline("I'm sorry; explore mode is not available in NetHack Tournament.\n\n");
+
+        /*pline(
         "Beware!  From explore mode there will be no return to normal game.");
         if (paranoid_query(ParanoidQuit,
                            "Do you want to enter explore mode?")) {
@@ -554,8 +561,10 @@ enter_explore_mode(VOID_ARGS)
         } else {
             clear_nhwindow(WIN_MESSAGE);
             pline("Resuming normal game.");
-        }
+        }*/
     }
+//END TOURNAMENT CODE
+
     return 0;
 }
 
@@ -3226,6 +3235,115 @@ register char *cmd;
 {
     boolean do_walk, do_rush, prefix_seen, bad_command,
         firsttime = (cmd == 0);
+
+//BEGIN GRUE CHALLENGE CODE
+    if(!u.gruechallenge_ignore) {
+        if((0 > u.gruechallenge_successmsgd) || (1 < u.gruechallenge_successmsgd)) {
+            u.gruechallenge_successmsgd = 0;
+        }
+
+        if((0 > u.gruechallenge_darkmoves) || (3 < u.gruechallenge_darkmoves)) {
+            u.gruechallenge_darkmoves = 0;
+        }
+
+        gruechallenge_checklights();
+
+        if((!u.gruechallenge_haslight) && (!u.uswallow)) {
+            FILE            *grue_flag = NULL;
+            char            grue_ignore[255];
+            char            grue_accept[255];
+            char            grue_success[255];
+            struct passwd   *NH_passwd;
+            char            gruebuf[BUFSZ];
+
+            NH_passwd = getpwnam("nhadmin");
+
+            sprintf(grue_ignore, "%s/challenge/Grue-%s-ignore", NH_passwd->pw_dir, plname);
+            sprintf(grue_accept, "%s/challenge/Grue-%s-accept", NH_passwd->pw_dir, plname);
+            sprintf(grue_success, "%s/challenge/Grue-%s-success", NH_passwd->pw_dir, plname);
+
+            grue_flag = fopen(grue_ignore, "r");
+            if(NULL == grue_flag) {
+                grue_flag = fopen(grue_success, "r");
+
+                if(NULL != grue_flag) {
+                    fclose(grue_flag);
+
+                    if(!u.gruechallenge_successmsgd) {
+                        pline("There's no reason to be afraid of a little darkness now, is there?.\n\n");
+                        u.gruechallenge_successmsgd = 1;
+                    }
+                } else {  
+                    grue_flag = fopen(grue_accept, "r");
+
+                    if(NULL != grue_flag) {
+                        fclose(grue_flag);
+
+                        //Grue text from <http://www.gamespot.com/features/tenspot_readers_monsters/page1.html>
+                        if(0 == u.gruechallenge_darkmoves) {
+                            pline("It is pitch black. You are likely to be eaten by a Grue.\n\n");
+                            u.gruechallenge_darkmoves ++;
+                        } else if(1 == u.gruechallenge_darkmoves) {
+                            pline("It is pitch black. You are likely to be eaten by a Grue.\n\n");
+                            u.gruechallenge_darkmoves ++;
+                        } else if(2 == u.gruechallenge_darkmoves) {
+                            pline("Invited by the darkness, a horde of Adventurer-hungry Grues sets upon you, and you are promptly devoured.\n\n* * * YOU HAVE DIED * * *\n\n");
+
+                            killer.format = NO_KILLER_PREFIX;
+                            Strcpy(killer.name, "eaten by a Grue");
+                            //Sprintf(gruebuf, "eaten by a Grue");
+                            //killer = gruebuf;
+                            done(DIED);
+                        }
+                    } else {  
+                        pline("In the darkness, you see the mystic shimmering form of a Tournament Administrator, who asks if you wish to accept a Challenge.\n\n");
+
+                        if(yn("Do you accept this Challenge? ") == 'y') {
+                            grue_flag = fopen(grue_accept, "w");
+
+                            if(NULL != grue_flag) {
+                                u.gruechallenge_darkmoves = 0;
+
+                                fclose(grue_flag);
+
+                                pline("Very Well.\n\nKnow then, adventurer, that this darkness is no mere absence of light; it is place of its own, deep and vast, spanning across all the multitude of Realms.\n\n");
+                                pline("Deep in the eternal darkness at the bottom of their mines the gnomes have come upon, and mistakenly activated, a device which has created a portal into that vast Plane.  Strange and terrible creatures have crept through into your world and will be waiting for you whenever you step out of the light.\n\n");
+                                pline("Your task, adventurer, shall be to find and deactivate the device.\n\n");
+                                pline("The Administrator has noted that you have accepted the Challenge and fades into the darkness with a smirk.\n\n");
+                                pline("The darkness around you looks a lot more menacing now ...\n\n");
+                            } else {
+                                pline("ERROR: I am unable to log your Challenge acceptance; please email the Tournament administrators.\n\n");
+                            }
+                        } else {
+                            pline("Suit yourself.\n\n");
+
+                            if(yn("Would you like to block this Challenge from being offered again for the duration of the Tournament? ") == 'y') {
+                                grue_flag = fopen(grue_ignore, "w");
+
+                                if(NULL != grue_flag) {
+                                    fclose(grue_flag);
+                                } else {
+                                    pline("ERROR: I am unable to log your decision to ignore this Challenge; please email the Tournament administrators.\n\n");
+                                }
+                            } else {
+                                u.gruechallenge_ignore = 1;
+                                pline("This Challenge will only be blocked until the end of the current game.\n\n");
+                            }
+                        }
+                    }
+                }
+            } else {
+                if(NULL != grue_flag) {
+                    fclose(grue_flag);
+                }
+            }
+        } else {
+            u.gruechallenge_darkmoves = 0;
+        }
+    }
+//END GRUE CHALLENGE CODE
+
+
 
     iflags.menu_requested = FALSE;
 #ifdef SAFERHANGUP

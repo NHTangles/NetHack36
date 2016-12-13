@@ -913,6 +913,11 @@ boolean artif;
             case DRUM_OF_EARTHQUAKE:
                 otmp->spe = rn1(5, 4);
                 break;
+// BEGIN POOL CHALLENGE CODE
+            case CUE_STICK:
+                otmp->spe = 100;
+                break;
+// END POOL CHALLENGE CODE
             }
             break;
         case AMULET_CLASS:
@@ -1812,7 +1817,10 @@ register struct obj *otmp;
     extract_nexthere(otmp, &level.objects[x][y]);
     extract_nobj(otmp, &fobj);
     /* update vision iff this was the only boulder at its spot */
-    if (otmp->otyp == BOULDER && !sobj_at(BOULDER, x, y))
+    // POOL CHALLENGE
+    //if (otmp->otyp == BOULDER && !sobj_at(BOULDER, x, y))
+    if ((otmp->otyp == BOULDER || otmp->otyp == CUE_BOULDER)
+        && !sobj_at(BOULDER, x, y) && !sobj_at(CUE_BOULDER, x, y))
         unblock_point(x, y); /* vision */
     if (otmp->timed)
         obj_timer_checks(otmp, x, y, 0);

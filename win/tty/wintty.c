@@ -10,7 +10,7 @@
 
 /* It's still not clear I've caught all the cases for H2344.  #undef this
  * to back out the changes. */
-#define H2344_BROKEN
+#undef H2344_BROKEN
 
 #include "hack.h"
 

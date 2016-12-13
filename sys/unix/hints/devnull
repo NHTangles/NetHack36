@@ -1,0 +1,53 @@
+#
+# NetHack 3.6  linux $NHDT-Date: 1432512814 2015/05/25 00:13:34 $  $NHDT-Branch: master $:$NHDT-Revision: 1.12 $
+# Copyright (c) Kenneth Lorber, Kensington, Maryland, 2007.
+# NetHack may be freely redistributed.  See license for details. 
+#
+#-PRE
+# hints file for devnull game server.
+# target environment is a debian "jessie" docker container.
+# hackdir is /devnull/nethackdir
+# adapted from the "linux" hints file in the dist.
+
+
+PREFIX=/devnull
+HACKDIR=$(PREFIX)/$(GAME)dir
+SHELLDIR = $(PREFIX)/bin
+INSTDIR=$(HACKDIR)
+VARDIR = $(HACKDIR)
+
+
+
+POSTINSTALL=cp -n sys/unix/sysconf $(INSTDIR)/sysconf; $(CHOWN) $(GAMEUID) $(INSTDIR)/sysconf; $(CHGRP) $(GAMEGRP) $(INSTDIR)/sysconf; chmod $(VARFILEPERM) $(INSTDIR)/sysconf;
+
+CFLAGS=-g -O -I../include -DNOTPARMDECL $(CFLAGS1) -DDLB -DLINUX
+CFLAGS1=-DCOMPRESS=\"/bin/gzip\" -DCOMPRESS_EXTENSION=\".gz\"
+CFLAGS+=-DSYSCF -DSYSCF_FILE=\"$(HACKDIR)/sysconf\" -DSECURE
+CFLAGS+=-DHACKDIR=\"$(HACKDIR)\"
+
+LINK=$(CC)
+# Only needed for GLIBC stack trace:
+LFLAGS=-rdynamic
+
+WINSRC = $(WINTTYSRC)
+WINOBJ = $(WINTTYOBJ)
+WINLIB = $(WINTTYLIB)
+
+WINTTYLIB=-lcurses
+
+CHOWN=chown
+CHGRP=chgrp
+
+GAMEUID  = nethack
+GAMEGRP  = nethack
+
+# Permissions - some places use setgid instead of setuid, for instance
+# See also the option "SECURE" in include/config.h
+GAMEPERM = 06755
+FILEPERM = 0644
+VARFILEPERM = 0664
+EXEPERM  = 0755
+DIRPERM  = 0755
+VARDIRPERM = 0755
+
+

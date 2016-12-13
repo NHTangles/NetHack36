@@ -43,6 +43,13 @@ E NEARDATA int in_doagain;
 
 E struct dgn_topology { /* special dungeon levels for speed */
     d_level d_oracle_level;
+//BEGIN GRUE/PACMAN/DIGDUG/POOL/JOUST CHALLENGE CODE
+    d_level     d_gruelair_level;
+    d_level     d_pmaze_level;
+    d_level     d_dmaze_level;
+    d_level     d_pool_level;
+    d_level     d_joust_level;
+//END GRUE/PACMAN/DIGDUG/POOL/JOUST CHALLENGE CODE
     d_level d_bigroom_level; /* unused */
     d_level d_rogue_level;
     d_level d_medusa_level;
@@ -73,6 +80,13 @@ E struct dgn_topology { /* special dungeon levels for speed */
 /* macros for accessing the dungeon levels by their old names */
 /* clang-format off */
 #define oracle_level            (dungeon_topology.d_oracle_level)
+//BEGIN GRUE/PACMAN/DIGDUG/POOL/JOUST CHALLENGE CODE
+#define gruelair_level                (dungeon_topology.d_gruelair_level)
+#define pmaze_level           (dungeon_topology.d_pmaze_level)
+#define dmaze_level           (dungeon_topology.d_dmaze_level)
+#define pool_level              (dungeon_topology.d_pool_level)
+#define joust_level              (dungeon_topology.d_joust_level)
+//END GRUE/PACMAN/DIGDUG/POOL/JOUST CHALLENGE CODE
 #define bigroom_level           (dungeon_topology.d_bigroom_level)
 #define rogue_level             (dungeon_topology.d_rogue_level)
 #define medusa_level            (dungeon_topology.d_medusa_level)

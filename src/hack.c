@@ -4,6 +4,10 @@
 
 #include "hack.h"
 
+//BEGIN POOL CHALLENGE CODE
+#include <pwd.h>
+//END POOL CHALLENGE CODE
+
 /* #define DEBUG */ /* uncomment for debugging */
 
 STATIC_DCL void NDECL(maybe_wail);
@@ -94,6 +98,80 @@ const char *msg;
     return revived;
 }
 
+// BEGIN POOL CHALLENGE CODE
+int
+check_pool_challenge()
+{
+    FILE                *Pool_flag = NULL;
+    char                Pool_ignore[255];
+    char                Pool_accept[255];
+    char                Pool_success[255];
+    struct passwd       *NH_passwd;
+    if(!u.poolchallenge_ignore) {
+        NH_passwd = getpwnam("nhadmin");
+ 
+        sprintf(Pool_ignore, "%s/challenge/Pool-%s-ignore", NH_passwd->pw_dir, plname);
+        sprintf(Pool_accept, "%s/challenge/Pool-%s-accept", NH_passwd->pw_dir, plname);
+        sprintf(Pool_success, "%s/challenge/Pool-%s-success", NH_passwd->pw_dir, plname);
+ 
+        Pool_flag = fopen(Pool_ignore, "r");
+        if(NULL == Pool_flag) {
+            Pool_flag = fopen(Pool_success, "r");
+            if(NULL != Pool_flag) {
+                fclose(Pool_flag);
+                if(!u.poolchallenge_successmsgd) {
+                    pline("You can feel the boulder shift slightly.  You think you can move it now!\n\n");
+                    u.poolchallenge_successmsgd = 1;
+                }
+            } else {
+                Pool_flag = fopen(Pool_accept, "r");
+                if(NULL != Pool_flag) {
+                    fclose(Pool_flag);
+                    pline("You strain with all your might, but the boulder doesn't roll.\n\n");
+                    return(0);
+                } else {
+                    pline("A Tournament Administrator steps out from behind the boulder and asks if you wish to accept a Challenge.\n\n");
+                    if(yn("Do you accept this Challenge? ") == 'y') {
+                        Pool_flag = fopen(Pool_accept, "w");
+                        if(NULL != Pool_flag) {
+                            fclose(Pool_flag);
+                            pline("Very Well.\n\nKnow then, adventurer, that a mad physicist passed through this realm not long ago.\n\n");
+                            pline("In her arrogance, she has performed an experiment to change the fabric of our reality. Generators from six micro-dimensional pockets have caused the rotational inertia of our universe to skyrocket.  Nothing will roll!\n\n");
+                            pline("You must seek out and plug the dimensional pockets to restore order to the universe.\n\n");
+                            pline("The Administrator has noted that you have accepted the Challenge and ducks back behind the boulder with a smirk.\n\n");
+                            pline("This boulder seems impossible to roll.\n\n");
+                            return(0);
+                        } else {
+                            pline("ERROR: I am unable to log your Challenge acceptance; please email the Tournament administrators.\n\n");
+                            return(0);
+                        }
+                    } else {
+                        pline("Suit yourself.\n\n");
+                        if(yn("Would you like to block this Challenge from being offered again for the duration of the Tournament? ") == 'y') {
+                            Pool_flag = fopen(Pool_ignore, "w");
+                            if(NULL != Pool_flag) {
+                                fclose(Pool_flag);
+                            } else {
+                                pline("ERROR: I am unable to log your decision to ignore this Challenge; please email the Tournament administrators.\n\n");
+                            }
+                        } else {
+                           u.poolchallenge_ignore = 1;
+                           pline("This Challenge will only be blocked until the end of the current game.\n\n");
+                        }
+                    }
+                }
+            }
+        } else {
+            if(NULL != Pool_flag) {
+                fclose(Pool_flag);
+            }
+        }
+    }
+    return(1);
+}
+// END POOL CHALLENGE CODE
+
+
 STATIC_OVL int
 moverock()
 {
@@ -103,6 +181,17 @@ moverock()
     register struct monst *mtmp;
 
     sx = u.ux + u.dx, sy = u.uy + u.dy; /* boulder starting position */
+// BEGIN POOL CHALLENGE CODE
+    if ((otmp = sobj_at(CUE_BOULDER, sx, sy)) != 0) {
+        if (otmp != level.objects[sx][sy]) movobj(otmp, sx, sy);
+        goto cannot_push;
+    }
+    if (((otmp = sobj_at(BOULDER, sx, sy)) != 0) && !check_pool_challenge()) {
+        if (otmp != level.objects[sx][sy]) movobj(otmp, sx, sy);
+        goto cannot_push;
+    }
+// END POOL CHALLENGE CODE
+
     while ((otmp = sobj_at(BOULDER, sx, sy)) != 0) {
         /* make sure that this boulder is visible as the top object */
         if (otmp != level.objects[sx][sy])
@@ -612,6 +701,7 @@ struct permonst *mdat;
 register xchar x, y;
 {
     return (boolean) ((Sokoban && sobj_at(BOULDER, x, y))
+                      || sobj_at(CUE_BOULDER,x,y) // POOL CHALLENGE CODE
                       || (IS_ROCK(levl[x][y].typ)
                           && (!tunnels(mdat) || needspick(mdat)
                               || !may_dig(x, y))
@@ -808,7 +898,7 @@ int mode;
         return FALSE;
     }
 
-    if (sobj_at(BOULDER, x, y) && (Sokoban || !Passes_walls)) {
+    if ((sobj_at(BOULDER,x,y) || sobj_at(CUE_BOULDER,x,y)) && (Sokoban || !Passes_walls)) {
         if (!(Blind || Hallucination) && (context.run >= 2)
             && mode != TEST_TRAV)
             return FALSE;
@@ -923,7 +1013,8 @@ boolean guess;
                     if (!isok(nx, ny))
                         continue;
                     if ((!Passes_walls && !can_ooze(&youmonst)
-                         && closed_door(x, y)) || sobj_at(BOULDER, x, y)) {
+                         && closed_door(x, y)) || sobj_at(BOULDER, x, y) || sobj_at(CUE_BOULDER,x,y)) {
+ 
                         /* closed doors and boulders usually
                          * cause a delay, so prefer another path */
                         if (travel[x][y] > radius - 3) {
@@ -1211,6 +1302,26 @@ domove()
           ballx = 0, bally = 0;         /* ball&chain new positions */
     int bc_control = 0;                 /* control for ball&chain */
     boolean cause_delay = FALSE;        /* dragging ball will skip a move */
+
+//BEGIN PACMAN/JOUST CHALLENGE CODE
+    static int pmoves = 1;
+    xchar joust_dy;
+
+    if(Is_joust_level(&u.uz)) {
+        if(!((u.dx == 0) && (u.dy == -1))) {
+            mtmp = m_at(u.ux + u.dx, u.uy + u.dy + 1);
+            if(!mtmp) {
+                mtmp = m_at(u.ux + u.dx, u.uy + u.dy);
+                if(!mtmp) {
+                    if(((test_move(u.ux, u.uy, u.dx, u.dy, DO_MOVE)) || (u.dx != -1))
+                       && (test_move(u.ux, u.uy, u.dx, u.dy + 1, DO_MOVE))) {
+                        u.dy++;
+                    }
+                }
+            }
+        }
+    }
+//END PACMAN/JOUST CHALLENGE CODE
 
     u_wipe_engr(rnd(5));
 
@@ -1542,6 +1653,45 @@ domove()
         u.usteed->my = u.uy;
         exercise_steed();
     }
+
+//BEGIN PACMAN CHALLENGE CODE
+    if(Is_pmaze_level(&u.uz)) {
+        if(levl[u.ux][u.uy].lit) {
+            levl[u.ux][u.uy].lit = 0;
+            u.pacmanchallenge_clearspaces ++;
+
+            if(1 == pmoves) {
+                Norep("  Wokka                                                        ");
+            } else if(2 == pmoves) {
+                Norep("        Wokka                                                  ");
+            } else if(3 == pmoves) {
+                Norep("              Wokka                                            ");
+            } else if(4 == pmoves) {
+                Norep("                    Wokka                                      ");
+            } else if(5 == pmoves) {
+                Norep("                          Wokka                                ");
+            } else if(6 == pmoves) {
+                Norep("                                Wokka                          ");
+            } else if(7 == pmoves) {
+                Norep("                                      Wokka                    ");
+            } else if(8 == pmoves) {
+                Norep("                                            Wokka              ");
+            } else if(9 == pmoves) {
+                Norep("                                                  Wokka        ");
+            } else if(10 == pmoves) {
+                Norep("                                                        Wokka  ");
+            }
+
+            pmoves ++;
+
+            if(10 < pmoves) {
+                pmoves = 1;
+            }
+        }
+    } else {
+        pmoves = 1;
+    }
+//END PACMAN CHALLENGE CODE
 
     /*
      * If safepet at destination then move the pet to the hero's

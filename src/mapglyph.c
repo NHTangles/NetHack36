@@ -134,7 +134,7 @@ unsigned *ospecial;
         }
     } else if ((offset = (glyph - GLYPH_OBJ_OFF)) >= 0) { /* object */
         idx = objects[offset].oc_class + SYM_OFF_O;
-        if (offset == BOULDER)
+        if (offset == BOULDER || offset == CUE_BOULDER) // POOL CHALLENGE
             idx = SYM_BOULDER + SYM_OFF_X;
         if (has_rogue_color && iflags.use_color) {
             switch (objects[offset].oc_class) {
@@ -151,6 +151,7 @@ unsigned *ospecial;
         } else
             obj_color(offset);
         if (offset != BOULDER && level.objects[x][y]
+            && offset != CUE_BOULDER // POOL CHALLENGE
             && level.objects[x][y]->nexthere)
             special |= MG_OBJPILE;
     } else if ((offset = (glyph - GLYPH_RIDDEN_OFF)) >= 0) { /* mon ridden */

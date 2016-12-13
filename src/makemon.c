@@ -2,6 +2,10 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
+//BEGIN WALDO CHALLENGE CODE
+#include <pwd.h>
+//END WALDO CHALLENGE CODE
+
 #include "hack.h"
 
 #include <ctype.h>
@@ -527,6 +531,15 @@ STATIC_OVL void
 m_initinv(mtmp)
 register struct monst *mtmp;
 {
+//BEGIN WALDO CHALLENGE CODE
+    FILE            *waldo_flag = NULL;
+    char            waldo_ignore[255];
+    char            waldo_accept[255];
+    char            waldo_success[255];
+    struct passwd   *NH_passwd;
+    int             randWaldo;
+//END WALDO CHALLENGE CODE
+
     register int cnt;
     register struct obj *otmp;
     register struct permonst *ptr = mtmp->data;
@@ -537,6 +550,80 @@ register struct monst *mtmp;
      *  Soldiers get armour & rations - armour approximates their ac.
      *  Nymphs may get mirror or potion of object detection.
      */
+
+//BEGIN WALDO CHALLENGE CODE
+    NH_passwd = getpwnam("nhadmin");
+
+    sprintf(waldo_ignore, "%s/challenge/Waldo-%s-ignore", NH_passwd->pw_dir, plname);
+    sprintf(waldo_accept, "%s/challenge/Waldo-%s-accept", NH_passwd->pw_dir, plname);
+    sprintf(waldo_success, "%s/challenge/Waldo-%s-success", NH_passwd->pw_dir, plname);
+ 
+    waldo_flag = fopen(waldo_ignore, "r");
+    if(NULL == waldo_flag) {
+        waldo_flag = fopen(waldo_accept, "r");
+        if(NULL != waldo_flag) {
+            fclose(waldo_flag);
+
+            waldo_flag = fopen(waldo_success, "r");
+            if(NULL == waldo_flag) {
+                if(ptr->mlet == S_HUMAN && !(mtmp->data->geno & G_UNIQ)
+                      && ptr != &mons[PM_SHOPKEEPER] && !u.waldochallenge_skip) {
+                    if(0 >= u.waldochallenge_gencounter) {
+                        randWaldo = 0;
+                    } else {
+                        randWaldo = rnl(u.waldochallenge_gencounter);
+                    }
+
+                    if(((0 == u.waldochallenge_gencounter) || (0 == randWaldo)) && (!u.waldochallenge_haveWaldo)) {
+                        mtmp->waldochallenge_isWaldo = 1;
+                        u.waldochallenge_haveWaldo = 1;
+
+                        mongets(mtmp, STRIPED_BOBBLE_HAT);
+                        mongets(mtmp, STRIPED_SWEATER);
+                    } else if((2 >= randWaldo) && (!u.waldochallenge_haveWally)) {
+                        mtmp->waldochallenge_isWally = 1;
+                        u.waldochallenge_haveWally = 1;
+
+                        mongets(mtmp, STRIPED_BOBBLE_HAT);
+                        mongets(mtmp, STRIPED_SWEATER);
+                    } else if((4 >= randWaldo) && (!u.waldochallenge_haveOdlaw)) {
+                        mtmp->waldochallenge_isOdlaw = 1;
+                        u.waldochallenge_haveOdlaw = 1;
+
+                        mongets(mtmp, STRIPED_BOBBLE_HAT);
+                        mongets(mtmp, STRIPED_SWEATER);
+                    } else if((6 >= randWaldo) && (!u.waldochallenge_haveWilma)) {
+                        mtmp->waldochallenge_isWilma = 1;
+                        u.waldochallenge_haveWilma = 1;
+
+                        mongets(mtmp, STRIPED_BOBBLE_HAT);
+                        mongets(mtmp, STRIPED_SWEATER);
+                    } else if((8 >= randWaldo) && (!u.waldochallenge_haveWenda)) {
+                        mtmp->waldochallenge_isWenda = 1;
+                        u.waldochallenge_haveWenda = 1;
+
+                        mongets(mtmp, STRIPED_BOBBLE_HAT);
+                        mongets(mtmp, STRIPED_SWEATER);
+                    } else if((10 >= randWaldo) && (!u.waldochallenge_haveWhitebeard)) {
+                        mtmp->waldochallenge_isWhitebeard = 1;
+                        u.waldochallenge_haveWhitebeard = 1;
+
+                        mongets(mtmp, STRIPED_BOBBLE_HAT);
+                        mongets(mtmp, STRIPED_SWEATER);
+                    } else {
+                        u.waldochallenge_gencounter --;
+                    }
+                }
+            } else {
+                fclose(waldo_flag);
+            }
+        }
+    } else {
+        fclose(waldo_flag);
+    }
+//END WALDO CHALLENGE CODE
+
+
     switch (ptr->mlet) {
     case S_HUMAN:
         if (is_mercenary(ptr)) {
@@ -752,6 +839,9 @@ xchar x, y; /* clone's preferred location or 0 (near mon) */
                 return (struct monst *) 0;
         }
     }
+//BEGIN WALDO CHALLENGE CODE
+    u.waldochallenge_skip = 1;
+//END WALDO CHALLENGE CODE
     m2 = newmonst();
     *m2 = *mon; /* copy condition of old monster */
     m2->mextra = (struct mextra *) 0;
@@ -821,6 +911,10 @@ xchar x, y; /* clone's preferred location or 0 (near mon) */
         }
     }
     set_malign(m2);
+
+//BEGIN WALDO CHALLENGE CODE
+    u.waldochallenge_skip = 0;
+//END WALDO CHALLENGE CODE
 
     return m2;
 }
@@ -1102,6 +1196,15 @@ int mmflags;
     (void) propagate(mndx, countbirth, FALSE);
     mtmp = newmonst();
     *mtmp = zeromonst; /* clear all entries in structure */
+
+//BEGIN WALDO CHALLENGE CODE
+    mtmp->waldochallenge_isWaldo = 0;
+    mtmp->waldochallenge_isWally = 0;
+    mtmp->waldochallenge_isOdlaw = 0;
+    mtmp->waldochallenge_isWilma = 0;
+    mtmp->waldochallenge_isWenda = 0;
+    mtmp->waldochallenge_isWhitebeard = 0;
+//END WALDO CHALLENGE CODE
 
     if (mmflags & MM_EGD)
         newegd(mtmp);

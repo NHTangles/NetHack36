@@ -1,0 +1,40 @@
+#BEGIN JOUST CHALLENGE CODE
+# "Joust Maze" by the NetHack Tournament Administrators
+#
+MAZE:"joust",' '
+FLAGS:noteleport
+GEOMETRY:center,center
+MAP
+     -----------------------------------                                   
+     |.................................|                                   
+     |.................................|                                   
+     |--------.................--------|                                   
+     |.................................|                                   
+     |.................................|                                   
+     |.........---------------.........|                                   
+     |.................................|                                   
+     |.................................|                                   
+     |-----.......................-----|                                   
+     |.................................|                                   
+     |............---------............|                                   
+     |.................................|                                   
+     |.................................|                                   
+     |..........-------------..........|                                   
+     |LLLLLLLLLL|           |LLLLLLLLLL|                                   
+     -----------------------------------                                   
+                                                                           
+ENDMAP
+
+REGION:(05,00,39,17),lit,"ordinary"
+NON_DIGGABLE: (05,00,39,17)
+NON_PASSWALL: (05,00,39,17)
+
+MONSTER:('o',"ostrich"),(22,05),peaceful
+#BUG: place Bounder buzzard
+MONSTER:('B',"the Bounder"),(09,02),hostile
+#BUG: place Hunter buzzard
+MONSTER:('H',"the Hunter"),(35,02),hostile
+#BUG: place Shadow Lord buzzard
+MONSTER:('S',"the Shadow Lord"),(22,10),hostile
+
+#END JOUST CHALLENGE CODE

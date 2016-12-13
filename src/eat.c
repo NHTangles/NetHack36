@@ -3,6 +3,9 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+//BEGIN PACMAN CHALLENGE CODE
+#include <pwd.h>
+//END PACMAN CHALLENGE CODE
 
 STATIC_PTR int NDECL(eatmdone);
 STATIC_PTR int NDECL(eatfood);
@@ -2326,6 +2329,14 @@ doeat()
     int basenutrit; /* nutrition of full item */
     boolean dont_start = FALSE, nodelicious = FALSE;
 
+//BEGIN PACMAN CHALLENGE CODE
+    FILE            *PacMan_flag = NULL;
+    char            PacMan_ignore[255];
+    char            PacMan_accept[255];
+    char            PacMan_success[255];
+    struct passwd   *NH_passwd;
+//END PACMAN CHALLENGE CODE
+
     if (Strangled) {
         pline("If you can't breathe air, how can you consume solids?");
         return 0;
@@ -2334,6 +2345,86 @@ doeat()
         return 0;
     if (check_capacity((char *) 0))
         return 0;
+
+//BEGIN PACMAN CHALLENGE CODE
+    if(!u.pacmanchallenge_ignore) {
+        NH_passwd = getpwnam("nhadmin");
+
+        sprintf(PacMan_ignore, "%s/challenge/PacMan-%s-ignore", NH_passwd->pw_dir, plname);
+        sprintf(PacMan_accept, "%s/challenge/PacMan-%s-accept", NH_passwd->pw_dir, plname);
+        sprintf(PacMan_success, "%s/challenge/PacMan-%s-success", NH_passwd->pw_dir, plname);
+
+        PacMan_flag = fopen(PacMan_ignore, "r");
+        if(((otmp->otyp == APPLE) || (otmp->otyp == ORANGE)
+                 || (otmp->otyp == PEAR) || (otmp->otyp == MELON)
+                 || (otmp->otyp == BANANA) || (otmp->otyp == CARROT)
+                 || (otmp->otyp == SLIME_MOLD)) && (NULL == PacMan_flag)) {
+            PacMan_flag = fopen(PacMan_success, "r");
+
+            if(NULL != PacMan_flag) {
+                fclose(PacMan_flag);
+
+                if(!u.pacmanchallenge_successmsgd) {
+                    pline("Fruit tastes even better without Blinky, Pinky, Inky and Clyde hot on your tail.\n\n");
+                    u.pacmanchallenge_successmsgd = 1;
+                }
+            } else {
+                PacMan_flag = fopen(PacMan_accept, "r");
+
+                if(NULL != PacMan_flag) {
+                    fclose(PacMan_flag);
+
+                    pline("You're going to have to find a way around Blinky, Pinky, Inky and Clyde before you've really earned that fruit.\n\n");
+
+                    return(0);
+                } else {
+                    pline("A tap on the shoulder distracts you from your snack.  Turning around, you see a Tournament Administrator who asks if you wish to accept a Challenge.\n\n");
+
+                    if(yn("Do you accept this Challenge? ") == 'y') {
+                        PacMan_flag = fopen(PacMan_accept, "w");
+
+                        if(NULL != PacMan_flag) {
+                            fclose(PacMan_flag);
+
+                            pline("Very Well.\n\nKnow then, adventurer, that long ago the necromancers Blinky, Pinky, Inky and Clyde (the four greatest villains of their age) stole away the only fruit ever borne by the now-aging Tree of Life.\n\n");
+                            pline("Though all four died in battle with the armies of Goodness and Light, the fruits were never recovered; they are rumored to have been hidden away in the Maze of Namco and are guarded by the restless spirits of these four terrible villains.\n\n");
+                            pline("You must find and explore the legendary Maze of Namco.  Beware, however, the ghosts of these monstrous villains which can kill with a single touch!\n\n");
+
+                            pline("The Administrator has noted that you have accepted the Challenge and dissolves into a cloud of Drosophyllae with a smirk.\n\n");
+                            pline("How tough can these villains be with names like that?\n\n");
+
+                            return(0);
+                        } else {
+                            pline("ERROR: I am unable to log your Challenge acceptance; please email the Tournament administrators.\n\n");
+
+                            return(0);
+                        }
+                    } else {
+                        pline("Suit yourself.\n\n");
+
+                        if(yn("Would you like to block this Challenge from being offered again for the duration of the Tournament? ") == 'y') {
+                            PacMan_flag = fopen(PacMan_ignore, "w");
+
+                            if(NULL != PacMan_flag) {
+                                fclose(PacMan_flag);
+                            } else {
+                                pline("ERROR: I am unable to log your decision to ignore this Challenge; please email the Tournament administrators.\n\n");
+                            }
+                        } else {
+                            u.pacmanchallenge_ignore = 1;
+
+                            pline("This Challenge will only be blocked until the end of the current game.\n\n");
+                        }
+                    }
+                }
+            }
+        } else {
+            if(NULL != PacMan_flag) {
+                fclose(PacMan_flag);
+            }
+        }
+    }
+//END PACMAN CHALLENGE CODE
 
     if (u.uedibility) {
         int res = edibility_prompts(otmp);

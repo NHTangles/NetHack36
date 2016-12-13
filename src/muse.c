@@ -432,7 +432,7 @@ struct monst *mtmp;
                 continue;
             /* skip if there's no trap or can't/won't move onto trap */
             if ((t = t_at(xx, yy)) == 0
-                || (!ignore_boulders && sobj_at(BOULDER, xx, yy))
+                || (!ignore_boulders && (sobj_at(BOULDER, xx, yy)||sobj_at(CUE_BOULDER,xx,yy)))
                 || onscary(xx, yy, mtmp))
                 continue;
             /* use trap if it's the correct type */
@@ -1630,7 +1630,7 @@ struct monst *mtmp;
                     && (diag_ok || xx == x || yy == y)
                     && ((xx == x && yy == y) || !level.monsters[xx][yy]))
                     if ((t = t_at(xx, yy)) != 0
-                        && (ignore_boulders || !sobj_at(BOULDER, xx, yy))
+                        && (ignore_boulders || !(sobj_at(BOULDER, xx, yy)||sobj_at(CUE_BOULDER,xx,yy)))
                         && !onscary(xx, yy, mtmp)) {
                         /* use trap if it's the correct type */
                         if (t->ttyp == POLY_TRAP) {

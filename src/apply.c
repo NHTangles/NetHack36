@@ -4,9 +4,16 @@
 
 #include "hack.h"
 
+//BEGIN GRUE/PACMAN CHALLENGE CODE
+#include <pwd.h>
+//END GRUE/PACMAN CHALLENGE CODE
+
 extern boolean notonhead; /* for long worms */
 
 STATIC_DCL int FDECL(use_camera, (struct obj *));
+//POOL
+STATIC_DCL int FDECL(use_cue_stick, (struct obj*));
+//
 STATIC_DCL int FDECL(use_towel, (struct obj *));
 STATIC_DCL boolean FDECL(its_dead, (int, int, int *));
 STATIC_DCL int FDECL(use_stethoscope, (struct obj *));
@@ -2188,6 +2195,19 @@ struct obj *tstone;
     if ((obj = getobj(choices, stonebuf)) == 0)
         return;
 
+//BEGIN GRUE CHALLENGE CODE
+    if(!u.gruechallenge_ignore)
+    {
+            gruechallenge_checklights();
+
+            if((!u.gruechallenge_haslight) && (!u.uswallow) && (tstone->otyp == FLINT) && (is_metallic(obj)))
+            {
+                    pline("You make a light in the darkness; it doesn't last very long ...");
+                    u.gruechallenge_darkmoves = 0;
+            }
+    }
+//END GRUE CHALLENGE CODE
+ 
     if (obj == tstone && obj->quan == 1L) {
         You_cant("rub %s on itself.", the(xname(obj)));
         return;
@@ -3345,6 +3365,267 @@ char class_list[];
         add_class(class_list, FOOD_CLASS);
 }
 
+//BEGIN POOL CHALLENGE CODE
+STATIC_OVL int
+use_cue_stick(obj)
+    struct obj *obj;
+{
+    char buf[BUFSZ];
+    xchar rx,ry;
+    struct rm *lev;
+    struct obj* tobj;
+
+    FILE          *Pool_flag = NULL;
+    char          Pool_ignore[255];
+    char          Pool_accept[255];
+    char          Pool_success[255];
+    struct passwd *NH_passwd;
+    if(!u.poolchallenge_ignore) {
+        NH_passwd = getpwnam("nhadmin");
+
+        sprintf(Pool_ignore, "%s/challenge/Pool-%s-ignore", NH_passwd->pw_dir, plname);
+        sprintf(Pool_accept, "%s/challenge/Pool-%s-accept", NH_passwd->pw_dir, plname);
+        sprintf(Pool_success, "%s/challenge/Pool-%s-success", NH_passwd->pw_dir, plname);
+
+        Pool_flag = fopen(Pool_ignore, "r");
+        if(NULL == Pool_flag) {
+            Pool_flag = fopen(Pool_accept, "r");
+            if(NULL == Pool_flag) {
+                pline("You can't think why you'd use this thing");
+                return(0);
+             } else {
+                fclose(Pool_flag);
+                // and continue working
+             }
+        } else {
+            pline("You can safely ignore this strange item");
+            fclose(Pool_flag);
+            u.poolchallenge_ignore = 1;
+            return(0);
+        }
+    } else {
+        pline("You can safely ignore this strange item");
+        return(0);
+    }
+    if (!wield_tool(obj, (char*)0)) return(0);
+
+    if(!getdir((char *)0)) return(0);
+
+    if (obj->spe <= 0) {
+        Your("%s!", aobjnam(obj,"snap"));
+        delobj(obj);
+        uwepgone();
+        return (1);
+    }
+    if (u.dz < 0) {
+        You("tap on the ceiling");
+        consume_obj_charge(obj, TRUE);
+    } else if (u.dz > 0) {
+        You("tamp %s on the floor", yname(obj));
+        consume_obj_charge(obj, TRUE);
+    } else if (!u.dx && !u.dy && !u.dz) {
+        You("pop yourself in the eye with %s", yname(obj));
+        Sprintf(buf, "%s own %s", uhis(), OBJ_NAME(objects[obj->otyp]));
+        losehp(2,buf,KILLED_BY);
+    } else if (u.dz == 0) {
+        rx = u.ux + u.dx;
+        ry = u.uy + u.dy;
+        if (!isok(rx,ry)) {
+            pline("Klonk!");
+            return(1);
+        }
+        lev = &levl[rx][ry];
+        tobj = sobj_at(CUE_BOULDER, rx, ry);
+        if (MON_AT(rx,ry)) {
+            attack(m_at(rx,ry));
+        } else if (tobj) {
+            roll_boulder(tobj, u.dx, u.dy, 10);
+        } else {
+            tobj = level.objects[rx][ry];
+            if (tobj)
+                You("prod at %s with %s", (Blind?"something":Tobjnam(tobj, (char*)0)), yname(obj));
+            else if (dfeature_at(rx, ry, buf))
+                You("poke at the %s.", buf);
+            else
+                You("take a practice stroke with %s", yname(obj));
+        }
+    }
+    return(1);
+}
+
+
+/*
+ * A modified version of launch_obj
+ */
+int
+roll_boulder(obj, dx, dy, dist)
+    struct obj* obj;
+    xchar dx, dy;
+    int dist;
+{
+    struct monst *mtmp;
+    struct obj *otmp, *otmp2;
+    xchar x2, y2, px, py;
+    int tmp;
+    int delaycnt = 2;
+    struct trap * t;
+    boolean bounced;
+
+    otmp = (struct obj*)0;
+    bhitpos.x = obj->ox;
+    bhitpos.y = obj->oy;
+    tmp_at(DISP_FLASH, obj_to_glyph(obj));
+    tmp_at(bhitpos.x, bhitpos.y);
+    obj_extract_self(obj);
+    while(dist-- > 0) {
+        tmp = 2;
+        tmp_at(bhitpos.x, bhitpos.y);
+        while (tmp-- > 0) delay_output();
+
+        // Check for some things pre-impact
+        px = bhitpos.x + dx;
+        py = bhitpos.y + dy;
+        otmp2 = sobj_at(BOULDER, px, py);
+        if (!otmp2)
+            otmp2 = sobj_at(CUE_BOULDER, px, py);
+        if (otmp2) {
+            const char *bmsg = " as one boulder sets another in motion";
+
+        if (!dist)
+            bmsg = " as one boulder hits another";
+
+            You_hear("a loud crash%s!",
+                     cansee(px, py) ? bmsg : "");
+            obj_extract_self(otmp2);
+            place_object(obj, bhitpos.x, bhitpos.y);
+            obj = otmp2;
+            otmp2 = (struct obj *)0;
+            tmp_at(DISP_END, 0);
+            tmp_at(DISP_FLASH, obj_to_glyph(obj));
+            wake_nearto(bhitpos.x, bhitpos.y, 10*10);
+        }
+        bounced = FALSE;
+        switch(levl[bhitpos.x + dx][bhitpos.y + dy].typ) {
+            case TLCORNER:
+            case TRCORNER:
+            case BLCORNER:
+            case BRCORNER:
+            case TDWALL:
+            case TRWALL:
+            case TLWALL:
+            case TUWALL:
+            case CROSSWALL:
+                // this assumes that the boulder is only *inside* a room.  Fails on mazes, too
+                dx = -dx;
+                dy = -dy;
+                bounced = TRUE;
+                break;
+            case HWALL:
+                dy = -dy;
+                bounced = TRUE;
+                break;
+            case VWALL:
+                dx = -dx;
+                bounced = TRUE;
+                break;
+            case STONE:
+                if (levl[bhitpos.x][bhitpos.y + dy].typ == STONE) {
+                    dy = -dy;
+                    bounced = TRUE;
+                }
+                if (levl[bhitpos.x + dx][bhitpos.y].typ == STONE) {
+                    dx = -dx;
+                    bounced = TRUE;
+                }
+                break;
+        }
+
+        if (bounced)
+            continue;
+
+        bhitpos.x += dx;
+        bhitpos.y += dy;
+
+        if ((mtmp = m_at(bhitpos.x, bhitpos.y)) != 0) {
+            ohitmon(mtmp, obj, -1, FALSE);
+        } else if (bhitpos.x == u.ux && bhitpos.y == u.uy) {
+            if (thitu(9 + obj->spe,
+                       dmgval(obj, &youmonst),
+                       obj, (char *)0)) {
+                stop_occupation();
+            }
+        }
+
+        t = t_at(bhitpos.x, bhitpos.y);
+        if (t && (obj->otyp == BOULDER || obj->otyp == CUE_BOULDER)) {
+            switch(t->ttyp) {
+                case LANDMINE:
+                    if (rn2(10) > 2) {
+                        pline("KAABLAMM!!!%s",
+                            cansee(bhitpos.x, bhitpos.y) ?
+                            " The rolling boulder triggers a land mine." : "");
+                        deltrap(t);
+                        del_engr_at(bhitpos.x,bhitpos.y);
+                        if (cansee(bhitpos.x,bhitpos.y))
+                            newsym(bhitpos.x,bhitpos.y);
+                    }
+                    break;
+                case LEVEL_TELEP:
+                case TELEP_TRAP:
+                    if (cansee(bhitpos.x, bhitpos.y))
+                        pline("Suddenly the rolling boulder disappears!");
+                    else
+                        You_hear("a rumbling stop abruptly.");
+                    dist = 0;
+                    if (t->ttyp == TELEP_TRAP)
+                        rloco(obj);
+                    else {
+                        int newlev = random_teleport_level();
+                        d_level dest;
+
+                        if (newlev == depth(&u.uz) || In_endgame(&u.uz))
+                            continue;
+                        add_to_migration(obj);
+                        get_level(&dest, newlev);
+                        obj->ox = dest.dnum;
+                        obj->oy = dest.dlevel;
+                        obj->owornmask = (long)MIGR_RANDOM;
+                    }
+                    seetrap(t);
+                    break;
+                case PIT:
+                case SPIKED_PIT:
+                case HOLE:
+                case TRAPDOOR:
+                    /* the boulder won't be used up if there is a
+                       monster in the trap; stop rolling anyway */
+                    x2 = bhitpos.x,  y2 = bhitpos.y;  /* stops here */
+                    if (flooreffects(obj, x2, y2, "fall")) {
+                        tmp_at(DISP_END, 0);
+                        newsym(x2,y2);
+                        return 1;
+                    }
+                    break;
+            }
+            if (dist == -1) break;
+        }
+    }
+    if ((obj->otyp == BOULDER || obj->otyp == CUE_BOULDER) && closed_door(bhitpos.x,bhitpos.y)) {
+        if (cansee(bhitpos.x, bhitpos.y))
+            pline_The("boulder crashes through a door.");
+        levl[bhitpos.x][bhitpos.y].doormask = D_BROKEN;
+        if (dist) unblock_point(bhitpos.x, bhitpos.y);
+    }
+
+    x2 = bhitpos.x;
+    y2 = bhitpos.y;
+    tmp_at(DISP_END, 0);
+    place_object(obj, x2,y2);
+    newsym(x2,y2);
+    return 1;
+}
+//END POOL CHALLENGE CODE
+
 /* the 'a' command */
 int
 doapply()
@@ -3352,6 +3633,18 @@ doapply()
     struct obj *obj;
     register int res = 1;
     char class_list[MAXOCLASSES + 2];
+
+//BEGIN GRUE/PACMAN CHALLENGE CODE
+    FILE            *grue_flag = NULL;
+    char            grue_ignore[255];
+    char            grue_accept[255];
+    char            grue_success[255];
+    FILE            *pacman_flag = NULL;
+    char            pacman_ignore[255];
+    char            pacman_accept[255];
+    char            pacman_success[255];
+    struct passwd   *NH_passwd;
+//END GRUE/PACMAN CHALLENGE CODE
 
     if (check_capacity((char *) 0))
         return 0;
@@ -3530,6 +3823,159 @@ doapply()
     case TOUCHSTONE:
         use_stone(obj);
         break;
+//BEGIN POOL/GRUE/PACMAN CHALLENGE CODE
+    case CUE_STICK:
+        use_cue_stick(obj);
+        break;
+    case FROBOZZ_COMPANY_INTER_DIMENSIO:
+        if(!objects[obj->otyp].oc_name_known) {
+            pline("You have no idea how that thing does whatever it does.\n\n");
+            break;
+        }
+
+        NH_passwd = getpwnam("nhadmin");
+
+        sprintf(grue_ignore, "%s/challenge/Grue-%s-ignore", NH_passwd->pw_dir, plname);
+        sprintf(grue_accept, "%s/challenge/Grue-%s-accept", NH_passwd->pw_dir, plname);
+        sprintf(grue_success, "%s/challenge/Grue-%s-success", NH_passwd->pw_dir, plname);
+
+        grue_flag = fopen(grue_ignore, "r");
+        if(NULL == grue_flag)
+        {
+            grue_flag = fopen(grue_success, "r");
+
+            if(NULL != grue_flag) {
+                fclose(grue_flag);
+
+                pline("On the other hand, maybe you should leave that portal closed ...\n\n");
+            } else {
+                grue_flag = fopen(grue_accept, "r");
+
+                if(NULL != grue_flag) {
+                    fclose(grue_flag);
+
+                    grue_flag = fopen(grue_success, "w");
+
+                    if(NULL != grue_flag) {
+                        fclose(grue_flag);
+
+                        pline("The Frobozz Company Inter-dimensional Portal Generator humms loudly for a few moments, flashes its lights briefly, and goes quiet.\n\n");
+                        pline("Congratulations!  You have closed of the portal; the darkness doesn't feel quite as scary now.\n\n");
+                    } else {
+                        pline("ERROR: I am unable to log your Challenge success; please email the Tournament administrators.\n\n");
+                    }
+                } else {
+                    pline("You wonder what this odd and sinister thing is for ....\n\n");
+                }
+            }
+        } else {
+            if(NULL != grue_flag) {
+                fclose(grue_flag);
+            }
+
+            pline("You don't have a clue what that thing is for ....\n\n");
+        }
+        break;
+    case ENERGIZER_PELLET:
+        if(!objects[obj->otyp].oc_name_known) {
+            pline("You have no idea how that thing does whatever it does.\n\n");
+            break;
+        }
+
+        NH_passwd = getpwnam("nhadmin");
+
+        sprintf(pacman_ignore, "%s/challenge/PacMan-%s-ignore", NH_passwd->pw_dir, plname);
+        sprintf(pacman_accept, "%s/challenge/PacMan-%s-accept", NH_passwd->pw_dir, plname);
+        sprintf(pacman_success, "%s/challenge/PacMan-%s-success", NH_passwd->pw_dir, plname);
+
+        pacman_flag = fopen(pacman_ignore, "r");
+        if(NULL == pacman_flag) {
+            pacman_flag = fopen(pacman_success, "r");
+
+            if(NULL != pacman_flag) {
+                fclose(pacman_flag);
+
+                pline("You don't need to be that energized; you've already finished that Challenge.\n\n");
+            } else {
+                pacman_flag = fopen(pacman_accept, "r");
+
+                if(NULL != pacman_flag) {
+                    fclose(pacman_flag);
+
+                    pline("Wow!  That thing makes to feel so energized!.\n\n");
+
+                    register int ct = 0;
+                    register struct monst *mtmp;
+
+                    for(mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+                        if((!strcmp("Blinky", Monnam(mtmp)))
+                                || (!strcmp("Pinky", Monnam(mtmp)))
+                                || (!strcmp("Inky", Monnam(mtmp)))
+                                || (!strcmp("Clyde", Monnam(mtmp)))) {
+                            monflee(mtmp, 0, FALSE, FALSE);
+
+                            pline("%s flees in terror.", Monnam(mtmp));
+                        }
+                    }
+
+                    useup(obj);
+                } else {
+                    pline("You wonder what this odd little pellet is for ....\n\n");
+                }
+            }
+        } else {
+            if(NULL != pacman_flag) {
+                fclose(pacman_flag);
+            }
+
+            pline("You don't have a clue what that thing is for ....\n\n");
+        }
+        break;
+    case LIFEGIVING_BONUS_FRUIT:
+        if(!objects[obj->otyp].oc_name_known) {
+            pline("You have no idea how that thing does whatever it does.\n\n");
+            break;
+        }
+
+        NH_passwd = getpwnam("nhadmin");
+
+        sprintf(pacman_ignore, "%s/challenge/PacMan-%s-ignore", NH_passwd->pw_dir, plname);
+        sprintf(pacman_accept, "%s/challenge/PacMan-%s-accept", NH_passwd->pw_dir, plname);
+        sprintf(pacman_success, "%s/challenge/PacMan-%s-success", NH_passwd->pw_dir, plname);
+
+        pacman_flag = fopen(pacman_ignore, "r");
+        if(NULL == pacman_flag) {
+            pacman_flag = fopen(pacman_success, "r");
+
+            if(NULL != pacman_flag) {
+                fclose(pacman_flag);
+
+                pline("You don't need any more bonus lives; you've already finished that Challenge.\n\n");
+            } else {
+                pacman_flag = fopen(pacman_accept, "r");
+
+                if(NULL != pacman_flag) {
+                    fclose(pacman_flag);
+
+                    pline("Hmm.  That token seems to have been worth an extra three lives.\n\n");
+
+                    u.pacmanchallenge_livesleft += 3;
+                    u.pacmanchallenge_cantry = 1;
+
+                    useup(obj);
+                } else {
+                    pline("You wonder what this odd little token is for ....\n\n");
+                }
+            }
+        } else {
+            if(NULL != pacman_flag) {
+                fclose(pacman_flag);
+            }
+
+            pline("You don't have a clue what that thing is for ....\n\n");
+        }
+        break;
+//END POOL/GRUE/PACMAN CHALLENGE CODE
     default:
         /* Pole-weapons can strike at a distance */
         if (is_pole(obj)) {

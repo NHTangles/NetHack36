@@ -4,6 +4,10 @@
 
 #include "hack.h"
 
+//BEGIN ZAPM CHALLENGE CODE
+#include <pwd.h>
+//END ZAPM CHALLENGE CODE
+
 /* Disintegration rays have special treatment; corpses are never left.
  * But the routine which calculates the damage is separate from the routine
  * which kills the monster.  The damage routine returns this cookie to
@@ -42,6 +46,10 @@ STATIC_DCL int FDECL(spell_hit_bonus, (int));
 #define ZT_POISON_GAS (AD_DRST - 1)
 #define ZT_ACID (AD_ACID - 1)
 /* 8 and 9 are currently unassigned */
+
+//BEGIN DIGDUG CHALLENGE CODE
+#define ZT_PUMP (AD_PUMP-1)
+//END DIGDUG CHALLENGE CODE
 
 #define ZT_WAND(x) (x)
 #define ZT_SPELL(x) (10 + (x))
@@ -147,6 +155,13 @@ struct obj *otmp;
         reveal_invis = FALSE;
 
     switch (otyp) {
+
+//BEGIN DIGDUG CHALLENGE CODE
+    case WAN_DANGEROUSLY_INFLATE_MONSTE:
+        pline("This thing doesn't really work immediately ...");
+        break;
+//END DIGDUG CHALLENGE CODE
+
     case WAN_STRIKING:
         zap_type_text = "wand";
     /* fall through */
@@ -1776,6 +1791,13 @@ struct obj *obj, *otmp;
             res = 0;
     } else
         switch (otmp->otyp) {
+
+//BEGIN DIGDUG CHALLENGE CODE
+        case WAN_DANGEROUSLY_INFLATE_MONSTE:
+            pline("This thing really doesn't work on objects ...");
+            break;
+//END DIGDUG CHALLENGE CODE
+
         case WAN_POLYMORPH:
         case SPE_POLYMORPH:
             if (obj->otyp == WAN_POLYMORPH || obj->otyp == SPE_POLYMORPH
@@ -2125,6 +2147,11 @@ boolean ordinary;
     int damage = 0;
 
     switch (obj->otyp) {
+//BEGIN DIGDUG CHALLENGE CODE
+    case WAN_DANGEROUSLY_INFLATE_MONSTE:
+        pline("This thing doesn't really work on you ...");
+        break;
+//END DIGDUG CHALLENGE CODE
     case WAN_STRIKING:
     case SPE_FORCE_BOLT:
         learn_it = TRUE;
@@ -2338,6 +2365,12 @@ boolean ordinary;
         if (flashburn((long) damage))
             learn_it = TRUE;
         damage = 0; /* reset */
+//BEGIN GRUE CHALLENGE CODE
+        if(!u.gruechallenge_ignore) {
+            u.gruechallenge_darkmoves = 0;
+        }
+//END GRUE CHALLENGE CODE
+
         break;
     case WAN_OPENING:
     case SPE_KNOCK:
@@ -2862,6 +2895,19 @@ struct obj *obj;
         else if (otyp >= SPE_MAGIC_MISSILE && otyp <= SPE_FINGER_OF_DEATH)
             buzz(otyp - SPE_MAGIC_MISSILE + 10, u.ulevel / 2 + 1, u.ux, u.uy,
                  u.dx, u.dy);
+
+//BEGIN DIGDUG CHALLENGE CODE
+        else if (otyp == WAN_DANGEROUSLY_INFLATE_MONSTE) {
+            if(objects[obj->otyp].oc_name_known) {
+                buzz(ZT_PUMP,
+                     (otyp == WAN_MAGIC_MISSILE) ? 2 : 6,
+                     u.ux, u.uy, u.dx, u.dy);
+            } else {
+                pline("You have no idea how that thing does whatever it does.\n\n");
+            }
+        }
+//END DIGDUG CHALLENGE CODE
+
         else if (otyp >= WAN_MAGIC_MISSILE && otyp <= WAN_LIGHTNING)
             buzz(otyp - WAN_MAGIC_MISSILE,
                  (otyp == WAN_MAGIC_MISSILE) ? 2 : 6, u.ux, u.uy, u.dx, u.dy);
@@ -3823,6 +3869,13 @@ register int dx, dy;
     spell_type = is_hero_spell(type) ? SPE_MAGIC_MISSILE + abstype : 0;
 
     fltxt = flash_types[(type <= -30) ? abstype : abs(type)];
+
+//BEGIN DIGDUG CHALLENGE CODE
+    if (ZT_PUMP == abs(type)) {
+      fltxt = "pump";
+    }
+//END DIGDUG CHALLENGE CODE
+
     if (u.uswallow) {
         register int tmp;
 
@@ -3847,8 +3900,14 @@ register int dx, dy;
     if (dx == 0 && dy == 0)
         range = 1;
     save_bhitpos = bhitpos;
-
-    tmp_at(DISP_BEAM, zapdir_to_glyph(dx, dy, abstype));
+//BEGIN DIGDUG CHALLENGE CODE
+    if((ZT_PUMP == abs(type)) && (4 < range)) {
+        range = 4;
+        tmp_at(DISP_BEAM, zapdir_to_glyph(dx, dy, 5));
+    } else {
+        tmp_at(DISP_BEAM, zapdir_to_glyph(dx, dy, abstype));
+    }
+//END DIGDUG CHALLENGE CODE
     while (range-- > 0) {
         lsx = sx;
         sx += dx;
@@ -3857,6 +3916,7 @@ register int dx, dy;
         if (isok(sx, sy) && (lev = &levl[sx][sy])->typ) {
             mon = m_at(sx, sy);
             if (cansee(sx, sy)) {
+
                 /* reveal/unreveal invisible monsters before tmp_at() */
                 if (mon && !canspotmon(mon))
                     map_invisible(sx, sy);
@@ -3933,7 +3993,28 @@ register int dx, dy;
                     } else {
                         if (!otmp) {
                             /* normal non-fatal hit */
-                            hit(fltxt, mon, exclam(tmp));
+//BEGIN DIGDUG CHALLENGE CODE
+                            if(ZT_PUMP == abs(type)) {
+                                if((!strcmp("Fygar", Monnam(mon))) || (!strcmp("Pooka", Monnam(mon)))) {
+                                    mon->digdugchallenge_hits++;
+
+                                    if(4 <= mon->digdugchallenge_hits) {
+                                        pline("Kablooie!");
+                                        u.digdugchallenge_killed ++;
+
+                                        mon->mhp = 0;
+                                        killed(mon);
+                                    } else {
+                                        pline("You hit %s with the pump!  *whoosh*", Monnam(mon));
+                                        mon->mstun = 1;
+                                    }
+                                } else {
+                                    pline("This thing doesn't really work on that ...");
+                                }
+                            } else {
+                                hit(fltxt, mon, exclam(tmp));
+                            }
+//END DIGDUG CHALLENGE CODE
                         } else {
                             /* some armor was destroyed; no damage done */
                             if (canseemon(mon))
@@ -3948,7 +4029,19 @@ register int dx, dy;
                 }
                 range -= 2;
             } else {
-                miss(fltxt, mon);
+
+//BEGIN DIGDUG CHALLENGE CODE
+                if(ZT_PUMP == abs(type)) {
+                    if((!strcmp("Fygar", Monnam(mon))) || (!strcmp("Pooka", Monnam(mon)))) {
+                        miss(fltxt,mon);
+                    } else {
+                        pline("This thing doesn't really work on that ...");
+                    }
+                } else { 
+                    miss(fltxt,mon);
+                }
+//END DIGDUG CHALLENGE CODE
+
             }
         } else if (sx == u.ux && sy == u.uy && range >= 0) {
             nomul(0);
@@ -4923,6 +5016,99 @@ int triesleft;
 void
 makewish()
 {
+//BEGIN ZAPM CHALLENGE CODE
+    FILE                    *ZAPM_flag = NULL;
+    char                    ZAPM_ignore[255];
+    char                    ZAPM_accept[255];
+    char                    ZAPM_success[255];
+    struct passwd   *NH_passwd;
+
+    if(!u.zapmchallenge_ignore) {
+        NH_passwd = getpwnam("nhadmin");
+
+        sprintf(ZAPM_ignore, "%s/challenge/ZAPM-%s-ignore", NH_passwd->pw_dir, plname);
+        sprintf(ZAPM_accept, "%s/challenge/ZAPM-%s-accept", NH_passwd->pw_dir, plname);
+        sprintf(ZAPM_success, "%s/challenge/ZAPM-%s-success", NH_passwd->pw_dir, plname);
+
+        ZAPM_flag = fopen(ZAPM_ignore, "r");
+        if(NULL == ZAPM_flag) {
+            ZAPM_flag = fopen(ZAPM_success, "r");
+
+            if(NULL != ZAPM_flag) {
+                fclose(ZAPM_flag);
+
+                if(!u.zapmchallenge_successmsgd) {
+                    pline("Mostly, you wish you still had the Bizarro Orgasmatron but apparently you can wish for something else too.\n\n");
+                    u.zapmchallenge_successmsgd = 1;
+                }
+
+                makewish_standard();
+            } else {
+                ZAPM_flag = fopen(ZAPM_accept, "r");
+
+                if(NULL != ZAPM_flag) {
+                    fclose(ZAPM_flag);
+
+                    pline("You cannot bring yourself to wish for anything as much as you wish to possess the Bizarro Orgasmatron.\n\n");
+                } else {
+                    pline("A Tournament Administrator appears in a swirling cloud of blinkenlights and asks if you wish to accept a Challenge.\n\n");
+
+                    if(yn("Do you accept this Challenge? ") == 'y') {
+                        ZAPM_flag = fopen(ZAPM_accept, "w");
+
+                        if(NULL != ZAPM_flag) {
+                            fclose(ZAPM_flag);
+
+                            pline("Very well.\n\nKnow then, Adventurer, that this world is but one among an uncountable multitude.  Though not all worlds are burdened with the presence of The Wizard of Yendor, these many worlds still possess challenges all their own.\n\n");
+                            pline("We are sending you to one of these worlds, Adventurer, where it will be your task to avert the impending doom of the universe by finding the fabled Bizarro Orgasmatron, rumored to be the most powerful artifact in the galaxy.\n\n");
+
+                            pline("The Administrator has noted that you have accepted the Challenge and fades away with a smirk.\n\n");
+
+                            dosave();
+
+                            pline("Now, what were you trying to do again?\n\n");
+                        } else {
+                             pline("ERROR: I am unable to log your Challenge acceptance; please email the Tournament administrators.\n\n");
+                        }
+                    } else {
+                        pline("Suit yourself.\n\n");
+
+                        if(yn("Would you like to block this Challenge from being offered again for the duration of the Tournament? ") == 'y') {
+                            ZAPM_flag = fopen(ZAPM_ignore, "w");
+
+                            if(NULL != ZAPM_flag) {
+                                fclose(ZAPM_flag);
+                            } else {
+                                pline("ERROR: I am unable to log your decision to ignore this Challenge; please email the Tournament administrators.\n\n");
+                            }
+                        } else {
+                            u.zapmchallenge_ignore = 1;
+
+                            pline("This Challenge will only be blocked until the end of the current game.\n\n");
+                        }
+
+                        makewish_standard();
+                    }
+                }
+            }
+        } else {
+            if(NULL != ZAPM_flag) {
+                fclose(ZAPM_flag);
+            }
+
+            makewish_standard();
+        }
+    } else {
+         makewish_standard();
+    }
+}
+
+void
+makewish_standard()
+{
+
+//END ZAPM CHALLENGE CODE
+
     char buf[BUFSZ], promptbuf[BUFSZ];
     struct obj *otmp, nothing;
     int tries = 0;

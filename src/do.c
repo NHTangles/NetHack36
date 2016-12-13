@@ -7,6 +7,11 @@
 #include "hack.h"
 #include "lev.h"
 
+// BEGIN POOL CHALLENGE CODE
+#include <pwd.h>
+// END POOL CHALLENGE CODE
+
+
 STATIC_DCL void FDECL(trycall, (struct obj *));
 STATIC_DCL void NDECL(polymorph_sink);
 STATIC_DCL boolean NDECL(teleport_sink);
@@ -49,7 +54,9 @@ struct obj *otmp;
 register int rx, ry;
 boolean pushing;
 {
-    if (!otmp || otmp->otyp != BOULDER) {
+
+    // POOL CHALLENGE CODE
+    if (!otmp || (otmp->otyp != BOULDER && otmp->otyp != CUE_BOULDER)) {
         impossible("Not a boulder?");
     } else if (!Is_waterlevel(&u.uz) && is_pool_or_lava(rx, ry)) {
         boolean lava = is_lava(rx, ry), fills_up;
@@ -137,15 +144,24 @@ const char *verb;
     struct monst *mtmp;
     struct obj *otmp;
 
+// BEGIN POOL CHALLENGE CODE
+    char          Pool_success[255];
+    FILE          *Pool_flag = NULL;
+    struct passwd *NH_passwd;
+// END POOL CHALLENGE CODE
+
+
     if (obj->where != OBJ_FREE)
         panic("flooreffects: obj not free");
 
     /* make sure things like water_damage() have no pointers to follow */
     obj->nobj = obj->nexthere = (struct obj *) 0;
 
-    if (obj->otyp == BOULDER && boulder_hits_pool(obj, x, y, FALSE)) {
+    // POOL CHALLENGE CODE
+    if ((obj->otyp == BOULDER || obj->otyp == CUE_BOULDER) && boulder_hits_pool(obj, x, y, FALSE)) {
         return TRUE;
-    } else if (obj->otyp == BOULDER && (t = t_at(x, y)) != 0
+    // POOL CHALLENGE CODE
+    } else if ((obj->otyp == BOULDER || obj->otyp == CUE_BOULDER) && (t = t_at(x,y)) != 0
              && (t->ttyp == PIT || t->ttyp == SPIKED_PIT
                  || t->ttyp == TRAPDOOR || t->ttyp == HOLE)) {
         if (((mtmp = m_at(x, y)) && mtmp->mtrapped)
@@ -173,11 +189,29 @@ const char *verb;
             if (Blind && (x == u.ux) && (y == u.uy)) {
                 You_hear("a CRASH! beneath you.");
             } else if (!Blind && cansee(x, y)) {
-                pline_The("boulder %s%s.", t->tseen ? "" : "triggers and ",
+// BEGIN POOL CHALLENGE CODE
+                if (Is_pool_level(&u.uz) && !u.poolchallenge_ignore) {
+                    pline_The("boulder falls into the pocket-dimension rift, plugging it");
+                    if (--u.poolchallenge_holesleft == 0) {
+                        NH_passwd = getpwnam("nhadmin");
+                        sprintf(Pool_success, "%s/challenge/Pool-%s-success", NH_passwd->pw_dir, plname);
+                        pline("As the last pocket is filled, your foot knocks into a pebble which rolls away. It seems that rotational intertia has returned to normal.");
+                        Pool_flag = fopen(Pool_success, "w");
+                        if(NULL != Pool_flag) {
+                            fclose(Pool_flag);
+                        } else {
+                            pline("ERROR: I am unable to log your completion of this Challenge; please email the Tournament administrators.\n\n");
+                        }
+                    }
+                } else {
+// END POOL CHALLENGE CODE
+
+                    pline_The("boulder %s%s.", t->tseen ? "" : "triggers and ",
                           t->ttyp == TRAPDOOR
                               ? "plugs a trap door"
                               : t->ttyp == HOLE ? "plugs a hole"
                                                 : "fills a pit");
+                } //PCC
             } else {
                 You_hear("a boulder %s.", verb);
             }
@@ -1178,7 +1212,30 @@ boolean at_stairs, falling, portal;
     u.ustuck = 0; /* idem */
     u.uinwater = 0;
     u.uundetected = 0; /* not hidden, even if means are available */
-    keepdogs(FALSE);
+//BEGIN PACMAN/DIGDUG/JOUST CHALLENGE CODE
+    //pline("current (do.c) is %d of dungeon %d\n\n", u.uz.dlevel, u.uz.dnum);
+    //pline("target (do.c) is %d of dungeon %d\n\n", newlevel->dlevel, newlevel->dnum);
+    if(Is_dmaze_level(newlevel)) {
+        u.digdugchallenge_returndungeon = u.uz.dnum;
+        u.digdugchallenge_returnlevel = u.uz.dlevel;
+        //pline("returnlevel (do.c - entrance) is %d of dungeon %d\n\n", u.digdugchallenge_returnlevel, u.digdugchallenge_returndungeon);
+    }
+
+    if(Is_dmaze_level(&u.uz)) {
+        //pline("returnlevel (do.c - exit) is %d of dungeon %d\n\n", u.digdugchallenge_returnlevel, u.digdugchallenge_returndungeon);
+        //pline("current (do.c - exit) is %d of dungeon %d\n\n", u.uz.dlevel, u.uz.dnum);
+    }
+
+    if(Is_pmaze_level(&u.uz) || Is_pmaze_level(newlevel)
+          || Is_dmaze_level(&u.uz) || Is_dmaze_level(newlevel)
+          || Is_joust_level(&u.uz) || Is_joust_level(newlevel)) {
+        keepdogs(TRUE);
+    } else {  
+        keepdogs(FALSE);
+    }
+    //    keepdogs(FALSE);
+//END PACMAN/DIGDUG/JOUST CHALLENGE CODE
+
     if (u.uswallow) /* idem */
         u.uswldtim = u.uswallow = 0;
     recalc_mapseen(); /* recalculate map overview before we leave the level */

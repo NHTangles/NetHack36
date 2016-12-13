@@ -1,0 +1,80 @@
+#BEGIN POOL CHALLENGE CODE
+# "PoolHall Maze" by the NetHack Tournament Administrators
+#
+MAZE:"pool1",' '
+FLAGS:noteleport,hardfloor,premapped
+GEOMETRY:center,center
+#12345678901234567890123456789012345678901234567890
+MAP
+-----------
+|.........|
+|.........|
+|.........|
+|.........|
+|.........|
+|.........|
+|.........|
+|.........|
+|.........|
+-----------
+ENDMAP
+BRANCH:(05,08,05,08),(0,0,0,0)
+REGION:(00,00,10,10),lit,"ordinary"
+
+TRAP:"pit",(01,01)
+TRAP:"pit",(01,05)
+TRAP:"pit",(01,09)
+TRAP:"pit",(09,01)
+TRAP:"pit",(09,05)
+TRAP:"pit",(09,09)
+
+OBJECT:('`',"cue boulder"),(04,04)
+OBJECT:('`',"boulder"),(06,06)
+OBJECT:('`',"boulder"),(03,07)
+OBJECT:('`',"boulder"),(08,02)
+OBJECT:('`',"boulder"),(08,04)
+OBJECT:('`',"boulder"),(04,02)
+OBJECT:('`',"boulder"),(02,01)
+
+OBJECT:('`',"boulder"),(06,05)
+OBJECT:('`',"boulder"),(02,05)
+OBJECT:('`',"boulder"),(07,06)
+
+OBJECT:('(',"cue stick"),(06,08)
+
+#MAP
+#---------------
+#|.............|
+#|.............|
+#|.............|
+#|.............|
+#|.............|
+#|.............|
+#|.............|
+#|.............|
+#|.............|
+#---------------
+#ENDMAP
+#BRANCH:(05,05,05,05),(0,0,0,0)
+#REGION:(00,00,14,10),lit,"ordinary"
+#NON_DIGGABLE:(00,00,14,10)
+#NON_PASSWALL:(00,00,14,10)
+
+#TRAP:"pit",(01,01)
+#TRAP:"pit",(07,01)
+#TRAP:"pit",(13,01)
+#TRAP:"pit",(01,09)
+#TRAP:"pit",(07,09)
+#TRAP:"pit",(13,09)
+
+#OBJECT:'`',"boulder",(02,02)
+#OBJECT:'`',"boulder",(07,02)
+#OBJECT:'`',"boulder",(08,04)
+#OBJECT:'`',"boulder",(04,06)
+#OBJECT:'`',"boulder",(08,06)
+# cue
+#OBJECT:'`',"cue boulder",(07,07)
+#OBJECT:'`',"boulder",(07,08)
+
+#OBJECT:'(',"cue stick",(06,07)
+#END POOL CHALLENGE CODE

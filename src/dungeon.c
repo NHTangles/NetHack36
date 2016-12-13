@@ -688,6 +688,13 @@ struct level_map {
                   { "knox", &knox_level },
                   { "medusa", &medusa_level },
                   { "oracle", &oracle_level },
+//BEGIN GRUE/PACMAN/DIGDUG/POOL/JOUST CHALLENGE CODE
+                  { "gruelair",   &gruelair_level },
+                  { "pmaze",      &pmaze_level },
+                  { "dmaze",      &dmaze_level },
+                  { "pool1",      &pool_level },
+                  { "joust",      &joust_level },
+//END GRUE/PACMAN/DIGDUG/POOL/JOUST CHALLENGE CODE
                   { "orcus", &orcus_level },
                   { "rogue", &rogue_level },
                   { "sanctum", &sanctum_level },

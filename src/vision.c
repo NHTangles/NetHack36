@@ -160,6 +160,12 @@ register struct rm *lev;
     struct obj *obj;
     struct monst *mon;
 
+//BEGIN PACMAN/DIGDUG/POOL/JOUST CHALLENGE CODE
+    if(Is_pmaze_level(&u.uz) || Is_dmaze_level(&u.uz) || Is_pool_level(&u.uz) || Is_joust_level(&u.uz)) {
+        return(0);
+    }
+//END PACMAN/DIGDUG/POOL/JOUST CHALLENGE CODE
+
     /* Features that block . . */
     if (IS_ROCK(lev->typ) || lev->typ == TREE
         || (IS_DOOR(lev->typ)
@@ -212,7 +218,11 @@ vision_reset()
         block = TRUE; /* location (0,y) is always stone; it's !isok() */
         lev = &levl[1][y];
         for (x = 1; x < COLNO; x++, lev += ROWNO)
-            if (block != (IS_ROCK(lev->typ) || does_block(x, y, lev))) {
+            //if (block != (IS_ROCK(lev->typ) || does_block(x, y, lev))) {
+//BEGIN PACMAN/DIGDUG CHALLENGE CODE
+            if (block != ((!Is_pmaze_level(&u.uz)) && (!Is_dmaze_level(&u.uz))
+                && (IS_ROCK(lev->typ) || does_block(x,y,lev)))) {
+//END PACMAN/DIGDUG CHALLENGE CODE
                 if (block) {
                     for (i = dig_left; i < x; i++) {
                         left_ptrs[y][i] = dig_left;

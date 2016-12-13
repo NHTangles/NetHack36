@@ -720,4 +720,50 @@ wiz_light_sources()
     return 0;
 }
 
+//BEGIN GRUE CHALLENGE CODE
+void
+gruechallenge_checklights()
+{
+    light_source *ls;
+
+    register struct obj *otmp;
+    for(otmp=invent ;otmp; otmp=otmp->nobj) {
+        if(otmp->where ==OBJ_INVENT && otmp->lamplit == 1) {
+            u.gruechallenge_haslight =1;
+            return;
+        }
+    }
+
+    //pline("DEBUG: checking for light ...\n");
+    u.gruechallenge_haslight = 0;
+
+    if(!IS_ROOM(levl[u.ux][u.uy].typ) && !IS_DOOR(levl[u.ux][u.uy].typ)) {
+        //pline("DEBUG:\tsafe: not a door or room map square\n");
+        u.gruechallenge_haslight = 1;
+        return;
+    }
+
+
+    if(levl[u.ux][u.uy].lit) {
+        //pline("DEBUG:\tsafe: lit square\n");
+        u.gruechallenge_haslight = 1;
+        return;
+    }
+
+    if(any_light_source()) {
+        for (ls = light_base; ls; ls = ls->next) {
+            if(((u.ux >= (ls->x - ls->range)) && (u.ux <= (ls->x + ls->range)))
+                      && ((u.uy >= (ls->y - ls->range)) && (u.uy <= (ls->y + ls->range)))) {
+                //pline("DEBUG:\tsafe: in range of portable light source\n");
+                u.gruechallenge_haslight = 1;
+                return;
+            }
+        }
+    }
+
+    //pline("DEBUG:\tdanger: no light\n");
+    return;
+}
+//END GRUE CHALLENGE CODE
+
 /*light.c*/

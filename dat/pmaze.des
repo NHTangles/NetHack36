@@ -1,0 +1,44 @@
+#BEGIN PACMAN CHALLENGE CODE
+# "PacMan Maze" by the NetHack Tournament Administrators
+#
+MAZE:"pmaze",' '
+FLAGS:noteleport
+GEOMETRY:center,center
+MAP
+     -----------------------------------                                   
+     |................|................|                                   
+     |.-----.--------.|.--------.-----.|                                   
+     |.................................|                                   
+     |.-----.-------------------.-----.|                                   
+     |................|................|                                   
+     |------.---.----...----.---.------|                                   
+     |........|.....|...|.....|........|                                   
+     |------.---.----...----.---.------|                                   
+     |................|................|                                   
+     |.-----.--------.|.--------.-----.|                                   
+     |.....|.....................|.....|                                   
+     |----.|.---.-----------.---.|.----|                                   
+     |........|.......|.......|........|                                   
+     |.--------------.|.--------------.|                                   
+     |.................................|                                   
+     -----------------------------------                                   
+                                                                           
+ENDMAP
+#292 dots total, 291 after the portal is installed
+
+REGION:(05,00,39,17),lit,"ordinary"
+NON_DIGGABLE: (05,00,39,17)
+NON_PASSWALL: (05,00,39,17)
+
+OBJECT:('(',"lifegiving bonus fruit"),(22,06)
+OBJECT:('(',"lifegiving bonus fruit"),(22,08)
+OBJECT:('(',"energizer pellet"),(06,04)
+OBJECT:('(',"energizer pellet"),(38,04)
+OBJECT:('(',"energizer pellet"),(10,12)
+OBJECT:('(',"energizer pellet"),(34,12)
+
+MONSTER:('&',"Blinky"),(21,06),hostile
+MONSTER:('&',"Pinky"),(23,06),hostile
+MONSTER:('&',"Inky"),(21,08),hostile
+MONSTER:('&',"Clyde"),(23,08),hostile
+#END PACMAN CHALLENGE CODE

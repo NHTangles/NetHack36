@@ -4,6 +4,11 @@
 
 #include "hack.h"
 
+//BEGIN DIGDUG CHALLENGE CODE
+#include <pwd.h>
+//END DIGDUG CHALLENGE CODE
+
+
 static NEARDATA boolean did_dig_msg;
 
 STATIC_DCL boolean NDECL(rm_waslit);
@@ -243,6 +248,93 @@ dig(VOID_ARGS)
     const char *verb = (!uwep || is_pick(uwep)) ? "dig into" : "chop through";
 
     lev = &levl[dpx][dpy];
+
+//BEGIN DIGDUG CHALLENGE CODE
+    FILE            *DigDug_flag = NULL;
+    char            DigDug_ignore[255];
+    char            DigDug_accept[255];
+    char            DigDug_success[255];
+    struct passwd   *NH_passwd;
+
+    if(!u.digdugchallenge_ignore) {
+        NH_passwd = getpwnam("nhadmin");
+
+        sprintf(DigDug_ignore, "%s/challenge/DigDug-%s-ignore", NH_passwd->pw_dir, plname);
+        sprintf(DigDug_accept, "%s/challenge/DigDug-%s-accept", NH_passwd->pw_dir, plname);
+        sprintf(DigDug_success, "%s/challenge/DigDug-%s-success", NH_passwd->pw_dir, plname);
+
+        DigDug_flag = fopen(DigDug_ignore, "r");
+        if(NULL == DigDug_flag) {
+            DigDug_flag = fopen(DigDug_success, "r");
+
+            if(NULL != DigDug_flag) {
+                fclose(DigDug_flag);
+
+                if(!u.digdugchallenge_successmsgd) {
+                    pline("Digging is less frightening with Fygar and his Pookas defeated.\n\n");
+                    u.digdugchallenge_successmsgd = 1;
+                }
+            } else {
+                DigDug_flag = fopen(DigDug_accept, "r");
+
+                if(NULL != DigDug_flag) {
+                    fclose(DigDug_flag);
+
+                    if(!Is_dmaze_level(&u.uz)) {
+                        pline("You can't dig here; you're too scared that Fygar and his Pookas may be waiting inside.\n\n");
+
+                        return(0);
+                    }
+                } else {
+                    pline("A whisper in your ear distracts you from your work.  Looking up, you see a Tournament Administrator who asks if you wish to accept a Challenge.\n\n");
+
+                    if(yn("Do you accept this Challenge? ") == 'y') {
+                        DigDug_flag = fopen(DigDug_accept, "w");
+
+                        if(NULL != DigDug_flag) {
+                            fclose(DigDug_flag);
+
+                            pline("Very Well.\n\nKnow then, adventurer, that once there lived the villainous Earth Dragon Fygar and his lieutenants, the terrible Pookas.\n\n");
+                            pline("Long ago they were challenged by the great hero Namco but, at the very moment of their defeat, they escaped destruction by phasing into the Earth stealing away the hero's special wand as they fled.\n\n");
+                            pline("You must seek out their hiding places, recover Namco's wand and destroy them.  Beware, however, for these monstrous villains can kill with a single touch!\n\n");
+
+                            pline("The Administrator has noted that you have accepted the Challenge and dissolves into the Earth with a smirk.\n\n");
+                            pline("The thought of digging when only a sliver of Earth is the only thing keeping back Fygar and his Pookas gives you the heebie-jeebies.\n\n");
+
+                            return(0);
+                        } else {
+                            pline("ERROR: I am unable to log your Challenge acceptance; please email the Tournament administrators.\n\n");
+
+                            return(0);
+                        }
+                    } else {
+                        pline("Suit yourself.\n\n");
+
+                        if(yn("Would you like to block this Challenge from being offered again for the duration of the Tournament? ") == 'y') {
+                            DigDug_flag = fopen(DigDug_ignore, "w");
+
+                            if(NULL != DigDug_flag) {
+                                fclose(DigDug_flag);
+                            } else {
+                                pline("ERROR: I am unable to log your decision to ignore this Challenge; please email the Tournament administrators.\n\n");
+                            }
+                        } else {
+                            u.digdugchallenge_ignore = 1;
+
+                            pline("This Challenge will only be blocked until the end of the current game.\n\n");
+                        }
+                    }
+                }
+            }
+        } else {
+            if(NULL != DigDug_flag) {
+                fclose(DigDug_flag);
+            }
+        }
+    }
+//END DIGDUG CHALLENGE CODE
+
+
     /* perhaps a nymph stole your pick-axe while you were busy digging */
     /* or perhaps you teleported away */
     if (u.uswallow || !uwep || (!ispick && !is_axe(uwep))
@@ -1051,6 +1143,18 @@ struct obj *obj;
         lev = &levl[rx][ry];
         if (MON_AT(rx, ry) && attack(m_at(rx, ry)))
             return 1;
+// BEGIN POOL CHALLENGE CODE
+        if (sobj_at(CUE_BOULDER, rx, ry)) {
+            char buf[BUFSZ];
+            boolean bonk = !rn2(3);
+            Your("%s off the strange boulder%s", aobjnam(obj, "bounce"),
+                   (bonk ? " and bonks you on the head!" : "."));
+            Sprintf(buf, "%s a cue boulder", verbing);
+            if (bonk) losehp(2, buf, KILLED_BY);
+                return(1);
+        }
+// END POOL CHALLENGE CODE
+
         dig_target = dig_typ(obj, rx, ry);
         if (dig_target == DIGTYP_UNDIGGABLE) {
             /* ACCESSIBLE or POOL */
@@ -1373,7 +1477,89 @@ zap_dig()
     struct trap *trap_with_u = (struct trap *) 0;
     int zx, zy, diridx = 8, digdepth, flow_x = -1, flow_y = -1;
     boolean shopdoor, shopwall, maze_dig, pitdig = FALSE, pitflow = FALSE;
+//BEGIN DIGDUG CHALLENGE CODE
+    FILE            *DigDug_flag = NULL;
+    char            DigDug_ignore[255];
+    char            DigDug_accept[255];
+    char            DigDug_success[255];
+    struct passwd   *NH_passwd;
 
+    if(!u.digdugchallenge_ignore) {
+        NH_passwd = getpwnam("nhadmin");
+
+        sprintf(DigDug_ignore, "%s/challenge/DigDug-%s-ignore", NH_passwd->pw_dir, plname);
+        sprintf(DigDug_accept, "%s/challenge/DigDug-%s-accept", NH_passwd->pw_dir, plname);
+        sprintf(DigDug_success, "%s/challenge/DigDug-%s-success", NH_passwd->pw_dir, plname);
+
+        DigDug_flag = fopen(DigDug_ignore, "r");
+        if(NULL == DigDug_flag) {
+            DigDug_flag = fopen(DigDug_success, "r");
+            if(NULL != DigDug_flag) {
+                fclose(DigDug_flag);
+
+                if(!u.digdugchallenge_successmsgd) {
+                    pline("Digging is less frightening with Fygar and his Pookas defeated.\n\n");
+                    u.digdugchallenge_successmsgd = 1;
+                }
+            } else {
+                DigDug_flag = fopen(DigDug_accept, "r");
+
+                if(NULL != DigDug_flag) {
+                    fclose(DigDug_flag);
+
+                    if(!Is_dmaze_level(&u.uz)) {
+                        pline("You can't dig here; you're too scared that Fygar and his Pookas may be waiting inside.\n\n");
+
+                        return;
+                    }
+                } else {
+                    pline("A whisper in your ear distracts you from your work.  Looking up, you see a Tournament Administrator who asks if you wish to accept a Challenge.\n\n");
+
+                    if(yn("Do you accept this Challenge? ") == 'y') {
+                        DigDug_flag = fopen(DigDug_accept, "w");
+
+                        if(NULL != DigDug_flag) {
+                            fclose(DigDug_flag);
+
+                            pline("Very Well.\n\nKnow then, adventurer, that once there lived the villainous Earth Dragon Fygar and his lieutenants, the terrible Pookas.\n\n");
+                            pline("Long ago they were challenged by the great hero Namco but, at the very moment of their defeat, they escaped destruction by phasing into the Earth stealing away the hero's special wand as they fled.\n\n");
+                            pline("You must seek out their hiding places, recover Namco's wand and destroy them.  Beware, however, for these monstrous villains can kill with a single touch!\n\n");
+
+                            pline("The Administrator has noted that you have accepted the Challenge and dissolves into the Earth with a smirk.\n\n");
+                            pline("The thought of digging when only a sliver of Earth is the only thing keeping back Fygar and his Pookas gives you the heebie-jeebies.\n\n");
+
+                            return;
+                        } else {
+                            pline("ERROR: I am unable to log your Challenge acceptance; please email the Tournament administrators.\n\n");
+
+                            return;
+                        }
+                    } else {
+                        pline("Suit yourself.\n\n");
+
+                        if(yn("Would you like to block this Challenge from being offered again for the duration of the Tournament? ") == 'y') {
+                            DigDug_flag = fopen(DigDug_ignore, "w");
+
+                            if(NULL != DigDug_flag) {
+                                fclose(DigDug_flag);
+                            } else {
+                                pline("ERROR: I am unable to log your decision to ignore this Challenge; please email the Tournament administrators.\n\n");
+                            }
+                        } else {
+                            u.digdugchallenge_ignore = 1;
+
+                            pline("This Challenge will only be blocked until the end of the current game.\n\n");
+                        }
+                    }
+                }
+            }
+        } else {
+            if(NULL != DigDug_flag) {
+                fclose(DigDug_flag);
+            }
+        }
+    }
+//END DIGDUG CHALLENGE CODE
     /*
      * Original effect (approximately):
      * from CORR: dig until we pierce a wall

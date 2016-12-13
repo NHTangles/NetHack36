@@ -877,6 +877,53 @@ u_init()
     if (u.umoney0)
         ini_inv(Money);
     u.umoney0 += hidden_gold(); /* in case sack has gold in it */
+//BEGIN KOL/GRUE/PACMAN/DIGDUG/POOL/JOUST CHALLENGE CODE
+    u.kolchallenge_ignore = 1;
+    u.kolchallenge_successmsgd = 1;
+
+    u.gruechallenge_ignore = 0;
+    u.gruechallenge_successmsgd = 0;
+    u.gruechallenge_darkmoves = 0;
+    u.gruechallenge_haslight = 0;
+
+    u.pacmanchallenge_ignore = 0;
+    u.pacmanchallenge_successmsgd = 0;
+    u.pacmanchallenge_cantry = 1;
+    u.pacmanchallenge_clearspaces = 0;
+    u.pacmanchallenge_livesleft = 3;
+
+    u.zapmchallenge_ignore = 0;
+    u.zapmchallenge_successmsgd = 0;
+
+    u.digdugchallenge_ignore = 0;
+    u.digdugchallenge_successmsgd = 0;
+    u.digdugchallenge_cantry = 1;
+    u.digdugchallenge_killed = 0;
+    u.digdugchallenge_livesleft = 3;
+    u.digdugchallenge_returndungeon = 0;
+    u.digdugchallenge_returnlevel = 0;
+
+    u.waldochallenge_ignore = 0;
+    u.waldochallenge_successmsgd = 0;
+    u.waldochallenge_gencounter = 100;
+    u.waldochallenge_haveWaldo = 0;
+    u.waldochallenge_haveWally = 0;
+    u.waldochallenge_haveOdlaw = 0;
+    u.waldochallenge_haveWilma = 0;
+    u.waldochallenge_haveWenda = 0;
+    u.waldochallenge_haveWhitebeard = 0;
+    u.waldochallenge_skip = 0;
+
+    u.poolchallenge_ignore = 0;
+    u.poolchallenge_successmsgd = 0;
+    u.poolchallenge_holesleft = 6;
+
+    u.joustchallenge_ignore = 0;
+    u.joustchallenge_successmsgd = 0;
+    u.joustchallenge_cantry = 1;
+    u.joustchallenge_killed = 0;
+    u.joustchallenge_livesleft = 3;
+//END KOL/GRUE/PACMAN/DIGDUG/POOL/JOUST CHALLENGE CODE
 
     find_ac();     /* get initial ac value */
     init_attr(75); /* init attribute values */

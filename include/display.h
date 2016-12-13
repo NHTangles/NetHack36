@@ -83,10 +83,11 @@
  * routines.  Like mon_visible(), but it checks to see if the hero sees the
  * location instead of assuming it.  (And also considers worms.)
  */
-#define canseemon(mon)                                                    \
-    ((mon->wormno ? worm_known(mon)                                       \
-                  : (cansee(mon->mx, mon->my) || see_with_infrared(mon))) \
-     && mon_visible(mon))
+//BEGIN PACMAN/DIGDUG/JOUST CHALLENGE CODE
+#define canseemon(mon) (Is_pmaze_level(&u.uz) || Is_dmaze_level(&u.uz) || Is_joust_level(&u.uz) \
+              || ((mon->wormno ? worm_known(mon) : (cansee(mon->mx, mon->my) || see_with_infrared(mon))) \
+      && mon_visible(mon)))
+//END PACMAN/DIGDUG/JOUST CHALLENGE CODE
 
 /*
  * canspotmon(mon)

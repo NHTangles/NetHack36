@@ -48,6 +48,8 @@
 /* #define GNOME_GRAPHICS */ /* Gnome interface */
 /* #define MSWIN_GRAPHICS */ /* Windows NT, CE, Graphics */
 
+/* #define VTILES /* TTY-based tiles, from 3.4.3 devnull patchset */
+
 /*
  * Define the default window system.  This should be one that is compiled
  * into your system (see defines above).  Known window systems are:
@@ -80,6 +82,12 @@
 #ifndef HACKDIR                   /* override the default hackdir below */
 #define HACKDIR "/boot/apps/NetHack"
 #endif
+#endif
+
+#ifdef TTY_GRAPHICS
+# ifdef VTILES
+#  define DEFAULT_WC_TILED_MAP
+# endif
 #endif
 
 #ifdef QT_GRAPHICS
@@ -184,7 +192,7 @@
  */
 
 #ifndef WIZARD_NAME /* allow for compile-time or Makefile changes */
-#define WIZARD_NAME "wizard" /* value is ignored if SYSCF is enabled */
+#define WIZARD_NAME "nhadmin" /* value is ignored if SYSCF is enabled */
 #endif
 
 #ifndef SYSCF
@@ -250,11 +258,11 @@
 
 #if defined(UNIX) && !defined(ZLIB_COMP) && !defined(COMPRESS)
 /* path and file name extension for compression program */
-#define COMPRESS "/usr/bin/compress" /* Lempel-Ziv compression */
-#define COMPRESS_EXTENSION ".Z"      /* compress's extension */
+/* #define COMPRESS "/usr/bin/compress" /* Lempel-Ziv compression */
+/* #define COMPRESS_EXTENSION ".Z"      /* compress's extension */
 /* An example of one alternative you might want to use: */
-/* #define COMPRESS "/usr/local/bin/gzip" */ /* FSF gzip compression */
-/* #define COMPRESS_EXTENSION ".gz" */       /* normal gzip extension */
+#define COMPRESS "/bin/gzip"  /* FSF gzip compression */
+#define COMPRESS_EXTENSION ".gz"        /* normal gzip extension */
 #endif
 
 #ifndef COMPRESS
@@ -435,9 +443,9 @@ typedef unsigned char uchar;
  * bugs left here.
  */
 
-/* #define STATUS_VIA_WINDOWPORT */ /* re-work of the status line
+#define STATUS_VIA_WINDOWPORT */ /* re-work of the status line
                                        updating process */
-/* #define STATUS_HILITES */        /* support hilites of status fields */
+#define STATUS_HILITES */        /* support hilites of status fields */
 
 /* #define WINCHAIN */              /* stacked window systems */
 
@@ -446,7 +454,7 @@ typedef unsigned char uchar;
 
 /* SCORE_ON_BOTL is neither experimental nor inadequately tested,
    but doesn't seem to fit in any other section... */
-/* #define SCORE_ON_BOTL */         /* enable the 'showscore' option to
+#define SCORE_ON_BOTL     /* devnull */ /* enable the 'showscore' option to
                                        show estimated score on status line */
 
 /* FREE_ALL_MEMORY is neither experimental nor inadequately tested,

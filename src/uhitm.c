@@ -1061,6 +1061,33 @@ int thrown; /* HMON_xxx (0 => hand-to-hand, other => ranged) */
         }
     }
 
+//BEGIN PACMAN/DIGDUG/JOUST CHALLENGE CODE
+    if((mon->mnum == PM_BLINKY) || (mon->mnum == PM_PINKY)
+       || (mon->mnum == PM_INKY) || (mon->mnum == PM_CLYDE)) {
+        if(mon->mflee) {
+            pline("Energized!");
+            mon->mhp = 0;
+        } else {
+            pline("Careful!");
+        }
+    }
+
+    if((mon->mnum == PM_FYGAR) || (mon->mnum == PM_POOKA)) {
+        pline("Careful!");
+    }
+
+    if((mon->mnum == PM_THE_SHADOW_LORD) || (mon->mnum == PM_THE_HUNTER) || (mon->mnum == PM_THE_BOUNDER)) {
+        if((u.uy < mon->my) && (u.usteed) && (u.usteed->mnum == PM_OSTRICH)) {
+            pline("Pop!");
+            mon->mhp = 0;
+
+            u.joustchallenge_killed ++;
+        } else {
+            pline("Careful!");
+        }
+    }
+ //END PACMAN/DIGDUG/JOUST CHALLENGE CODE
+
     if (!already_killed)
         mon->mhp -= tmp;
     /* adjustments might have made tmp become less than what

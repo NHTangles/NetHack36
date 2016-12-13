@@ -4,6 +4,10 @@
 
 #include "hack.h"
 
+//BEGIN JOUST CHALLENGE CODE
+#include <pwd.h>
+//END JOUST CHALLENGE CODE
+
 /* Monsters that might be ridden */
 static NEARDATA const char steeds[] = { S_QUADRUPED, S_UNICORN, S_ANGEL,
                                         S_CENTAUR,   S_DRAGON,  S_JABBERWOCK,
@@ -28,9 +32,25 @@ struct monst *mtmp;
 {
     struct permonst *ptr = mtmp->data;
 
-    return (index(steeds, ptr->mlet) && (ptr->msize >= MZ_MEDIUM)
+//BEGIN JOUST CHALLENGE CODE
+    if(mtmp->mnum == PM_OSTRICH) {
+        mtmp->mpeaceful = 1;
+        set_malign(mtmp);
+        mtmp->mflee = 0;
+        mtmp->mfleetim = 0;
+
+        mtmp->mtame += 1000;
+
+        return ((ptr->msize >= MZ_MEDIUM) &&
+                (!humanoid(ptr) || ptr->mlet == S_CENTAUR) &&
+                !amorphous(ptr) && !noncorporeal(ptr) &&
+                !is_whirly(ptr) && !unsolid(ptr));
+    } else {
+//END JOUST CHALLENGE CODE
+        return (index(steeds, ptr->mlet) && (ptr->msize >= MZ_MEDIUM)
             && (!humanoid(ptr) || ptr->mlet == S_CENTAUR) && !amorphous(ptr)
             && !noncorporeal(ptr) && !is_whirly(ptr) && !unsolid(ptr));
+    } // JOUST
 }
 
 int
@@ -125,6 +145,12 @@ struct obj *otmp;
     if (otmp->cursed)
         chance -= 50;
 
+//BEGIN JOUST CHALLENGE CODE
+    if(mtmp->mnum == PM_OSTRICH) {
+        chance += 100;
+    }
+//END JOUST CHALLENGE CODE
+
     /* [intended] steed becomes alert if possible */
     maybewakesteed(mtmp);
 
@@ -153,6 +179,17 @@ boolean
 can_ride(mtmp)
 struct monst *mtmp;
 {
+//BEGIN JOUST CHALLENGE CODE
+    if(mtmp->mnum == PM_OSTRICH) {
+        mtmp->mpeaceful = 1;
+        set_malign(mtmp);
+        mtmp->mflee = 0;
+        mtmp->mfleetim = 0;
+
+        mtmp->mtame += 1000;
+    }
+//END JOUST CHALLENGE CODE
+
     return (mtmp->mtame && humanoid(youmonst.data)
             && !verysmall(youmonst.data) && !bigmonst(youmonst.data)
             && (!Underwater || is_swimmer(mtmp->data)));
@@ -184,6 +221,103 @@ boolean force;      /* Quietly force this animal */
     struct obj *otmp;
     char buf[BUFSZ];
     struct permonst *ptr;
+
+//BEGIN JOUST CHALLENGE CODE
+    FILE            *Joust_flag = NULL;
+    char            Joust_ignore[255];
+    char            Joust_accept[255];
+    char            Joust_success[255];
+    struct passwd   *NH_passwd;
+
+    if(!u.joustchallenge_ignore) {
+        NH_passwd = getpwnam("nhadmin");
+
+        sprintf(Joust_ignore, "%s/challenge/Joust-%s-ignore", NH_passwd->pw_dir, plname);
+        sprintf(Joust_accept, "%s/challenge/Joust-%s-accept", NH_passwd->pw_dir, plname);
+        sprintf(Joust_success, "%s/challenge/Joust-%s-success", NH_passwd->pw_dir, plname);
+
+        Joust_flag = fopen(Joust_ignore, "r");
+        if(NULL == Joust_flag) {
+            Joust_flag = fopen(Joust_success, "r");
+
+            if(NULL != Joust_flag) {
+                fclose(Joust_flag);
+
+                /* SUCCEEDED: proceed */
+
+                if(!u.joustchallenge_successmsgd) {
+                    pline("The Horseman's Word ringing in your mind, you try to mount %s.\n\n", Monnam(mtmp));
+                    u.joustchallenge_successmsgd = 1;
+                }
+            } else {
+                Joust_flag = fopen(Joust_accept, "r");
+ 
+                if(NULL != Joust_flag) {
+                    fclose(Joust_flag);
+ 
+                    /* OLD ACCEPT: exit */
+ 
+                    if(mtmp->mnum != PM_OSTRICH) {
+                        pline("Your mind is a blank; you can't remember the Horseman's Word, and without it there's no way you can mount %s.  I guess you really will have to defeat this Shadow Lord fellow first.\n\n", Monnam(mtmp));
+ 
+                        return(FALSE);
+                    }
+                } else {
+                    /* UNKNOWN: offer */
+ 
+                    pline("A Tournament Administrator appears in front of %s and asks if you wish to accept a Challenge.\n\n", Monnam(mtmp));
+ 
+                    if(yn("Do you accept this Challenge? ") == 'y') {
+                        Joust_flag = fopen(Joust_accept, "w");
+ 
+                        if(NULL != Joust_flag) {
+                            fclose(Joust_flag);
+ 
+                            /* NEW ACCEPT: exit */
+ 
+                            pline("Very Well.\n\nKnow then, adventurer, that the Shadow Lord has stolen from our world all knowledge of the Horseman's Word.  I realize this means you don't know what I'm talking about, but believe me that without it you will not be able to calm any steed enough to mount.\n\n");
+                            pline("You must find the despicable Shadow Lord and his henchmen, and you must defeat them to reclaim the Horseman's Word.  You will not be able to defeat them alone, as they cannot be harmed from the ground, but trust that help will come along the way.\n\n");
+ 
+                            pline("The Administrator has noted that you have accepted the Challenge and fades away with a smirk.\n\n");
+                            pline("Now, what were you trying to do again?\n\n");
+ 
+                            return(FALSE);
+                        } else {
+                            pline("ERROR: I am unable to log your Challenge acceptance; please email the Tournament administrators.\n\n");
+                        }
+                    } else {
+                        pline("Suit yourself.\n\n");
+ 
+                        if(yn("Would you like to block this Challenge from being offered again for the duration of the Tournament? ") == 'y') {
+                            Joust_flag = fopen(Joust_ignore, "w");
+ 
+                            if(NULL != Joust_flag) {
+                                fclose(Joust_flag);
+                            } else {
+                                pline("ERROR: I am unable to log your decision to ignore this Challenge; please email the Tournament administrators.\n\n");
+                            }
+                        } else {
+                            u.joustchallenge_ignore = 1;
+ 
+                            pline("This Challenge will only be blocked until the end of the current game.\n\n");
+                        }
+ 
+                        /* REJECTED: continue */
+                    }
+                }
+            }
+        } else {
+            if(NULL != Joust_flag) {
+                fclose(Joust_flag);
+            }
+ 
+            /* PERM IGNORED: continue */
+        }
+    } else {
+        /* TEMP IGNORED: continue */
+    }
+//END JOUST CHALLENGE CODE
+
 
     /* Sanity checks */
     if (u.usteed) {
@@ -258,6 +392,18 @@ boolean force;      /* Quietly force this animal */
         Sprintf(kbuf, "attempting to ride %s", an(mtmp->data->mname));
         instapetrify(kbuf);
     }
+
+//BEGIN JOUST CHALLENGE CODE
+    if(mtmp->mnum == PM_OSTRICH) {
+        mtmp->mpeaceful = 1;
+        set_malign(mtmp);
+        mtmp->mflee = 0;
+        mtmp->mfleetim = 0;
+
+        mtmp->mtame += 1000;
+    }
+//END JOUST CHALLENGE CODE
+
     if (!mtmp->mtame || mtmp->isminion) {
         pline("I think %s would mind.", mon_nam(mtmp));
         return (FALSE);
@@ -270,15 +416,20 @@ boolean force;      /* Quietly force this animal */
         return (FALSE);
     }
 
-    if (!force && !Role_if(PM_KNIGHT) && !(--mtmp->mtame)) {
-        /* no longer tame */
-        newsym(mtmp->mx, mtmp->my);
-        pline("%s resists%s!", Monnam(mtmp),
+//BEGIN JOUST CHALLENGE CODE
+    if(!(mtmp->mnum == PM_OSTRICH)) {
+//END JOUST CHALLENGE CODE
+        if (!force && !Role_if(PM_KNIGHT) && !(--mtmp->mtame)) {
+            /* no longer tame */
+            newsym(mtmp->mx, mtmp->my);
+            pline("%s resists%s!", Monnam(mtmp),
               mtmp->mleashed ? " and its leash comes off" : "");
-        if (mtmp->mleashed)
+            if (mtmp->mleashed)
             m_unleash(mtmp, FALSE);
-        return (FALSE);
-    }
+            return (FALSE);
+        }
+    } //JOUST
+
     if (!force && Underwater && !is_swimmer(ptr)) {
         You_cant("ride that creature while under water.");
         return (FALSE);
@@ -431,7 +582,7 @@ int forceit;
                     if (min_distance < 0 || distance < min_distance
                         || (distance == min_distance && rn2(2))) {
                         if (i > 0 || (((t = t_at(x, y)) == 0 || !t->tseen)
-                                      && (!sobj_at(BOULDER, x, y)
+                                          && (!(sobj_at(BOULDER, x, y)||sobj_at(CUE_BOULDER,x,y))
                                           || throws_rocks(youmonst.data)))) {
                             spot->x = x;
                             spot->y = y;

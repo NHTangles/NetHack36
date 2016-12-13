@@ -1909,7 +1909,12 @@ struct mkroom *croom;
          */
         for (wastyp = otmp->corpsenm; i < 1000; i++, wastyp = rndmonnum()) {
             /* makemon without rndmonst() might create a group */
+//BEGIN WALDO CHALLENGE CODE
+            u.waldochallenge_skip = 1;
+            //was = makemon(&mons[wastyp], 0, 0, NO_MM_FLAGS);
             was = makemon(&mons[wastyp], 0, 0, MM_NOCOUNTBIRTH);
+            u.waldochallenge_skip = 0;
+//END WALDO CHALLENGE CODE
             if (was) {
                 if (!resists_ston(was)) {
                     (void) propagate(wastyp, TRUE, FALSE);

@@ -5,6 +5,10 @@
 /* This file contains the command routines dowhatis() and dohelp() and */
 /* a few other help related facilities */
 
+//BEGIN WALDO CHALLENGE CODE
+#include <pwd.h>
+//END WALDO CHALLENGE CODE
+
 #include "hack.h"
 #include "dlb.h"
 
@@ -262,6 +266,14 @@ char *buf, *monbuf;
     struct permonst *pm = (struct permonst *) 0;
     int glyph;
 
+//BEGIN WALDO CHALLENGE CODE
+    FILE            *waldo_flag = NULL;
+    char            waldo_ignore[255];
+    char            waldo_accept[255];
+    char            waldo_success[255];
+    struct passwd   *NH_passwd;
+//END WALDO CHALLENGE CODE
+
     buf[0] = monbuf[0] = '\0';
     glyph = glyph_at(x, y);
     if (u.ux == x && u.uy == y && canspotself()) {
@@ -358,6 +370,63 @@ char *buf, *monbuf;
             Strcpy(buf, defsyms[glyph_to_cmap(glyph)].explanation);
             break;
         }
+//BEGIN WALDO CHALLENGE CODE
+    NH_passwd = getpwnam("nhadmin");
+
+    sprintf(waldo_ignore, "%s/challenge/Waldo-%s-ignore", NH_passwd->pw_dir, plname);
+    sprintf(waldo_accept, "%s/challenge/Waldo-%s-accept", NH_passwd->pw_dir, plname);
+    sprintf(waldo_success, "%s/challenge/Waldo-%s-success", NH_passwd->pw_dir, plname);
+
+    waldo_flag = fopen(waldo_ignore, "r");
+    if(NULL == waldo_flag) {
+        waldo_flag = fopen(waldo_accept, "r");
+        if(NULL != waldo_flag) {
+            fclose(waldo_flag);
+
+            waldo_flag = fopen(waldo_success, "r");
+            if(NULL == waldo_flag) {
+                if(glyph_is_monster(glyph)) {
+                    bhitpos.x = x;
+                    bhitpos.y = y;
+                    mtmp = m_at(x,y);
+
+                    if(mtmp != (struct monst *) 0) {
+                        if(mtmp->waldochallenge_isWaldo) {
+                            mtmp = christen_monst(mtmp, "Waldo");
+
+                            Strcat(buf, " ... Wow!  That's Waldo! ... ");
+                        } else if(mtmp->waldochallenge_isWally) {
+                            mtmp = christen_monst(mtmp, "Wally");
+
+                            Strcat(buf, " ... Wow!  That's Waldo!  No wait; that one's Wally.  Bummer. ... ");
+                        } else if(mtmp->waldochallenge_isOdlaw) {
+                            mtmp = christen_monst(mtmp, "Odlaw");
+
+                            Strcat(buf, " ... Wow!  That's Waldo!  No wait; that one's Odlaw.  Bummer. ... ");
+                        } else if(mtmp->waldochallenge_isWilma) {
+                            mtmp = christen_monst(mtmp, "Wilma");
+
+                            Strcat(buf, " ... Wow!  That's Waldo!  No wait; that one's Wilma.  Bummer. ... ");
+                        } else if(mtmp->waldochallenge_isWenda) {
+                            mtmp = christen_monst(mtmp, "Wenda");
+
+                            Strcat(buf, " ... Wow!  That's Waldo!  No wait; that one's Wenda.  Bummer. ... ");
+                        } else if(mtmp->waldochallenge_isWhitebeard) {
+                            mtmp = christen_monst(mtmp, "Whitebeard");
+
+                            Strcat(buf, " ... Wow!  That's Waldo!  No wait; that one's Whitebeard.  Bummer. ... ");
+                        }
+                    }
+                }
+            } else if(NULL != waldo_flag) {
+                fclose(waldo_flag);
+            }
+        }
+    } else {
+        fclose(waldo_flag);
+    }
+//END WALDO CHALLENGE CODE
+
 
     return (pm && !Hallucination) ? pm : (struct permonst *) 0;
 }

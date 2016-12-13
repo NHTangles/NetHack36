@@ -382,6 +382,54 @@ struct you {
     struct skills weapon_skills[P_NUM_SKILLS];
     boolean twoweap; /* KMH -- Using two-weapon combat */
 
+//BEGIN KOL/GRUE/PACMAN/ZAPM/DIGDUG/WALDO/POOL/JOUST CHALLENGE CODE
+    char    kolchallenge_ignore;
+    char    kolchallenge_successmsgd;
+
+    char    gruechallenge_ignore;
+    char    gruechallenge_successmsgd;
+    int     gruechallenge_darkmoves;
+    char    gruechallenge_haslight;
+
+    char    pacmanchallenge_ignore;
+    char    pacmanchallenge_successmsgd;
+    char    pacmanchallenge_cantry;
+    int     pacmanchallenge_clearspaces;
+    int     pacmanchallenge_livesleft;
+
+    char    zapmchallenge_ignore;
+    char    zapmchallenge_successmsgd;
+
+    char    digdugchallenge_ignore;
+    char    digdugchallenge_successmsgd;
+    char    digdugchallenge_cantry;
+    char    digdugchallenge_killed;
+    int     digdugchallenge_livesleft;
+    xchar   digdugchallenge_returndungeon;
+    xchar   digdugchallenge_returnlevel;
+
+    char    waldochallenge_ignore;
+    char    waldochallenge_successmsgd;
+    char    waldochallenge_gencounter;
+    char    waldochallenge_haveWaldo;
+    char    waldochallenge_haveWally;
+    char    waldochallenge_haveOdlaw;
+    char    waldochallenge_haveWilma;
+    char    waldochallenge_haveWenda;
+    char    waldochallenge_haveWhitebeard;
+    char    waldochallenge_skip;
+
+    char    poolchallenge_ignore;
+    char    poolchallenge_successmsgd;
+    char    poolchallenge_holesleft;
+
+    char    joustchallenge_ignore;
+    char    joustchallenge_successmsgd;
+    char    joustchallenge_cantry;
+    char    joustchallenge_killed;
+    int     joustchallenge_livesleft;
+//END KOL/GRUE/PACMAN/ZAPM/DIGDUG/WALDO/POOL/JOUST CHALLENGE CODE
+
 }; /* end of `struct you' */
 
 #define Upolyd (u.umonnum != u.umonster)

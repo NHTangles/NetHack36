@@ -78,6 +78,11 @@
 #define AD_ENCH 41  /* remove enchantment (disenchanter) */
 #define AD_CORR 42  /* corrode armor (black pudding) */
 
+//BEGIN DIGDUG CHALLENGE CODE
+#define AD_PUMP               80      /* Namco pump */
+//END DIGDUG CHALLENGE CODE
+
+
 #define AD_CLRC 240 /* random clerical spell */
 #define AD_SPEL 241 /* random magic spell */
 #define AD_RBRE 242 /* random breath weapon */

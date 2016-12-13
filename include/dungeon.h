@@ -102,6 +102,13 @@ typedef struct branch {
 #define Is_airlevel(x) (on_level(x, &air_level))
 #define Is_medusa_level(x) (on_level(x, &medusa_level))
 #define Is_oracle_level(x) (on_level(x, &oracle_level))
+//BEGIN GRUE/PACMAN/DIGDUG/POOL/JOUST CHALLENGE CODE
+#define Is_gruelair_level(x)  (on_level(x, &gruelair_level))
+#define Is_pmaze_level(x)     (on_level(x, &pmaze_level))
+#define Is_dmaze_level(x)     (on_level(x, &dmaze_level))
+#define Is_pool_level(x)        (on_level(x, &pool_level))
+#define Is_joust_level(x)        (on_level(x, &joust_level))
+//END GRUE/PACMAN/DIGDUG/POOL/JOUST CHALLENGE CODE
 #define Is_valley(x) (on_level(x, &valley_level))
 #define Is_juiblex_level(x) (on_level(x, &juiblex_level))
 #define Is_asmo_level(x) (on_level(x, &asmodeus_level))

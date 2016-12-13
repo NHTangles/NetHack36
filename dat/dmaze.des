@@ -1,0 +1,46 @@
+#BEGIN DIGDUG CHALLENGE CODE
+# "DigDug Maze" by the NetHack Tournament Administrators
+#
+MAZE:"dmaze",' '
+FLAGS:noteleport
+GEOMETRY:center,center
+MAP
+                        ----------------                                   
+                        |..............|                                   
+                        |..............|                                   
+                        |..............|                                   
+                        |      #       |                                   
+                        | #    #  #### |                                   
+                        | #    #       |                                   
+                        | #    #       |                                   
+                        | #    #       |                                   
+                        |     ###      |                                   
+                        |              |                                   
+                        |         #    |                                   
+                        |  ####   #    |                                   
+                        |         #    |                                   
+                        |         #    |                                   
+                        |              |                                   
+                        ----------------                                   
+                                                                           
+ENDMAP
+
+REGION:(24,00,49,17),lit,"ordinary"
+NON_DIGGABLE: (00,00,24,17)
+NON_DIGGABLE: (24,00,39,00)
+NON_DIGGABLE: (39,00,49,17)
+NON_DIGGABLE: (24,17,39,17)
+NON_PASSWALL: (24,00,49,17)
+
+OBJECT:('(',"pick-axe"),(31,01)
+OBJECT:('/',"dangerously inflate monster, by Namco TM"),(31,09)
+OBJECT:('/',"dangerously inflate monster, by Namco TM"),(26,07)
+OBJECT:('/',"dangerously inflate monster, by Namco TM"),(36,05)
+OBJECT:('/',"dangerously inflate monster, by Namco TM"),(34,13)
+OBJECT:('/',"dangerously inflate monster, by Namco TM"),(29,12)
+
+MONSTER:('p',"Pooka"),(26,07),hostile
+MONSTER:('p',"Pooka"),(36,05),hostile
+MONSTER:('p',"Pooka"),(34,13),hostile
+MONSTER:('D',"Fygar"),(29,12),hostile
+#END DIGDUG CHALLENGE CODE

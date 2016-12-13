@@ -682,6 +682,11 @@ doengrave()
             case WAN_LOCKING:
             case WAN_PROBING:
                 break;
+//BEGIN DIGDUG CHALLENGE CODE
+            case WAN_DANGEROUSLY_INFLATE_MONSTE:
+                pline("That's not really going to help with this thing  ...\n\n");
+                break;
+//END DIGDUG CHALLENGE CODE
             /* RAY wands */
             case WAN_MAGIC_MISSILE:
                 ptext = TRUE;

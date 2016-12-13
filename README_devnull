@@ -1,0 +1,55 @@
+NETHACK 3.6.0 WITH DEVNULL PATCHES
+
+This is for building nethack on a game serer for the devnull tournament
+that runs every year in November. Details of the tournament are at
+https://nethack.devnull.net, and in #devnull_nethack on the freenode
+irc network.
+Volunteers to host game servers for the tournament are generally sought
+after and welcome, so if that's you, read on:
+
+
+YOU WILL ALSO NEED:
+- the tournament directory structure (coming soon to another repo)
+- the zapm game (which is required for one of the special devnull
+  "challenges"), available at http://zapm.org. 
+
+
+BUILD INSTRUCTIONS:
+Full game-server build/configure instructions will be available in the
+tournament repo.  These instructions cover building the nethack game
+itself. Full build instructions for nethack are provided by the devteam
+and are retained here (start with the README file), but the following
+should be enough to produce a tournament-ready build.
+
+- Most local config is in sys/unix/hints/devnull.
+  Because of this, not too much will need to change in the Makefiles or
+  headers.  Modify the hints file to suit your environment.
+then from sys/unix: 
+	./setup.sh hints/devnull
+then from the top level
+	make all
+	sudo make install
+- Follow the remaining instructions for building the tournament server.
+- check system-wide defaults and options in NETHACKDIR/sysconf 
+- Keep a backup of the tournament directory (and xlogfile and anything
+  else you want to keep) as "make install" blats the
+  entire contents of NETHACKDIR.
+
+
+QUESTIONS/ISSUES
+I can be contacted on the Freenode irc network as Tangles, and am
+happy to take questions on the devnull code patches (noting that
+none of this code is my own work).  Issues and bugs in nethackc istelf
+should be reported to the nethack devteam, and questions about the
+tournament or offers to help should be directed to the lead tournament
+administrator, krystal, via the contact details on the devnull website.
+
+
+THANKS
+I would like to thank everyone involved in building, running and
+participating in the devnull tournament to date, and a special
+thanks to krystal, who gives up his time and energy every year to
+almost single-handedly run the tournament and who is responsible for
+making this the longest-running game tournament on the Internet.
+
+Enjoy!

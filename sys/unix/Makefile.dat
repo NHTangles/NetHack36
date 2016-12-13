@@ -117,9 +117,11 @@ options:	../util/makedefs
 	../util/makedefs -v
 
 
+#CONTAINS GRUE/PACMAN/DIGDUG/JOUST CHALLENGE CODE
 spec_levs: ../util/lev_comp \
 	bigroom.des castle.des endgame.des gehennom.des knox.des medusa.des \
-	mines.des oracle.des sokoban.des tower.des yendor.des
+	mines.des oracle.des sokoban.des tower.des yendor.des \
+	gruelair.des pmaze.des dmaze.des pool1.des
 	../util/lev_comp bigroom.des
 	../util/lev_comp castle.des
 	../util/lev_comp endgame.des
@@ -131,6 +133,11 @@ spec_levs: ../util/lev_comp \
 	../util/lev_comp sokoban.des
 	../util/lev_comp tower.des
 	../util/lev_comp yendor.des
+	../util/lev_comp gruelair.des
+	../util/lev_comp pmaze.des
+	../util/lev_comp dmaze.des
+	../util/lev_comp pool1.des
+	../util/lev_comp joust.des
 	touch spec_levs
 
 quest_levs: ../util/lev_comp \

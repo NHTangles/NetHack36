@@ -1316,7 +1316,8 @@ nexttry: /* eels prefer the water, but if there is no water nearby,
                         continue;
                     info[cnt] |= NOGARLIC;
                 }
-                if (checkobj && sobj_at(BOULDER, nx, ny)) {
+                if(checkobj && (sobj_at(BOULDER, nx, ny) || sobj_at(CUE_BOULDER, nx, ny))) {
+
                     if (!(flag & ALLOW_ROCK))
                         continue;
                     info[cnt] |= ALLOW_ROCK;

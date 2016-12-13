@@ -375,6 +375,9 @@ Helmet_on(VOID_ARGS)
     case DWARVISH_IRON_HELM:
     case ORCISH_HELM:
     case HELM_OF_TELEPATHY:
+//BEGIN WALDO CHALLENGE CODE
+    case STRIPED_BOBBLE_HAT:
+//END WALDO CHALLENGE CODE
         break;
     case HELM_OF_BRILLIANCE:
         adj_abon(uarmh, uarmh->spe);
@@ -439,6 +442,9 @@ Helmet_off(VOID_ARGS)
     case ELVEN_LEATHER_HELM:
     case DWARVISH_IRON_HELM:
     case ORCISH_HELM:
+//BEGIN WALDO CHALLENGE CODE
+    case STRIPED_BOBBLE_HAT:
+//END WALDO CHALLENGE CODE
         break;
     case DUNCE_CAP:
         context.botl = 1;

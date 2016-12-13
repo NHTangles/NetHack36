@@ -2,6 +2,10 @@
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
+//BEGIN WALDO CHALLENGE CODE
+#include <pwd.h>
+//END WALDO CHALLENGE CODE
+
 #include "hack.h"
 
 STATIC_DCL boolean FDECL(mon_is_gecko, (struct monst *));
@@ -491,6 +495,15 @@ STATIC_OVL int
 domonnoise(mtmp)
 register struct monst *mtmp;
 {
+
+//BEGIN WALDO CHALLENGE CODE
+    FILE            *waldo_flag = NULL;
+    char            waldo_ignore[255];
+    char            waldo_accept[255];
+    char            waldo_success[255];
+    struct passwd   *NH_passwd;
+//END WALDO CHALLENGE CODE
+
     char verbuf[BUFSZ];
     register const char *pline_msg = 0, /* Monnam(mtmp) will be prepended */
         *verbl_msg = 0,                 /* verbalize() */
@@ -524,6 +537,45 @@ register struct monst *mtmp;
      */
     if (!canspotmon(mtmp))
         map_invisible(mtmp->mx, mtmp->my);
+
+
+//BEGIN WALDO CHALLENGE CODE
+    NH_passwd = getpwnam("nhadmin");
+
+    sprintf(waldo_ignore, "%s/challenge/Waldo-%s-ignore", NH_passwd->pw_dir, plname);
+    sprintf(waldo_accept, "%s/challenge/Waldo-%s-accept", NH_passwd->pw_dir, plname);
+    sprintf(waldo_success, "%s/challenge/Waldo-%s-success", NH_passwd->pw_dir, plname);
+
+    waldo_flag = fopen(waldo_ignore, "r");
+    if(NULL == waldo_flag) {
+        waldo_flag = fopen(waldo_accept, "r");
+        if(NULL != waldo_flag) {
+            fclose(waldo_flag);
+
+            waldo_flag = fopen(waldo_success, "r");
+            if(NULL == waldo_flag) {
+                if(mtmp->waldochallenge_isWaldo) {
+                    waldo_flag = fopen(waldo_success, "w");
+                    if(NULL != waldo_flag) {
+                        fclose(waldo_flag);
+
+                        pline("\"Gotcha, Waldo!\"  Having been finally found, Waldo's essence fades away; you hear the happy ethereal barking of Woof as his master finally returns.\n\n");
+                        pline("Congratulations!  You have found Waldo the Red (and White) and convinced him to return to his faithful companion Woof; you'll feel better about acquiring new companions yourself now.\n\n");
+
+                        mtmp = christen_monst(mtmp, "the former Waldo");
+                    } else {
+                        pline("ERROR: I am unable to log your Challenge success; please email the Tournament administrators.\n\n");
+                    }
+                }
+            } else {
+                fclose(waldo_flag);
+            }
+        }
+    } else {
+        fclose(waldo_flag);
+    }
+//END WALDO CHALLENGE CODE
+
 
     switch (msound) {
     case MS_ORACLE:
