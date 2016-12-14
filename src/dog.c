@@ -895,7 +895,7 @@ register struct obj *obj;
                 /* SUCCEEDED: proceed */
 
                 if(!u.waldochallenge_successmsgd) {
-                    pline("With warm fuzzies in your heart from reuniting Waldo and Woof, you try to tame %s.\n\n", Monnam(mtmp));
+                    pline("With warm fuzzies in your heart from reuniting Waldo and Woof, you try to tame %s.\n\n", mon_nam(mtmp));
                     u.waldochallenge_successmsgd = 1;
                 }
             } else {  
@@ -913,7 +913,7 @@ register struct obj *obj;
                 } else {
                     /* UNKNOWN: offer */
 
-                    pline("A Tournament Administrator appears in front of %s and asks if you wish to accept a Challenge.\n\n", Monnam(mtmp));
+                    pline("A Tournament Administrator appears in front of %s and asks if you wish to accept a Challenge.\n\n", mon_nam(mtmp));
 
                     if(yn("Do you accept this Challenge? ") == 'y') {
                         Waldo_flag = fopen(Waldo_accept, "w");
