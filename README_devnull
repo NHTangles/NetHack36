@@ -1,6 +1,6 @@
 NETHACK 3.6.0 WITH DEVNULL PATCHES
 
-This is for building nethack on a game serer for the devnull tournament
+This is for building nethack on a game server for the devnull tournament
 that runs every year in November. Details of the tournament are at
 https://nethack.devnull.net, and in #devnull_nethack on the freenode
 irc network.
@@ -39,10 +39,10 @@ then from the top level
 QUESTIONS/ISSUES
 I can be contacted on the Freenode irc network as Tangles, and am
 happy to take questions on the devnull code patches (noting that
-none of this code is my own work).  Issues and bugs in nethackc istelf
+none of this code is my own work).  Issues and bugs in nethack itself
 should be reported to the nethack devteam, and questions about the
 tournament or offers to help should be directed to the lead tournament
-administrator, krystal, via the contact details on the devnull website.
+administrator, irc nick krystal, via the contact details on the devnull website.
 
 
 THANKS
