@@ -246,7 +246,7 @@ boolean force;      /* Quietly force this animal */
                 /* SUCCEEDED: proceed */
 
                 if(!u.joustchallenge_successmsgd) {
-                    pline("The Horseman's Word ringing in your mind, you try to mount %s.\n\n", Monnam(mtmp));
+                    pline("The Horseman's Word ringing in your mind, you try to mount %s.\n\n", mon_nam(mtmp));
                     u.joustchallenge_successmsgd = 1;
                 }
             } else {
@@ -258,14 +258,14 @@ boolean force;      /* Quietly force this animal */
                     /* OLD ACCEPT: exit */
  
                     if(mtmp->mnum != PM_OSTRICH) {
-                        pline("Your mind is a blank; you can't remember the Horseman's Word, and without it there's no way you can mount %s.  I guess you really will have to defeat this Shadow Lord fellow first.\n\n", Monnam(mtmp));
+                        pline("Your mind is a blank; you can't remember the Horseman's Word, and without it there's no way you can mount %s.  I guess you really will have to defeat this Shadow Lord fellow first.\n\n", mon_nam(mtmp));
  
                         return(FALSE);
                     }
                 } else {
                     /* UNKNOWN: offer */
  
-                    pline("A Tournament Administrator appears in front of %s and asks if you wish to accept a Challenge.\n\n", Monnam(mtmp));
+                    pline("A Tournament Administrator appears in front of %s and asks if you wish to accept a Challenge.\n\n", mon_nam(mtmp));
  
                     if(yn("Do you accept this Challenge? ") == 'y') {
                         Joust_flag = fopen(Joust_accept, "w");
@@ -275,7 +275,8 @@ boolean force;      /* Quietly force this animal */
  
                             /* NEW ACCEPT: exit */
  
-                            pline("Very Well.\n\nKnow then, adventurer, that the Shadow Lord has stolen from our world all knowledge of the Horseman's Word.  I realize this means you don't know what I'm talking about, but believe me that without it you will not be able to calm any steed enough to mount.\n\n");
+                            pline("Very Well.\n\nKnow then, adventurer, that the Shadow Lord has stolen from our world all knowledge of the Horseman's Word.\n\n");
+                            pline("I realize this means you don't know what I'm talking about, but believe me that without it you will not be able to calm any steed enough to mount.\n\n");
                             pline("You must find the despicable Shadow Lord and his henchmen, and you must defeat them to reclaim the Horseman's Word.  You will not be able to defeat them alone, as they cannot be harmed from the ground, but trust that help will come along the way.\n\n");
  
                             pline("The Administrator has noted that you have accepted the Challenge and fades away with a smirk.\n\n");
