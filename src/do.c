@@ -188,30 +188,31 @@ const char *verb;
         if (*verb) {
             if (Blind && (x == u.ux) && (y == u.uy)) {
                 You_hear("a CRASH! beneath you.");
-            } else if (!Blind && cansee(x, y)) {
 // BEGIN POOL CHALLENGE CODE
-                if (Is_pool_level(&u.uz) && !u.poolchallenge_ignore) {
+            } else if (Is_pool_level(&u.uz) && !u.poolchallenge_ignore) {
+                if (!Blind && cansee(x, y)) {
                     pline_The("boulder falls into the pocket-dimension rift, plugging it");
-                    if (--u.poolchallenge_holesleft == 0) {
-                        NH_passwd = getpwnam("nhadmin");
-                        sprintf(Pool_success, "%s/challenge/Pool-%s-success", NH_passwd->pw_dir, plname);
-                        pline("As the last pocket is filled, your foot knocks into a pebble which rolls away. It seems that rotational intertia has returned to normal.");
-                        Pool_flag = fopen(Pool_success, "w");
-                        if(NULL != Pool_flag) {
-                            fclose(Pool_flag);
-                        } else {
-                            pline("ERROR: I am unable to log your completion of this Challenge; please email the Tournament administrators.\n\n");
-                        }
-                    }
                 } else {
+                    You_hear("a boulder %s.", verb);
+                }
+                if (--u.poolchallenge_holesleft == 0) {
+                    NH_passwd = getpwnam("nhadmin");
+                    sprintf(Pool_success, "%s/challenge/Pool-%s-success", NH_passwd->pw_dir, plname);
+                    pline("As the last pocket is filled, your foot knocks into a pebble which rolls away. It seems that rotational intertia has returned to normal.");
+                    Pool_flag = fopen(Pool_success, "w");
+                    if(NULL != Pool_flag) {
+                        fclose(Pool_flag);
+                    } else {
+                        pline("ERROR: I am unable to log your completion of this Challenge; please email the Tournament administrators.\n\n");
+                    }
+                }
 // END POOL CHALLENGE CODE
-
-                    pline_The("boulder %s%s.", t->tseen ? "" : "triggers and ",
-                          t->ttyp == TRAPDOOR
+            } else if (!Blind && cansee(x, y)) {
+                pline_The("boulder %s%s.", t->tseen ? "" : "triggers and ",
+                           t->ttyp == TRAPDOOR
                               ? "plugs a trap door"
                               : t->ttyp == HOLE ? "plugs a hole"
                                                 : "fills a pit");
-                } //PCC
             } else {
                 You_hear("a boulder %s.", verb);
             }
