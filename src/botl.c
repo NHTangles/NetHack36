@@ -13,15 +13,12 @@ const char *const enc_stat[] = { "",         "Burdened",  "Stressed",
 STATIC_OVL NEARDATA int mrank_sz = 0; /* loaded by max_rank_sz (from u_init) */
 STATIC_DCL const char *NDECL(rank);
 
-#ifndef STATUS_VIA_WINDOWPORT
+#if !defined(STATUS_VIA_WINDOWPORT) || defined(DUMPLOG)
 
-STATIC_DCL void NDECL(bot1);
-STATIC_DCL void NDECL(bot2);
-
-STATIC_OVL void
-bot1()
+char *
+do_statusline1()
 {
-    char newbot1[MAXCO];
+    static char newbot1[BUFSZ];
     register char *nb;
     register int i, j;
 
@@ -71,12 +68,11 @@ bot1()
     if (flags.showscore)
         Sprintf(nb = eos(nb), " S:%ld", botl_score());
 #endif
-    curs(WIN_STATUS, 1, 0);
-    putstr(WIN_STATUS, 0, newbot1);
+    return newbot1;
 }
 
-STATIC_OVL void
-bot2()
+char *
+do_statusline2()
 {
     char newbot2[MAXCO];
     register char *nb;
@@ -90,7 +86,8 @@ bot2()
         hp = 0;
     (void) describe_level(newbot2);
     Sprintf(nb = eos(newbot2), "%s:%-2ld HP:%d(%d) Pw:%d(%d) AC:%-2d",
-            encglyph(objnum_to_glyph(GOLD_PIECE)), money_cnt(invent), hp,
+            iflags.in_dumplog ? "$" : encglyph(objnum_to_glyph(GOLD_PIECE)),
+            money_cnt(invent), hp,
             hpmax, u.uen, u.uenmax, u.uac);
 
     if (Upolyd)
@@ -124,21 +121,24 @@ bot2()
         Sprintf(nb = eos(nb), " Slime");
     if (cap > UNENCUMBERED)
         Sprintf(nb = eos(nb), " %s", enc_stat[cap]);
-    curs(WIN_STATUS, 1, 1);
-    putmixed(WIN_STATUS, 0, newbot2);
+    return newbot2;
 }
 
+#ifndef STATUS_VIA_WINDOWPORT
 void
 bot()
 {
-    if (youmonst.data) {
-        bot1();
-        bot2();
+    if (youmonst.data && iflags.status_updates) {
+        curs(WIN_STATUS, 1, 0);
+        putstr(WIN_STATUS, 0, do_statusline1());
+        curs(WIN_STATUS, 1, 1);
+        putmixed(WIN_STATUS, 0, do_statusline2());
     }
     context.botl = context.botlx = 0;
 }
-
 #endif /* !STATUS_VIA_WINDOWPORT */
+
+#endif /* !STATUS_VIA_WINDOWPORT || DUMPLOG */
 
 /* convert experience level (1..30) to rank index (0..8) */
 int

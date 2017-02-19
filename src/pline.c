@@ -11,6 +11,10 @@ static char prevmsg[BUFSZ];
 
 static char *FDECL(You_buf, (int));
 
+#ifdef DUMPLOG
+char* saved_plines[DUMPLOG_MSG_COUNT] = {0};
+#endif
+
 /*VARARGS1*/
 /* Note that these declarations rely on knowledge of the internals
  * of the variable argument handling stuff in "tradstdc.h"
@@ -83,6 +87,16 @@ VA_DECL(const char *, line)
         iflags.last_msg = PLNMSG_UNKNOWN;
         return;
     }
+
+#ifdef DUMPLOG
+    /* We hook here early to have options-agnostic output. */
+    free(saved_plines[DUMPLOG_MSG_COUNT - 1]);
+    for (ln = 0; ln < DUMPLOG_MSG_COUNT - 1; ++ln)
+        saved_plines[DUMPLOG_MSG_COUNT - ln - 1] = saved_plines[DUMPLOG_MSG_COUNT - ln - 2];
+    saved_plines[0] = malloc(strlen(line) + 1);
+    (void) strcpy(saved_plines[0], line);
+#endif
+
 #ifndef MAC
     if (no_repeat && !strcmp(line, toplines))
         return;

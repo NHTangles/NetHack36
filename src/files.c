@@ -2255,6 +2255,12 @@ int src;
                 free((genericptr_t) sysopt.debugfiles);
             sysopt.debugfiles = dupstr(bufp);
         }
+    } else if (src == SET_IN_SYS && match_varname(buf, "DUMPLOGFILE", 7)) {
+#ifdef DUMPLOG
+        if (sysopt.dumplogfile)
+            free((genericptr_t) sysopt.dumplogfile);
+        sysopt.dumplogfile = dupstr(bufp);
+#endif
     } else if (src == SET_IN_SYS && match_varname(buf, "SUPPORT", 7)) {
         if (sysopt.support)
             free((genericptr_t) sysopt.support);

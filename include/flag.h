@@ -178,12 +178,21 @@ struct instance_flags {
     int purge_monsters;    /* # of dead monsters still on fmon list */
     int override_ID;       /* true to force full identification of objects */
     int suppress_price;    /* controls doname() for unpaid objects */
+/* these are part of a #terrain patch that is not implemented, but also needed for dumplogs */
+#define TER_MAP    0x01
+#define TER_TRP    0x02
+#define TER_OBJ    0x04
+#define TER_MON    0x08
+#define TER_DETECT 0x10    /* detect_foo magic rather than #terrain */
     coord travelcc;        /* coordinates for travel_cache */
     boolean window_inited; /* true if init_nhwindows() completed */
     boolean vision_inited; /* true if vision is ready */
     boolean sanity_check;  /* run sanity checks */
     boolean mon_polycontrol; /* debug: control monster polymorphs */
-    /* stuff that is related to options and/or user or platform preferences */
+    boolean in_dumplog;    /* doing the dumplog right now? */
+
+    /* stuff that is related to options and/or user or platform preferences
+     */
     unsigned msg_history; /* hint: # of top lines to save */
     int menu_headings;    /* ATR for menu headings */
     int *opt_booldup;     /* for duplication of boolean opts in config file */

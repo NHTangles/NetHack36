@@ -20,6 +20,8 @@ STATIC_DCL int FDECL(detect_obj_traps, (struct obj *, BOOLEAN_P, int));
 STATIC_DCL void FDECL(show_map_spot, (int, int));
 STATIC_PTR void FDECL(findone, (int, int, genericptr_t));
 STATIC_PTR void FDECL(openone, (int, int, genericptr_t));
+STATIC_DCL int FDECL(mfind0, (struct monst *, BOOLEAN_P));
+STATIC_DCL int FDECL(reveal_terrain_getglyph, (int, int, int, unsigned, int, int));
 
 /* Recursively search obj for an object in class oclass and return 1st found
  */
@@ -1462,6 +1464,111 @@ sokoban_detect()
     }
 }
 
+STATIC_DCL int
+reveal_terrain_getglyph(x,y, full, swallowed, default_glyph, which_subset)
+int x,y, full;
+unsigned swallowed;
+int default_glyph, which_subset;
+{
+    int glyph, levl_glyph;
+    uchar seenv;
+    boolean keep_traps = (which_subset & TER_TRP) !=0,
+            keep_objs = (which_subset & TER_OBJ) != 0,
+            keep_mons = (which_subset & TER_MON) != 0;
+    struct monst *mtmp;
+    struct trap *t;
+
+    /* for 'full', show the actual terrain for the entire level,
+       otherwise what the hero remembers for seen locations with
+       monsters, objects, and/or traps removed as caller dictates */
+    seenv = (full || level.flags.hero_memory)
+        ? levl[x][y].seenv : cansee(x, y) ? SVALL : 0;
+    if (full) {
+        levl[x][y].seenv = SVALL;
+        glyph = back_to_glyph(x, y);
+        levl[x][y].seenv = seenv;
+    } else {
+        levl_glyph = level.flags.hero_memory
+            ? levl[x][y].glyph
+            : seenv
+            ? back_to_glyph(x, y)
+            : default_glyph;
+        /* glyph_at() returns the displayed glyph, which might
+           be a monster.  levl[][].glyph contains the remembered
+           glyph, which will never be a monster (unless it is
+           the invisible monster glyph, which is handled like
+           an object, replacing any object or trap at its spot) */
+        glyph = !swallowed ? glyph_at(x, y) : levl_glyph;
+        if (keep_mons && x == u.ux && y == u.uy && swallowed)
+            glyph = mon_to_glyph(u.ustuck);
+        else if (((glyph_is_monster(glyph)
+                   || glyph_is_warning(glyph)) && !keep_mons)
+                 || glyph_is_swallow(glyph))
+            glyph = levl_glyph;
+        if (((glyph_is_object(glyph) && !keep_objs)
+             || glyph_is_invisible(glyph))
+            && keep_traps && !covers_traps(x, y)) {
+            if ((t = t_at(x, y)) != 0 && t->tseen)
+                glyph = trap_to_glyph(t);
+        }
+        if ((glyph_is_object(glyph) && !keep_objs)
+            || (glyph_is_trap(glyph) && !keep_traps)
+            || glyph_is_invisible(glyph)) {
+            if (!seenv) {
+                glyph = default_glyph;
+            } else if (lastseentyp[x][y] == levl[x][y].typ) {
+                glyph = back_to_glyph(x, y);
+            } else {
+                /* look for a mimic here posing as furniture;
+                   if we don't find one, we'll have to fake it */
+                if ((mtmp = m_at(x, y)) != 0
+                    && mtmp->m_ap_type == M_AP_FURNITURE) {
+                    glyph = cmap_to_glyph(mtmp->mappearance);
+                } else {
+                    /* we have a topology type but we want a
+                       screen symbol in order to derive a glyph;
+                       some screen symbols need the flags field
+                       of levl[][] in addition to the type
+                       (to disambiguate STAIRS to S_upstair or
+                       S_dnstair, for example; current flags
+                       might not be intended for remembered
+                       type, but we've got no other choice) */
+                    schar save_typ = levl[x][y].typ;
+
+                    levl[x][y].typ = lastseentyp[x][y];
+                    glyph = back_to_glyph(x, y);
+                    levl[x][y].typ = save_typ;
+                }
+            }
+        }
+    }
+    if (glyph == cmap_to_glyph(S_darkroom))
+        glyph = cmap_to_glyph(S_room); /* FIXME: dirty hack */
+    return glyph;
+}
+
+void
+dump_map()
+{
+    int x, y, glyph;
+    int subset = TER_MAP|TER_TRP|TER_OBJ|TER_MON;
+    int default_glyph = cmap_to_glyph(level.flags.arboreal ? S_tree : S_stone);
+    char buf[BUFSZ];
+
+    for (y = 0; y < ROWNO; y++) {
+        for (x = 1; x < COLNO; x++) {
+            int ch, color;
+            unsigned special;
+            glyph = reveal_terrain_getglyph(x,y, FALSE, u.uswallow,
+                                            default_glyph, subset);
+            (void) mapglyph(glyph, &ch, &color, &special, x, y);
+            buf[x-1] = ch;
+        }
+        buf[x-2] = '\0';
+        putstr(0,0, buf);
+    }
+}
+
 /* idea from crawl; show known portion of map without any monsters,
    objects, or traps occluding the view of the underlying terrain */
 void
@@ -1472,93 +1579,28 @@ int which_subset; /* when not full, whether to suppress objs and/or traps */
     if ((Hallucination || Stunned || Confusion) && !full) {
         You("are too disoriented for this.");
     } else {
-        int x, y, glyph, levl_glyph, default_glyph;
-        uchar seenv;
-        unsigned save_swallowed;
-        struct monst *mtmp;
-        struct trap *t;
+        int x, y, glyph, default_glyph;
         char buf[BUFSZ];
         boolean keep_traps = (which_subset & 1) !=0,
                 keep_objs = (which_subset & 2) != 0,
                 keep_mons = (which_subset & 4) != 0; /* actually always 0 */
 
-        save_swallowed = u.uswallow;
+        unsigned swallowed = u.uswallow;
         iflags.save_uinwater = u.uinwater, iflags.save_uburied = u.uburied;
         u.uinwater = u.uburied = 0;
         u.uswallow = 0;
         default_glyph = cmap_to_glyph(level.flags.arboreal ? S_tree : S_stone);
-        /* for 'full', show the actual terrain for the entire level,
-           otherwise what the hero remembers for seen locations with
-           monsters, objects, and/or traps removed as caller dictates */
+
         for (x = 1; x < COLNO; x++)
             for (y = 0; y < ROWNO; y++) {
-                seenv = (full || level.flags.hero_memory)
-                           ? levl[x][y].seenv : cansee(x, y) ? SVALL : 0;
-                if (full) {
-                    levl[x][y].seenv = SVALL;
-                    glyph = back_to_glyph(x, y);
-                    levl[x][y].seenv = seenv;
-                } else {
-                    levl_glyph = level.flags.hero_memory
-                                    ? levl[x][y].glyph
-                                    : seenv
-                                       ? back_to_glyph(x, y)
-                                       : default_glyph;
-                    /* glyph_at() returns the displayed glyph, which might
-                       be a monster.  levl[][].glyph contains the remembered
-                       glyph, which will never be a monster (unless it is
-                       the invisible monster glyph, which is handled like
-                       an object, replacing any object or trap at its spot) */
-                    glyph = !save_swallowed ? glyph_at(x, y) : levl_glyph;
-                    if (keep_mons && x == u.ux && y == u.uy && save_swallowed)
-                        glyph = mon_to_glyph(u.ustuck);
-                    else if (((glyph_is_monster(glyph)
-                               || glyph_is_warning(glyph)) && !keep_mons)
-                             || glyph_is_swallow(glyph))
-                        glyph = levl_glyph;
-                    if (((glyph_is_object(glyph) && !keep_objs)
-                         || glyph_is_invisible(glyph))
-                        && keep_traps && !covers_traps(x, y)) {
-                        if ((t = t_at(x, y)) != 0 && t->tseen)
-                            glyph = trap_to_glyph(t);
-                    }
-                    if ((glyph_is_object(glyph) && !keep_objs)
-                        || (glyph_is_trap(glyph) && !keep_traps)
-                        || glyph_is_invisible(glyph)) {
-                        if (!seenv) {
-                            glyph = default_glyph;
-                        } else if (lastseentyp[x][y] == levl[x][y].typ) {
-                            glyph = back_to_glyph(x, y);
-                        } else {
-                            /* look for a mimic here posing as furniture;
-                               if we don't find one, we'll have to fake it */
-                            if ((mtmp = m_at(x, y)) != 0
-                                && mtmp->m_ap_type == M_AP_FURNITURE) {
-                                glyph = cmap_to_glyph(mtmp->mappearance);
-                            } else {
-                                /* we have a topology type but we want a
-                                   screen symbol in order to derive a glyph;
-                                   some screen symbols need the flags field
-                                   of levl[][] in addition to the type
-                                   (to disambiguate STAIRS to S_upstair or
-                                   S_dnstair, for example; current flags
-                                   might not be intended for remembered
-                                   type, but we've got no other choice) */
-                                schar save_typ = levl[x][y].typ;
-
-                                levl[x][y].typ = lastseentyp[x][y];
-                                glyph = back_to_glyph(x, y);
-                                levl[x][y].typ = save_typ;
-                            }
-                        }
-                    }
-                }
+                glyph = reveal_terrain_getglyph(x,y, full, swallowed,
+                                                default_glyph, which_subset);
                 show_glyph(x, y, glyph);
             }
 
         /* [TODO: highlight hero's location somehow] */
         u.uinwater = iflags.save_uinwater, u.uburied = iflags.save_uburied;
-        if (save_swallowed)
+        if (swallowed)
             u.uswallow = 1;
         flush_screen(1);
         if (full) {
