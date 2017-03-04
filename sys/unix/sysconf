@@ -118,5 +118,6 @@ LIVELOG=63
 # still choose their own option settings via NETHACKOPTIONS in their
 # environment or via ~/.nethackrc run-time configuration file.
 #OPTIONS=!autopickup,fruit:tomato,symset:DECgraphics
+OPTIONS=color,boulder:0,hilite_pet,lit_corridor,!sparkle
 
 #eof
