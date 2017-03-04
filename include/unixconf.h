@@ -231,7 +231,7 @@
 /* #define COMPRESS_OPTIONS "-q" */
 #endif
 
-#define FCMASK 0660 /* file creation mask */
+#define FCMASK 0644 /* file creation mask */
 
 /* fcntl(2) is a POSIX-portable call for manipulating file descriptors.
  * Comment out the USE_FCNTL if for some reason you have a strange
