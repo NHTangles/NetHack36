@@ -76,6 +76,8 @@ fi
 echo "Copying NetHack playground stuff"
 cp "$NETHACK_GIT/dat/nhdat" "$NAO_CHROOT/$NHSUBDIR"
 chmod 644 "$NAO_CHROOT/$NHSUBDIR/nhdat"
+cp "$NETHACK_GIT/dat/symbols" "$NAO_CHROOT/$NHSUBDIR"
+chmod 644 "$NAO_CHROOT/$NHSUBDIR/symbols"
 
 # 3.6.x uses sysconf. Copy this in only if it
 # doesn't already exist
