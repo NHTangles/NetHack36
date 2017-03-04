@@ -208,7 +208,7 @@
    (whose name can be overridden via #define in global.h if desired) */
 #define LOGFILE  "logfile"  /* larger file for debugging purposes */
 #define XLOGFILE "xlogfile" /* even larger logfile */
-/* #define LIVELOGFILE "livelog" * in-game events recorded live */
+#define LIVELOGFILE "livelog" /* in-game events recorded live */
 #ifdef LIVELOGFILE
 /* LL_flags defined in global.h. Value below ignored if SYSCF is enabled */
 #define LIVELOG_DETAIL (LL_TRADITIONAL|LL_ACHIEVE|LL_UKILL|LL_DIVINEGIFT|LL_CONDUCT)
