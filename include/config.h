@@ -517,7 +517,7 @@ typedef unsigned char uchar;
    but it isn't necessary for successful operation of the program */
 #define FREE_ALL_MEMORY             /* free all memory at exit */
 
-/* #define DUMPLOG */  /* End-of-game dump logs */
+#define DUMPLOG   /* End-of-game dump logs */
 #ifdef DUMPLOG
 
 #ifndef DUMPLOG_MSG_COUNT
