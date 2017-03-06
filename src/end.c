@@ -1,4 +1,4 @@
-/* NetHack 3.6	end.c	$NHDT-Date: 1488075979 2017/02/26 02:26:19 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.127 $ */
+/* NetHack 3.6	end.c	$NHDT-Date: 1488788512 2017/03/06 08:21:52 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.129 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -689,12 +689,11 @@ int how;
     display_inventory((char *) 0, TRUE);
     container_contents(invent, TRUE, TRUE, FALSE);
     enlightenment((BASICENLIGHTENMENT | MAGICENLIGHTENMENT),
-        (how >= PANICKED) ? ENL_GAMEOVERALIVE
-        : ENL_GAMEOVERDEAD);
+                  (how >= PANICKED) ? ENL_GAMEOVERALIVE : ENL_GAMEOVERDEAD);
     putstr(0, 0, "");
-    list_vanquished('y', FALSE);
+    list_vanquished('d', FALSE); /* 'd' => 'y' */
     putstr(0, 0, "");
-    list_genocided('a', FALSE);
+    list_genocided('d', FALSE); /* 'd' => 'y' */
     putstr(0, 0, "");
     show_conduct((how >= PANICKED) ? 1 : 2);
     putstr(0, 0, "");
@@ -1206,9 +1205,13 @@ int how;
         done_stopprint = 1; /* just avoid any more output */
 
 #ifdef DUMPLOG
-    dump_redirect(TRUE);
-    genl_outrip(0, how, endtime);
-    dump_redirect(FALSE);
+    /* 'how' reasons beyond genocide shouldn't show tombstone;
+       for normal end of game, genocide doesn't either */
+    if (how <= GENOCIDED) {
+        dump_redirect(TRUE);
+        genl_outrip(0, how, endtime);
+        dump_redirect(FALSE);
+    }
 #endif
     if (u.uhave.amulet) {
         Strcat(killer.name, " (with the Amulet)");
@@ -1507,6 +1510,10 @@ dovanquished()
     return 0;
 }
 
+/* high priests aren't unique but are flagged as such to simplify something */
+#define UniqCritterIndx(mndx) ((mons[mndx].geno & G_UNIQ) \
+                               && mndx != PM_HIGH_PRIEST)
+
 STATIC_OVL void
 list_vanquished(defquery, ask)
 char defquery;
@@ -1518,7 +1525,13 @@ boolean ask;
     long total_120 = 0L;
     char c;
     winid klwin;
-    char buf[BUFSZ];
+    short mindx[NUMMONS];
+    char c, buf[BUFSZ], buftoo[BUFSZ];
+    boolean dumping; /* for DUMPLOG; doesn't need to be conditional */
+
+    dumping = (defquery == 'd');
+    if (dumping)
+        defquery = 'y';
 
     /* get totals first */
     for (i = LOW_PM; i < NUMMONS; i++) {
@@ -1545,7 +1558,8 @@ boolean ask;
         if (c == 'y' || c == 'a') {
             klwin = create_nhwindow(NHW_MENU);
             putstr(klwin, 0, "Vanquished creatures:");
-            putstr(klwin, 0, "");
+            if (!dumping)
+                putstr(klwin, 0, "");
 
             /* countdown by monster "toughness" */
             for (lev = max_lev; lev >= 0; lev--)
@@ -1590,7 +1604,8 @@ boolean ask;
              *     putstr(klwin, 0, "and a partridge in a pear tree");
              */
             if (ntypes > 1) {
-                putstr(klwin, 0, "");
+                if (!dumping)
+                    putstr(klwin, 0, "");
                 Sprintf(buf, "%ld creatures vanquished.", total_killed);
                 putstr(klwin, 0, buf);
                 Sprintf(buf, "Extinctions: %d.", extinctioncount);
@@ -1604,6 +1619,10 @@ boolean ask;
     } else if (defquery == 'a') {
         /* #dovanquished rather than final disclosure, so pline() is ok */
         pline("No monsters have been vanquished.");
+#ifdef DUMPLOG
+    } else if (dumping) {
+        putstr(0, 0, "No monsters were vanquished."); /* not pline() */
+#endif
     }
 }
 
@@ -1643,6 +1662,11 @@ boolean ask;
     char c;
     winid klwin;
     char buf[BUFSZ];
+    boolean dumping; /* for DUMPLOG; doesn't need to be conditional */
+
+    dumping = (defquery == 'd');
+    if (dumping)
+        defquery = 'y';
 
     ngenocided = num_genocides();
     nextinct = num_extinct();
@@ -1662,22 +1686,29 @@ boolean ask;
                     (ngenocided) ? "Genocided" : "Extinct",
                     (nextinct && ngenocided) ? " or extinct" : "");
             putstr(klwin, 0, buf);
-            putstr(klwin, 0, "");
+            if (!dumping)
+                putstr(klwin, 0, "");
 
-            for (i = LOW_PM; i < NUMMONS; i++)
-                if (mvitals[i].mvflags & G_GONE && !(mons[i].geno & G_UNIQ)) {
-                    if ((mons[i].geno & G_UNIQ) && i != PM_HIGH_PRIEST)
-                        Sprintf(buf, "%s%s",
-                                !type_is_pname(&mons[i]) ? "" : "the ",
-                                mons[i].mname);
-                    else
-                        Strcpy(buf, makeplural(mons[i].mname));
-                    if (!(mvitals[i].mvflags & G_GENOD))
+            for (i = LOW_PM; i < NUMMONS; i++) {
+                /* uniques can't be genocided but can become extinct;
+                   however, they're never reported as extinct, so skip them */
+                if (UniqCritterIndx(i))
+                    continue;
+                if (mvitals[i].mvflags & G_GONE) {
+                    Sprintf(buf, " %s", makeplural(mons[i].mname));
+                    /*
+                     * "Extinct" is unfortunate terminology.  A species
+                     * is marked extinct when its birth limit is reached,
+                     * but there might be members of the species still
+                     * alive, contradicting the meaning of the word.
+                     */
+                    if ((mvitals[i].mvflags & G_GONE) == G_EXTINCT)
                         Strcat(buf, " (extinct)");
                     putstr(klwin, 0, buf);
                 }
-
-            putstr(klwin, 0, "");
+            }
+            if (!dumping)
+                putstr(klwin, 0, "");
             if (ngenocided > 0) {
                 Sprintf(buf, "%d species genocided.", ngenocided);
                 putstr(klwin, 0, buf);
@@ -1690,6 +1721,10 @@ boolean ask;
             display_nhwindow(klwin, TRUE);
             destroy_nhwindow(klwin);
         }
+#ifdef DUMPLOG
+    } else if (dumping) {
+        putstr(0, 0, "No species were genocided or became extinct.");
+#endif
     }
 }
 
