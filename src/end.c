@@ -1523,7 +1523,6 @@ boolean ask;
     int ntypes = 0, max_lev = 0, nkilled, extinctioncount = 0;
     long total_killed = 0L;
     long total_120 = 0L;
-    char c;
     winid klwin;
     short mindx[NUMMONS];
     char c, buf[BUFSZ], buftoo[BUFSZ];
