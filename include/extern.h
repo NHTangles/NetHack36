@@ -792,6 +792,9 @@ E boolean FDECL(read_tribute, (const char *, const char *, int,
 E boolean FDECL(Death_quote, (char *, int));
 E void FDECL(livelog_write_string, (unsigned char, char *));
 E void VDECL(livelog_printf, (unsigned char, const char *, ...)) PRINTF_F(2, 3); 
+#ifdef EXTRAINFO_FN
+E void NDECL(mk_dgl_extrainfo);
+#endif
 
 /* ### fountain.c ### */
 
