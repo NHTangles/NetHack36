@@ -212,6 +212,7 @@ E void NDECL(end_of_input);
 #endif
 E char NDECL(readchar);
 E void NDECL(sanity_check);
+E char* FDECL(key2txt, (UCHAR_P, char *));
 E char FDECL(yn_function, (const char *, const char *, CHAR_P));
 E boolean FDECL(paranoid_query, (BOOLEAN_P, const char *));
 

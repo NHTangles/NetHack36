@@ -3118,6 +3118,30 @@ wiz_migrate_mons()
 }
 #endif
 
+/* returns the text for a one-byte encoding;
+ * must be shorter than a tab for proper formatting */
+char *
+key2txt(c, txt)
+uchar c;
+char *txt; /* sufficiently long buffer */
+{   
+    /* should probably switch to "SPC", "ESC", "RET"
+       since nethack's documentation uses ESC for <escape> */
+    if (c == ' ')
+        Sprintf(txt, "<space>");
+    else if (c == '\033')
+        Sprintf(txt, "<esc>");
+    else if (c == '\n')
+        Sprintf(txt, "<enter>");
+    else if (c == '\177')
+        Sprintf(txt, "<del>"); /* "<delete>" won't fit */
+    else
+        Strcpy(txt, visctrl((char) c));
+    return txt;
+}
+
+
+
 #define unctrl(c) ((c) <= C('z') ? (0x60 | (c)) : (c))
 #define unmeta(c) (0x7f & (c))
 
@@ -4224,19 +4248,36 @@ yn_function(query, resp, def)
 const char *query, *resp;
 char def;
 {
-    char qbuf[QBUFSZ];
+    char res, qbuf[QBUFSZ];
+#ifdef DUMPLOG
+    extern unsigned saved_pline_index; /* pline.c */
+    unsigned idx = saved_pline_index;
+    /* buffer to hold query+space+formatted_single_char_response */
+    char dumplog_buf[QBUFSZ + 1 + 15]; /* [QBUFSZ+1+7] should suffice */
+#endif
 
     iflags.last_msg = PLNMSG_UNKNOWN; /* most recent pline is clobbered */
 
     /* maximum acceptable length is QBUFSZ-1 */
-    if (strlen(query) < QBUFSZ)
-        return (*windowprocs.win_yn_function)(query, resp, def);
-
-    /* caller shouldn't have passed anything this long */
-    paniclog("Query truncated: ", query);
-    (void) strncpy(qbuf, query, QBUFSZ - 1 - 3);
-    Strcpy(&qbuf[QBUFSZ - 1 - 3], "...");
-    return (*windowprocs.win_yn_function)(qbuf, resp, def);
+    if (strlen(query) >= QBUFSZ) {
+        /* caller shouldn't have passed anything this long */
+        paniclog("Query truncated: ", query);
+        (void) strncpy(qbuf, query, QBUFSZ - 1 - 3);
+        Strcpy(&qbuf[QBUFSZ - 1 - 3], "...");
+        query = qbuf;
+    }
+    res = (*windowprocs.win_yn_function)(query, resp, def);
+#ifdef DUMPLOG
+    if (idx == saved_pline_index) {
+        /* when idx is still the same as saved_pline_index, the interface
+           didn't put the prompt into saved_plines[]; we put a simplified
+           version in there now (without response choices or default) */
+        Sprintf(dumplog_buf, "%s ", query);
+        (void) key2txt((uchar) res, eos(dumplog_buf));
+        dumplogmsg(dumplog_buf);
+    }
+#endif
+    return res;
 }
 
 /* for paranoid_confirm:quit,die,attack prompting */
