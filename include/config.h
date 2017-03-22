@@ -169,7 +169,7 @@
  *            Can force incubi/succubi behavior to be toned down to nymph-like:
  *              SEDUCE       (0 or 1 - runtime disable/enable SEDUCE option)
  *            Live-logging
- *              LIVELOG      (0-255 - bitmask for level/type of live-logging
+ *              LIVELOG      (0-0xFFFF - bitmask for level/type of live-logging
  *                            See comments in 'sysconf' for details)
  *            The following options pertain to crash reporting:
  *              GREPPATH     (the path to the system grep(1) utility)
@@ -211,7 +211,7 @@
 #define LIVELOGFILE "livelog" /* in-game events recorded live */
 #ifdef LIVELOGFILE
 /* LL_flags defined in global.h. Value below ignored if SYSCF is enabled */
-#define LIVELOG_DETAIL (LL_TRADITIONAL|LL_ACHIEVE|LL_UKILL|LL_DIVINEGIFT|LL_CONDUCT)
+#define LIVELOG_DETAIL 0xFF
 #endif
 #define NEWS     "news"     /* the file containing the latest hack news */
 #define PANICLOG "paniclog" /* log of panic and impossible events */
