@@ -2270,11 +2270,17 @@ int src;
                 free((genericptr_t) sysopt.debugfiles);
             sysopt.debugfiles = dupstr(bufp);
         }
-    } else if (src == SET_IN_SYS && match_varname(buf, "DUMPLOGFILE", 7)) {
+    } else if (src == SET_IN_SYS && match_varname(buf, "DUMPLOGFILE", 11)) {
 #ifdef DUMPLOG
         if (sysopt.dumplogfile)
             free((genericptr_t) sysopt.dumplogfile);
         sysopt.dumplogfile = dupstr(bufp);
+#endif
+    } else if (src == SET_IN_SYS && match_varname(buf, "DUMPLOGURL", 10)) {
+#ifdef DUMPLOG
+        if (sysopt.dumplogurl)
+            free((genericptr_t) sysopt.dumplogurl);
+        sysopt.dumplogurl = dupstr(bufp);
 #endif
     } else if (src == SET_IN_SYS && match_varname(buf, "GENERICUSERS", 12)) {
         if (sysopt.genericusers)

@@ -39,6 +39,7 @@ sys_early_init()
 #endif
 #ifdef DUMPLOG
     sysopt.dumplogfile = (char *) 0;
+    sysopt.dumplogurl = (char *) 0;
 #endif
     sysopt.env_dbgfl = 0; /* haven't checked getenv("DEBUGFILES") yet */
     sysopt.shellers = (char *) 0;
