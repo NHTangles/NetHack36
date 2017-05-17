@@ -1049,6 +1049,7 @@ int how;
         } else {
             killer.name[0] = 0;
             killer.format = 0;
+            livelog_write_string(LL_TRADITIONAL, "averted death");
             return;
         }
     }
@@ -1356,7 +1357,7 @@ int how;
 
         if (!done_stopprint)
             artifact_score(invent, FALSE, endwin); /* list artifacts */
-#if DUMPLOG
+#ifdef DUMPLOG
         dump_redirect(TRUE);
         artifact_score(invent, FALSE, 0);
         dump_redirect(FALSE);
