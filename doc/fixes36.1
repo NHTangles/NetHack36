@@ -382,6 +382,14 @@ removing a blindfold with 'A' took two turns, with 'R' (and 'T') only one,
 	and could result in a panic if the blindfold was stolen during removal
 cmdassist help for movement prefix followed by invalid direction was strange
 	when the direction was up, down, or self disallowed for that prefix
+poor message when shape-shifted vampire reverts to vampire if it has a name:
+	The Dracula suddenly transforms and rises as Dracula.
+poor message when shape-shifted vampire reverts if cause of 'death' was
+	disintegration or digestion and shifted form wasn't amorphous:
+	The vampire bat is disintegrated.  The vampire bat suddenly transforms
+	and rises as a vampire.  (fix: switch to existing alternate phrasing
+	used for amorphous form, "reconstitute" rather than "transform")
+adult green dragons and the Chromatic Dragon were blinded by gas clouds
 
 
 Fixes to Post-3.6.0 Problems that Were Exposed Via git Repository
@@ -422,6 +430,13 @@ humanoid pet could become hostile but still remain tame if it observed hero
 	attacking a peaceful creature
 minor ^X/enlightenment bugs: grammar when poly'd into '1 hit dice' critter,
 	missing punctuation for "You entered the dungeon N turns ago"
+when configured with DUMPLOG enabled, artifacts were counted twice towards
+	final score
+once Moloch's Sanctum (or Astral Plane via wizard mode level teleport direct
+	to end-game) was entered, end of game disclosure would reveal that
+	high priests had been incorrectly flagged as extinct
+attempting to name an item as an artifact and failing via hand slip violates
+	illiterate conduct
 
 
 Platform- and/or Interface-Specific Fixes
