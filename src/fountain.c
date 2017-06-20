@@ -394,7 +394,7 @@ register struct obj *obj;
             obj->oeroded = obj->oeroded2 = 0;
             obj->oerodeproof = TRUE;
             exercise(A_WIS, TRUE);
-	    livelog_write_string(LL_ARTIFACT, "had Excalibur thrown at them by some watery tart"); /* Monty Python and the Holy Grail ;) */
+	    livelog_printf(LL_ARTIFACT, "had Excalibur thrown at %s by some watery tart",uhim()); /* Monty Python and the Holy Grail ;) */
         }
         update_inventory();
         levl[u.ux][u.uy].typ = ROOM;
