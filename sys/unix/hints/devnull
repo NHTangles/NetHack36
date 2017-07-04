@@ -10,7 +10,7 @@
 # adapted from the "linux" hints file in the dist.
 
 
-PREFIX=/devnull
+PREFIX=/opt/devnull
 HACKDIR=$(PREFIX)/$(GAME)dir
 SHELLDIR = $(PREFIX)/bin
 INSTDIR=$(HACKDIR)
