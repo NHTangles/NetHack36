@@ -1,4 +1,4 @@
-/* NetHack 3.6	options.c	$NHDT-Date: 1470357737 2016/08/05 00:42:17 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.279 $ */
+/* NetHack 3.6	options.c	$NHDT-Date: 1498078876 2017/06/21 21:01:16 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.288 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -126,6 +126,7 @@ static struct Bool_Opt {
     { "flush", (boolean *) 0, FALSE, SET_IN_FILE },
 #endif
     { "fullscreen", &iflags.wc2_fullscreen, FALSE, SET_IN_FILE },
+    { "goldX", &iflags.goldX, FALSE, SET_IN_GAME },
     { "help", &flags.help, TRUE, SET_IN_GAME },
     { "hilite_pet", &iflags.wc_hilite_pet, FALSE, SET_IN_GAME }, /*WC*/
     { "hilite_pile", &iflags.hilite_pile, FALSE, SET_IN_GAME },
@@ -265,7 +266,7 @@ static struct Comp_Opt {
     { "altkeyhandler", "alternate key handler", 20, DISP_IN_GAME },
 #ifdef BACKWARD_COMPAT
     { "boulder", "deprecated (use S_boulder in sym file instead)", 1,
-      SET_IN_FILE },
+      SET_IN_GAME },
 #endif
     { "catname", "the name of your (first) cat (e.g., catname:Tabby)",
       PL_PSIZ, DISP_IN_GAME },
@@ -2340,32 +2341,32 @@ boolean tinitial, tfrom_file;
             return;
         if (!initial) {
             struct fruit *f;
+            int fnum = 0;
 
-            num = 0;
-            for (f = ffruit; f; f = f->nextf) {
-                if (!strcmp(op, f->fname))
-                    break;
-                num++;
-            }
-            if (!flags.made_fruit) {
-                for (forig = ffruit; forig; forig = forig->nextf) {
-                    if (!strcmp(pl_fruit, forig->fname)) {
-                        break;
-                    }
+            /* count number of named fruits; if 'op' is found among them,
+               then the count doesn't matter because we won't be adding it */
+            f = fruit_from_name(op, FALSE, &fnum);
+            if (!f) {
+                if (!flags.made_fruit)
+                    forig = fruit_from_name(pl_fruit, FALSE, (int *) 0);
+
+                if (!forig && fnum >= 100) {
+                    pline("Doing that so many times isn't very fruitful.");
+                    return;
                 }
-            }
-            if (!forig && num >= 100) {
-                pline("Doing that so many times isn't very fruitful.");
-                return;
             }
         }
     goodfruit:
         nmcpy(pl_fruit, op, PL_FSIZ);
         sanitize_name(pl_fruit);
-        /* OBJ_NAME(objects[SLIME_MOLD]) won't work after initialization */
+        /* OBJ_NAME(objects[SLIME_MOLD]) won't work for this after
+           initialization; it gets changed to generic "fruit" */
         if (!*pl_fruit)
             nmcpy(pl_fruit, "slime mold", PL_FSIZ);
         if (!initial) {
+            /* if 'forig' is nonNull, we replace it rather than add
+               a new fruit; it can only be nonNull if no fruits have
+               been created since the previous name was put in place */
             (void) fruitadd(pl_fruit, forig);
             pline("Fruit is now \"%s\".", pl_fruit);
         }
@@ -2441,8 +2442,12 @@ boolean tinitial, tfrom_file;
              */
             iflags.bouldersym = (uchar) opts[0];
         }
-        if (!initial)
+        /* for 'initial', update_bouldersym() is done in initoptions_finish(),
+           after all symset options have been processed */
+        if (!initial) {
+            update_bouldersym();
             need_redraw = TRUE;
+        }
         return;
     }
 #endif
@@ -2585,7 +2590,7 @@ boolean tinitial, tfrom_file;
                     op = pp + 1;
                 else
                     break; /* no next token */
-            }              /* for(;;) */
+            } /* for(;;) */
         }
         return;
     }
@@ -3497,7 +3502,8 @@ char* bindings;
     }
 
     /* parse a single binding: first split around : */
-    if (! (bind = index(bindings, ':'))) return; /* it's not a binding */
+    if (! (bind = index(bindings, ':')))
+        return; /* it's not a binding */
     *bind++ = 0;
 
     /* read the key to be bound */
@@ -4691,7 +4697,8 @@ boolean setinitial, setfromfile;
                 }
                 sl = sl->next;
             }
-            Sprintf(buf, "Select %ssymbol set:", rogueflag ? "rogue level " : "");
+            Sprintf(buf, "Select %ssymbol set:",
+                    rogueflag ? "rogue level " : "");
             end_menu(tmpwin, buf);
             if (select_menu(tmpwin, PICK_ONE, &symset_pick) > 0) {
                 chosen = symset_pick->item.a_int - 2;
@@ -5335,7 +5342,8 @@ register char *opts;
 
     if ((op = index(opts, ',')) != 0) {
         *op++ = 0;
-        if (!parsesymbols(op)) return FALSE;
+        if (!parsesymbols(op))
+            return FALSE;
     }
 
     /* S_sample:string */
@@ -5566,7 +5574,6 @@ struct fruit *replace_fruit;
         /* disallow naming after other foods (since it'd be impossible
          * to tell the difference)
          */
-
         for (i = bases[FOOD_CLASS]; objects[i].oc_class == FOOD_CLASS; i++) {
             if (!strcmp(OBJ_NAME(objects[i]), pl_fruit)) {
                 found = TRUE;
@@ -5576,15 +5583,15 @@ struct fruit *replace_fruit;
         {
             char *c;
 
-            c = pl_fruit;
-
             for (c = pl_fruit; *c >= '0' && *c <= '9'; c++)
-                ;
+                continue;
             if (isspace((uchar) *c) || *c == 0)
                 numeric = TRUE;
         }
-        if (found || numeric || !strncmp(str, "cursed ", 7)
-            || !strncmp(str, "uncursed ", 9) || !strncmp(str, "blessed ", 8)
+        if (found || numeric
+            || !strncmp(str, "cursed ", 7)
+            || !strncmp(str, "uncursed ", 9)
+            || !strncmp(str, "blessed ", 8)
             || !strncmp(str, "partly eaten ", 13)
             || (!strncmp(str, "tin of ", 7)
                 && (!strcmp(str + 7, "spinach")
@@ -5607,42 +5614,39 @@ struct fruit *replace_fruit;
          */
         flags.made_fruit = FALSE;
         if (replace_fruit) {
-            for (f = ffruit; f; f = f->nextf) {
-                if (f == replace_fruit) {
-                    copynchars(f->fname, str, PL_FSIZ - 1);
-                    goto nonew;
-                }
-            }
+            /* replace_fruit is already part of the fruit chain;
+               update it in place rather than looking it up again */
+            f = replace_fruit;
+            copynchars(f->fname, str, PL_FSIZ - 1);
+            goto nonew;
         }
     } else {
         /* not user_supplied, so assumed to be from bones */
         copynchars(altname, str, PL_FSIZ - 1);
         sanitize_name(altname);
         flags.made_fruit = TRUE; /* for safety.  Any fruit name added from a
-                                    bones level should exist anyway. */
+                                  * bones level should exist anyway. */
     }
-    for (f = ffruit; f; f = f->nextf) {
-        if (f->fid > highest_fruit_id)
-            highest_fruit_id = f->fid;
-        if (!strncmp(str, f->fname, PL_FSIZ - 1)
-            || (*altname && !strcmp(altname, f->fname)))
-            goto nonew;
-    }
-    /* if adding another fruit would overflow spe, use a random
-       fruit instead... we've got a lot to choose from.
+    f = fruit_from_name(*altname ? altname : str, FALSE, &highest_fruit_id);
+    if (f)
+        goto nonew;
+
+    /* Maximum number of named fruits is 127, even if obj->spe can
+       handle bigger values.  If adding another fruit would overflow,
+       use a random fruit instead... we've got a lot to choose from.
        current_fruit remains as is. */
     if (highest_fruit_id >= 127)
         return rnd(127);
 
     f = newfruit();
-    (void) memset((genericptr_t)f, 0, sizeof(struct fruit));
+    (void) memset((genericptr_t) f, 0, sizeof (struct fruit));
     copynchars(f->fname, *altname ? altname : str, PL_FSIZ - 1);
     f->fid = ++highest_fruit_id;
     /* we used to go out of our way to add it at the end of the list,
        but the order is arbitrary so use simpler insertion at start */
     f->nextf = ffruit;
     ffruit = f;
-nonew:
+ nonew:
     if (user_specified)
         context.current_fruit = f->fid;
     return f->fid;

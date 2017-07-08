@@ -379,7 +379,9 @@ levitation vs encumbrance message sequencing issues:  putting on boots of
 	and float-up messages, taking off such boots didn't report increase
 	of encumbrance until player took another action
 removing a blindfold with 'A' took two turns, with 'R' (and 'T') only one,
-	and could result in a panic if the blindfold was stolen during removal
+	and could result in a crash if the blindfold was stolen during removal
+removing a blindfold and wielded weapon with 'A' could result in crash if the
+	weapon was destroyed by various methods
 cmdassist help for movement prefix followed by invalid direction was strange
 	when the direction was up, down, or self disallowed for that prefix
 poor message when shape-shifted vampire reverts to vampire if it has a name:
@@ -389,7 +391,20 @@ poor message when shape-shifted vampire reverts if cause of 'death' was
 	The vampire bat is disintegrated.  The vampire bat suddenly transforms
 	and rises as a vampire.  (fix: switch to existing alternate phrasing
 	used for amorphous form, "reconstitute" rather than "transform")
+poor message when named vampire shifts shape within view:
+	You observe a Dracula where a Dracula was.
+vampire shifting into fog cloud to pass under door "oozed" rather than "flowed"
 adult green dragons and the Chromatic Dragon were blinded by gas clouds
+named floating eye (when hit by another monster with reflection) or named
+	silver weapon (when hero hits silver-hating monster) could disrupt
+	message formatting and conceivably trigger crash if name had '%' in it
+fix "you feel like a new man" if female human hero's polymorph attempt failed
+	while in human form (when already poly'd, "new woman" correctly shown)
+fix the 'A' command to have the 'D' command's fix for C331-1 (quirk for
+	menustyle:Combination; if user included 'a' in "which object classes?"
+	response, to operate on applicable all items, there would still be a
+	followup menu asking to choose specific items)
+eating 1 tin from stack of N (for N >= 2) on shop's floor forced hero to buy 2
 
 
 Fixes to Post-3.6.0 Problems that Were Exposed Via git Repository
@@ -437,6 +452,9 @@ once Moloch's Sanctum (or Astral Plane via wizard mode level teleport direct
 	high priests had been incorrectly flagged as extinct
 attempting to name an item as an artifact and failing via hand slip violates
 	illiterate conduct
+crashes for 'A' above were downgraded to impossible "cursed without otmp"
+wizhelp: ^O is #overview in wizard mode too; #wizwhere shows dungeon layout
+wishing for tins sometimes yielded a tin wand
 
 
 Platform- and/or Interface-Specific Fixes
@@ -476,6 +494,9 @@ unix: Makefile.{src,utl} ignored CPPFLAGS which is expanded by the default .c
 win32gui: getversionstring() was overflowing the provided Help About buffer
 win32gui: guard against buffer overflow in in mswin_getlin()
 win32gui: handle menu_color attribute
+win32gui: name-from-discoveries list menu selector characters were punctuation
+	instead of letters, repeated for each class; caused by the core bug
+	of erroneously specifying space as a selector for class header lines
 MacOSX: initial binary release was built from out of date source code that
 	had 'BETA' and 'DEBUG' inappropriately enabled
 MacOSX: force TIMED_DELAY build option on so that 'runmode' run-time option
@@ -570,6 +591,13 @@ give feedback just before timed levitation runs out
 travel accepts 'm' (request menu) prefix
 pressing a or A when cursor positioning shows menu of "interesting" features
 wizard-mode command #wizmakemap to recreate the current level
+'goldX' boolean option to treat gold pieces as X (vs U) during BUCX filtering
+	(should be persistent but is reset each save/restore cycle in order
+	to avoid breaking 3.6.0 save files)
+for menustyle:Traditional and Combination, support BUCX filtering for item
+	pick-up and container put-in and take-out; also for object IDing
+for menustyle:Full and Traditional and Combination, support BUCX filtering
+	for the 'A' command
 
 
 Platform- and/or Interface-Specific New Features
