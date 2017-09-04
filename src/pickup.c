@@ -707,7 +707,7 @@ int what; /* should be a long */
 
         /* position may need updating (invisible hero) */
         if (n_picked)
-            newsym(u.ux, u.uy);
+            newsym_force(u.ux, u.uy);
 
         /* check if there's anything else here after auto-pickup is done */
         if (autopickup)
@@ -840,7 +840,7 @@ menu_item **pick_list;            /* return list of items picked */
 int how;                          /* type of query */
 boolean FDECL((*allow), (OBJ_P)); /* allow function */
 {
-    int i, n, actualn;
+    int i, n;
     winid win;
     struct obj *curr, *last, fake_hero_object, *olist = *olist_p;
     char *pack;
@@ -859,7 +859,6 @@ boolean FDECL((*allow), (OBJ_P)); /* allow function */
             last = curr;
             n++;
         }
-    actualn = n;
     if (engulfer) {
         ++n;
         /* don't autoselect swallowed hero if it's the only choice */

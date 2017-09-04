@@ -233,7 +233,7 @@ static struct Bool_Opt {
     { "vt_tiledata", (boolean *) 0, FALSE, SET_IN_FILE },
 #endif
     { "whatis_menu", &iflags.getloc_usemenu, FALSE, SET_IN_GAME },
-    { "whatis_inview", &iflags.getloc_limitview, FALSE, SET_IN_GAME },
+    { "whatis_moveskip", &iflags.getloc_moveskip, FALSE, SET_IN_GAME },
     { "wizweight", &iflags.wizweight, FALSE, SET_IN_WIZGAME },
     { "wraptext", &iflags.wc2_wraptext, FALSE, SET_IN_GAME },
 #ifdef ZEROCOMP
@@ -403,6 +403,8 @@ static struct Comp_Opt {
 #endif
     { "whatis_coord", "show coordinates when auto-describing cursor position",
       1, SET_IN_GAME },
+    { "whatis_filter", "filter coordinate locations when targeting next or previous",
+            1, SET_IN_GAME },
     { "windowcolors", "the foreground/background colors of windows", /*WC*/
       80, DISP_IN_GAME },
     { "windowtype", "windowing system to use", WINTYPELEN, DISP_IN_GAME },
@@ -483,7 +485,7 @@ static const menu_cmd_t default_menu_cmd_info[] = {
  { "menu_previous_page", MENU_PREVIOUS_PAGE, "Go to previous page" },
  { "menu_select_all", MENU_SELECT_ALL, "Select all items" },
  { "menu_deselect_all", MENU_UNSELECT_ALL, "Unselect all items" },
- { "menu_invert_all", MENU_INVERT_ALL, "Insert selection" },
+ { "menu_invert_all", MENU_INVERT_ALL, "Invert selection" },
  { "menu_select_page", MENU_SELECT_PAGE, "Select items in current page" },
  { "menu_deselect_page", MENU_UNSELECT_PAGE, "Unselect items in current page" },
  { "menu_invert_page", MENU_INVERT_PAGE, "Invert current page selection" },
@@ -639,7 +641,7 @@ initoptions()
     /* ... and _must_ parse correctly. */
     if (!read_config_file(SYSCF_FILE, SET_IN_SYS)) {
         raw_printf("Error(s) found in SYSCF_FILE, quitting.");
-        terminate(EXIT_FAILURE);
+        nh_terminate(EXIT_FAILURE);
     }
     /*
      * TODO [maybe]: parse the sysopt entries which are space-separated
@@ -2379,7 +2381,7 @@ boolean tinitial, tfrom_file;
     }
 
     fullname = "whatis_coord";
-    if (match_optname(opts, fullname, 6, TRUE)) {
+    if (match_optname(opts, fullname, 8, TRUE)) {
         if (duplicate)
             complain_about_duplicate(opts, 1);
         if (negated) {
@@ -2395,6 +2397,33 @@ boolean tinitial, tfrom_file;
                 iflags.getpos_coords = c;
             else
                 badoption(opts);
+        }
+        return;
+    }
+
+    fullname = "whatis_filter";
+    if (match_optname(opts, fullname, 8, TRUE)) {
+        if (duplicate)
+            complain_about_duplicate(opts, 1);
+        if (negated) {
+            iflags.getloc_filter = GFILTER_NONE;
+            return;
+        } else if ((op = string_for_env_opt(fullname, opts, FALSE)) != 0) {
+            char c = lowc(*op);
+
+            switch (c) {
+            case 'n':
+                iflags.getloc_filter = GFILTER_NONE;
+                break;
+            case 'v':
+                iflags.getloc_filter = GFILTER_VIEW;
+                break;
+            case 'a':
+                iflags.getloc_filter = GFILTER_AREA;
+                break;
+            default:
+                badoption(opts);
+            }
         }
         return;
     }
@@ -4283,6 +4312,37 @@ boolean setinitial, setfromfile;
             free((genericptr_t) window_pick);
         }
         destroy_nhwindow(tmpwin);
+    } else if (!strcmp("whatis_filter", optname)) {
+        menu_item *window_pick = (menu_item *) 0;
+        int pick_cnt;
+        char gf = iflags.getloc_filter;
+
+        tmpwin = create_nhwindow(NHW_MENU);
+        start_menu(tmpwin);
+        any = zeroany;
+        any.a_char = (GFILTER_NONE + 1);
+        add_menu(tmpwin, NO_GLYPH, &any, 'n',
+                 0, ATR_NONE, "no filtering",
+                 (gf == GFILTER_NONE) ? MENU_SELECTED : MENU_UNSELECTED);
+        any.a_char = (GFILTER_VIEW + 1);
+        add_menu(tmpwin, NO_GLYPH, &any, 'v',
+                 0, ATR_NONE, "in view only",
+                 (gf == GFILTER_VIEW) ? MENU_SELECTED : MENU_UNSELECTED);
+        any.a_char = (GFILTER_AREA + 1);
+        add_menu(tmpwin, NO_GLYPH, &any, 'a',
+                 0, ATR_NONE, "in same area",
+                 (gf == GFILTER_AREA) ? MENU_SELECTED : MENU_UNSELECTED);
+        end_menu(tmpwin,
+            "Select location filtering when going for next/previous map position:");
+        if ((pick_cnt = select_menu(tmpwin, PICK_ONE, &window_pick)) > 0) {
+            iflags.getloc_filter = (window_pick[0].item.a_char - 1);
+            /* PICK_ONE doesn't unselect preselected entry when
+               selecting another one */
+            if (pick_cnt > 1 && iflags.getloc_filter == gf)
+                iflags.getloc_filter = (window_pick[1].item.a_char - 1);
+            free((genericptr_t) window_pick);
+        }
+        destroy_nhwindow(tmpwin);
     } else if (!strcmp("msg_window", optname)) {
 #ifdef TTY_GRAPHICS
         /* by Christian W. Cooper */
@@ -5056,6 +5116,11 @@ char *buf;
                 : (iflags.getpos_coords == GPCOORDS_COMPASS) ? "compass"
                 : (iflags.getpos_coords == GPCOORDS_COMFULL) ? "full compass"
                 : (iflags.getpos_coords == GPCOORDS_SCREEN) ? "screen"
+                : "none");
+    } else if (!strcmp(optname, "whatis_filter")) {
+        Sprintf(buf, "%s",
+                (iflags.getloc_filter == GFILTER_VIEW) ? "view"
+                : (iflags.getloc_filter == GFILTER_AREA) ? "area"
                 : "none");
     } else if (!strcmp(optname, "scores")) {
         Sprintf(buf, "%d top/%d around%s", flags.end_top, flags.end_around,

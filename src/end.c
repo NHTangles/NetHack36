@@ -1459,7 +1459,7 @@ int how;
         raw_print("");
     }
     livelog_dump_url(LL_DUMP_ALL|(how == ASCENDED ? LL_DUMP_ASC : 0));
-    terminate(EXIT_SUCCESS);
+    nh_terminate(EXIT_SUCCESS);
 }
 
 void
@@ -1534,7 +1534,7 @@ boolean identified, all_containers, reportempty;
 
 /* should be called with either EXIT_SUCCESS or EXIT_FAILURE */
 void
-terminate(status)
+nh_terminate(status)
 int status;
 {
     program_state.in_moveloop = 0; /* won't be returning to normal play */
@@ -1551,7 +1551,7 @@ int status;
 #ifdef VMS
     /*
      *  This is liable to draw a warning if compiled with gcc, but it's
-     *  more important to flag panic() -> really_done() -> terminate()
+     *  more important to flag panic() -> really_done() -> nh_terminate()
      *  as __noreturn__ then to avoid the warning.
      */
     /* don't call exit() if already executing within an exit handler;

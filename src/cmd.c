@@ -1189,7 +1189,12 @@ wiz_intrinsic(VOID_ARGS)
                 add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE, "--", FALSE);
             }
             any.a_int = i + 1; /* +1: avoid 0 */
-            add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE, propname, FALSE);
+            oldtimeout = u.uprops[p].intrinsic & TIMEOUT;
+            if (oldtimeout)
+                Sprintf(buf, "%-27s [%li]", propname, oldtimeout);
+            else
+                Sprintf(buf, "%s", propname);
+            add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
         }
         end_menu(win, "Which intrinsics?");
         n = select_menu(win, PICK_ANY, &pick_list);
@@ -3738,10 +3743,13 @@ struct {
     { NHKF_GETPOS_DOOR_PREV, 'D', "getpos.door.prev" },
     { NHKF_GETPOS_UNEX_NEXT, 'x', "getpos.unexplored.next" },
     { NHKF_GETPOS_UNEX_PREV, 'X', "getpos.unexplored.prev" },
+    { NHKF_GETPOS_VALID_NEXT, 'z', "getpos.valid.next" },
+    { NHKF_GETPOS_VALID_PREV, 'Z', "getpos.valid.prev" },
     { NHKF_GETPOS_INTERESTING_NEXT, 'a', "getpos.all.next" },
     { NHKF_GETPOS_INTERESTING_PREV, 'A', "getpos.all.prev" },
     { NHKF_GETPOS_HELP,      '?', "getpos.help" },
-    { NHKF_GETPOS_LIMITVIEW, '"', "getpos.inview" },
+    { NHKF_GETPOS_LIMITVIEW, '"', "getpos.filter" },
+    { NHKF_GETPOS_MOVESKIP,  '*', "getpos.moveskip" },
     { NHKF_GETPOS_MENU,      '!', "getpos.menu" }
 };
 
@@ -4957,7 +4965,7 @@ end_of_input()
     if (iflags.window_inited)
         exit_nhwindows((char *) 0);
     clearlocks();
-    terminate(EXIT_SUCCESS);
+    nh_terminate(EXIT_SUCCESS);
     /*NOTREACHED*/ /* not necessarily true for vms... */
     return;
 }
@@ -5030,10 +5038,14 @@ dotravel(VOID_ARGS)
     }
     iflags.getloc_travelmode = TRUE;
     if (iflags.menu_requested) {
-        if (!getpos_menu(&cc, TRUE, GLOC_INTERESTING)) {
+        int gf = iflags.getloc_filter;
+        iflags.getloc_filter = GFILTER_VIEW;
+        if (!getpos_menu(&cc, GLOC_INTERESTING)) {
+            iflags.getloc_filter = gf;
             iflags.getloc_travelmode = FALSE;
             return 0;
         }
+        iflags.getloc_filter = gf;
     } else {
         pline("Where do you want to travel to?");
         if (getpos(&cc, TRUE, "the desired destination") < 0) {
