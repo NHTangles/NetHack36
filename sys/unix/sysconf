@@ -19,7 +19,7 @@ WIZARDS=nhadmin
 # Which users can use explore mode (aka discover mode; accessed via '-X'
 # command line flag or OPTIONS=playmode:explore in runtime options file or
 # via '#exploremode' command during normal play).  Same syntax as WIZARDS.
-EXPLORERS=nhadmin
+#EXPLORERS=nhadmin
 
 # Users allowed to use the '!' (shell escape) and '^Z' (suspend process)
 # commands to temporarily leave the game and enter a shell process.
@@ -39,7 +39,7 @@ MAXPLAYERS=25
 
 # If not null, added to string "To get local support, " in the support
 # information help.
-SUPPORT=contact the tournament administrators at tournament@devnull.org
+SUPPORT=contact K2 or Tangles in \#hardfought on the freenode irc network
 
 # If not null, displayed at the end of a panic-save sequence.
 #RECOVER=Run the recover program.

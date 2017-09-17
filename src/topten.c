@@ -74,9 +74,6 @@ STATIC_DCL void FDECL(writexlentry, (FILE *, struct toptenentry *));
 STATIC_DCL long NDECL(encodexlogflags);
 STATIC_DCL long NDECL(encodeconduct);
 STATIC_DCL long NDECL(encodeachieve);
-//BEGIN TOURNAMENT CODE
-STATIC_DCL void FDECL(postentry, (FILE *,struct toptenentry *));
-//END TOURNAMENT CODE
 STATIC_DCL void FDECL(free_ttlist, (struct toptenentry *));
 STATIC_DCL int FDECL(classmon, (char *, BOOLEAN_P));
 STATIC_DCL int FDECL(score_wanted, (BOOLEAN_P, int, struct toptenentry *, int,
@@ -367,62 +364,6 @@ struct toptenentry *tt;
 #undef XLOG_SEP
 }
 
-//BEGIN TOURNAMENT CODE
-STATIC_OVL void
-postentry(rfile,tt)
-FILE *rfile;
-struct toptenentry *tt;
-{
-    char            deathscript_path[255];
-    char            tournament_out[1024];
-    struct passwd   *NH_passwd;
-    int             pid, status;
-
-    sprintf(tournament_out, "DEATH: ");
-
-#ifdef NO_SCAN_BRACK
-    sprintf(tournament_out,"%s%d %d %d %ld %d %d %d %d %d %d %ld %ld %d ",
-#else
-    sprintf(tournament_out,"%s%d.%d.%d %ld %d %d %d %d %d %d %ld %ld %d ",
-#endif
-            tournament_out,
-            tt->ver_major, tt->ver_minor, tt->patchlevel,
-            tt->points, tt->deathdnum, tt->deathlev,
-            tt->maxlvl, tt->hp, tt->maxhp, tt->deaths,
-            tt->deathdate, tt->birthdate, tt->uid);
-    if (tt->ver_major < 3 || (tt->ver_major == 3 && tt->ver_minor < 3))
-#ifdef NO_SCAN_BRACK
-        sprintf(tournament_out,"%s%c%c %s %s\n",
-#else
-        sprintf(tournament_out,"%s%c%c %s,%s\n",
-#endif
-                tournament_out,
-                tt->plrole[0], tt->plgend[0],
-                onlyspace(tt->name) ? "_" : tt->name, tt->death);
-    else
-#ifdef NO_SCAN_BRACK
-        sprintf(tournament_out,"%s%s %s %s %s %s %s\n",
-#else
-        sprintf(tournament_out,"%s%s %s %s %s %s,%s\n",
-#endif
-                tournament_out,
-                tt->plrole, tt->plrace, tt->plgend, tt->plalign,
-                onlyspace(tt->name) ? "_" : tt->name, tt->death);
-
-    NH_passwd = getpwnam("nhadmin");
-
-    sprintf(deathscript_path, "%s/bin/death.pl", NH_passwd->pw_dir);
-
-    if(fork()) {
-        //parent; waiting
-        pid = wait(&status);
-    } else {
-        //child; running script
-        execl(deathscript_path, "death.pl", tournament_out, NULL);
-        exit(0);
-    }
-}
-//END TOURNAMENT CODE
 
 STATIC_OVL long
 encodexlogflags()
@@ -611,9 +552,6 @@ time_t when;
             HUP raw_print("Cannot open log file!");
         } else {
             writeentry(lfile, t0);
-//BEGIN TOURNAMENT CODE
-            postentry(lfile, t0);
-//END TOURNAMENT CODE
             (void) fclose(lfile);
         }
         unlock_file(LOGFILE);

@@ -227,14 +227,11 @@ boolean force;      /* Quietly force this animal */
     char            Joust_ignore[255];
     char            Joust_accept[255];
     char            Joust_success[255];
-    struct passwd   *NH_passwd;
 
     if(!u.joustchallenge_ignore) {
-        NH_passwd = getpwnam("nhadmin");
-
-        sprintf(Joust_ignore, "%s/challenge/Joust-%s-ignore", NH_passwd->pw_dir, plname);
-        sprintf(Joust_accept, "%s/challenge/Joust-%s-accept", NH_passwd->pw_dir, plname);
-        sprintf(Joust_success, "%s/challenge/Joust-%s-success", NH_passwd->pw_dir, plname);
+        sprintf(Joust_ignore, "%s/challenge/Joust-%s-ignore", DEVNULL_PFX, plname);
+        sprintf(Joust_accept, "%s/challenge/Joust-%s-accept", DEVNULL_PFX, plname);
+        sprintf(Joust_success, "%s/challenge/Joust-%s-success", DEVNULL_PFX, plname);
 
         Joust_flag = fopen(Joust_ignore, "r");
         if(NULL == Joust_flag) {

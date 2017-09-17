@@ -3253,14 +3253,11 @@ register char *cmd;
             char            grue_ignore[255];
             char            grue_accept[255];
             char            grue_success[255];
-            struct passwd   *NH_passwd;
             char            gruebuf[BUFSZ];
 
-            NH_passwd = getpwnam("nhadmin");
-
-            sprintf(grue_ignore, "%s/challenge/Grue-%s-ignore", NH_passwd->pw_dir, plname);
-            sprintf(grue_accept, "%s/challenge/Grue-%s-accept", NH_passwd->pw_dir, plname);
-            sprintf(grue_success, "%s/challenge/Grue-%s-success", NH_passwd->pw_dir, plname);
+            sprintf(grue_ignore, "%s/challenge/Grue-%s-ignore", DEVNULL_PFX, plname);
+            sprintf(grue_accept, "%s/challenge/Grue-%s-accept", DEVNULL_PFX, plname);
+            sprintf(grue_success, "%s/challenge/Grue-%s-success", DEVNULL_PFX, plname);
 
             grue_flag = fopen(grue_ignore, "r");
             if(NULL == grue_flag) {

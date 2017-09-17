@@ -15,6 +15,9 @@
 
 #define UNIX /* delete if no fork(), exec() available */
 
+/* for running devnull challenges from dgamelaunch */
+#define DEVNULL_PFX "/dgldir/devnull"
+
 /* #define MSDOS */ /* in case it's not auto-detected */
 
 /* #define OS2 */ /* define for OS/2 */
@@ -48,7 +51,7 @@
 /* #define GNOME_GRAPHICS */ /* Gnome interface */
 /* #define MSWIN_GRAPHICS */ /* Windows NT, CE, Graphics */
 
-/* #define VTILES /* TTY-based tiles, from 3.4.3 devnull patchset */
+/* #define VTILES */ /* TTY-based tiles, from 3.4.3 devnull patchset */
 
 /*
  * Define the default window system.  This should be one that is compiled
@@ -443,9 +446,9 @@ typedef unsigned char uchar;
  * bugs left here.
  */
 
-#define STATUS_VIA_WINDOWPORT */ /* re-work of the status line
+#define STATUS_VIA_WINDOWPORT  /* re-work of the status line
                                        updating process */
-#define STATUS_HILITES */        /* support hilites of status fields */
+#define STATUS_HILITES        /* support hilites of status fields */
 
 /* #define WINCHAIN */              /* stacked window systems */
 

@@ -2334,7 +2334,6 @@ doeat()
     char            PacMan_ignore[255];
     char            PacMan_accept[255];
     char            PacMan_success[255];
-    struct passwd   *NH_passwd;
 //END PACMAN CHALLENGE CODE
 
     if (Strangled) {
@@ -2348,11 +2347,10 @@ doeat()
 
 //BEGIN PACMAN CHALLENGE CODE
     if(!u.pacmanchallenge_ignore) {
-        NH_passwd = getpwnam("nhadmin");
 
-        sprintf(PacMan_ignore, "%s/challenge/PacMan-%s-ignore", NH_passwd->pw_dir, plname);
-        sprintf(PacMan_accept, "%s/challenge/PacMan-%s-accept", NH_passwd->pw_dir, plname);
-        sprintf(PacMan_success, "%s/challenge/PacMan-%s-success", NH_passwd->pw_dir, plname);
+        sprintf(PacMan_ignore, "%s/challenge/PacMan-%s-ignore", DEVNULL_PFX, plname);
+        sprintf(PacMan_accept, "%s/challenge/PacMan-%s-accept", DEVNULL_PFX, plname);
+        sprintf(PacMan_success, "%s/challenge/PacMan-%s-success", DEVNULL_PFX, plname);
 
         PacMan_flag = fopen(PacMan_ignore, "r");
         if(((otmp->otyp == APPLE) || (otmp->otyp == ORANGE)

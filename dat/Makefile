@@ -1,0 +1,237 @@
+#
+# This file is generated automatically.  Do not edit.
+# Your changes will be lost.  See sys/unix/NewInstall.unx.
+# Identify this file:
+MAKEFILE_DAT=1
+
+###
+### Start hints/devnull PRE
+###
+# (new segment at source line 6 )
+# hints file for devnull game server.
+# target environment is a debian "jessie" docker container.
+# hackdir is /devnull/nethackdir
+# adapted from the "linux" hints file in the dist.
+
+
+PREFIX=/opt/devnull
+HACKDIR=$(PREFIX)/$(GAME)dir
+SHELLDIR = $(PREFIX)/bin
+INSTDIR=$(HACKDIR)
+VARDIR = $(HACKDIR)
+
+
+
+POSTINSTALL=cp -n sys/unix/sysconf $(INSTDIR)/sysconf; $(CHOWN) $(GAMEUID) $(INSTDIR)/sysconf; $(CHGRP) $(GAMEGRP) $(INSTDIR)/sysconf; chmod $(VARFILEPERM) $(INSTDIR)/sysconf;
+
+CFLAGS=-g -O -I../include -DNOTPARMDECL $(CFLAGS1) -DDLB -DLINUX
+CFLAGS1=-DCOMPRESS=\"/bin/gzip\" -DCOMPRESS_EXTENSION=\".gz\"
+CFLAGS+=-DSYSCF -DSYSCF_FILE=\"$(HACKDIR)/sysconf\" -DSECURE
+CFLAGS+=-DHACKDIR=\"$(HACKDIR)\"
+
+LINK=$(CC)
+# Only needed for GLIBC stack trace:
+LFLAGS=-rdynamic
+
+WINSRC = $(WINTTYSRC)
+WINOBJ = $(WINTTYOBJ)
+WINLIB = $(WINTTYLIB)
+
+WINTTYLIB=-lcurses
+
+CHOWN=chown
+CHGRP=chgrp
+
+GAMEUID  = nethack
+GAMEGRP  = nethack
+
+# Permissions - some places use setgid instead of setuid, for instance
+# See also the option "SECURE" in include/config.h
+GAMEPERM = 06755
+FILEPERM = 0644
+VARFILEPERM = 0664
+EXEPERM  = 0755
+DIRPERM  = 0755
+VARDIRPERM = 0755
+
+
+### End hints/devnull PRE
+
+###
+### Start Makefile.dat
+###
+#	NetHack Makefile.
+# NetHack 3.6  Makefile.dat	$NHDT-Date: 1447844574 2015/11/18 11:02:54 $  $NHDT-Branch: master $:$NHDT-Revision: 1.18 $
+
+# Root of source tree:
+NHSROOT=..
+
+# for Atari
+# SHELL=E:/GEMINI2/MUPFEL.TTP
+# UUDECODE=uudecode
+
+VARDAT = bogusmon data engrave epitaph rumors quest.dat oracles options
+
+all:	$(VARDAT) spec_levs quest_levs dungeon
+
+../util/makedefs:
+	(cd ../util ; $(MAKE) makedefs)
+
+../util/dgn_comp:
+	(cd ../util ; $(MAKE) dgn_comp)
+
+../util/lev_comp:
+	(cd ../util ; $(MAKE) lev_comp)
+
+../util/tile2x11:
+	(cd ../util ; $(MAKE) tile2x11)
+
+../util/tile2beos:
+	(cd ../util ; $(MAKE) tile2beos)
+
+../util/tile2bmp:
+	(cd ../util ; $(MAKE) tile2bmp)
+
+x11tiles: ../util/tile2x11 ../win/share/monsters.txt ../win/share/objects.txt \
+				../win/share/other.txt
+	../util/tile2x11 ../win/share/monsters.txt ../win/share/objects.txt \
+				../win/share/other.txt
+
+beostiles: ../util/tile2beos ../win/share/monsters.txt \
+				../win/share/objects.txt \
+				../win/share/other.txt
+	../util/tile2beos ../win/share/monsters.txt \
+				../win/share/objects.txt \
+				../win/share/other.txt
+
+nhtiles.bmp: ../util/tile2bmp ../win/share/monsters.txt \
+				../win/share/objects.txt \
+				../win/share/other.txt
+	../util/tile2bmp $@
+
+NetHack.ad: ../win/X11/NetHack.ad
+	cp ../win/X11/NetHack.ad NetHack.ad
+
+pet_mark.xbm: ../win/X11/pet_mark.xbm
+	cp ../win/X11/pet_mark.xbm pet_mark.xbm
+
+pilemark.xbm: ../win/X11/pilemark.xbm
+	cp ../win/X11/pilemark.xbm pilemark.xbm
+
+rip.xpm: ../win/X11/rip.xpm
+	cp ../win/X11/rip.xpm rip.xpm
+
+mapbg.xpm: ../win/gnome/mapbg.xpm
+	cp ../win/gnome/mapbg.xpm mapbg.xpm
+
+nhsplash.xpm: ../win/Qt/nhsplash.xpm
+	cp ../win/Qt/nhsplash.xpm nhsplash.xpm
+
+nethack.icns: ../win/Qt/nhicns.uu
+	$(UUDECODE) ../win/Qt/nhicns.uu
+
+Info.plist: ../win/Qt/Info.pli
+	cp ../win/Qt/Info.pli Info.plist
+
+../util/tile2img.ttp:
+	(cd ../util ; $(MAKE) tile2img.ttp)
+
+../util/xpm2img.ttp:
+	(cd ../util ; $(MAKE) xpm2img.ttp)
+nh16.img: ../util/tile2img.ttp ../win/share/monsters.txt \
+				../win/share/objects.txt ../win/share/other.txt
+	../util/tile2img.ttp nh16.img
+
+rip.img: ../util/xpm2img.ttp
+	../util/xpm2img.ttp ../win/X11/rip.xpm rip.img
+title.img:
+	# cp ../win/gem/title.img title.img
+	$(UUDECODE) ../win/gem/title.uu
+
+GEM_RSC.RSC:
+	# cp ../win/gem/GEM_RSC.RSC GEM_RSC.RSC
+	$(UUDECODE) ../win/gem/gem_rsc.uu
+
+
+data:	data.base ../util/makedefs
+	../util/makedefs -d
+
+rumors:	rumors.tru rumors.fal ../util/makedefs
+	../util/makedefs -r
+
+quest.dat:	quest.txt ../util/makedefs
+	../util/makedefs -q
+
+oracles:	oracles.txt ../util/makedefs
+	../util/makedefs -h
+
+engrave:	engrave.txt ../util/makedefs
+	../util/makedefs -s
+
+epitaph:	epitaph.txt ../util/makedefs
+	../util/makedefs -s
+
+bogusmon:	bogusmon.txt ../util/makedefs
+	../util/makedefs -s
+
+# note: 'options' should have already been made when include/date.h was created
+options:	../util/makedefs
+	../util/makedefs -v
+
+
+#CONTAINS GRUE/PACMAN/DIGDUG/JOUST CHALLENGE CODE
+spec_levs: ../util/lev_comp \
+	bigroom.des castle.des endgame.des gehennom.des knox.des medusa.des \
+	mines.des oracle.des sokoban.des tower.des yendor.des \
+	gruelair.des pmaze.des dmaze.des pool1.des
+	../util/lev_comp bigroom.des
+	../util/lev_comp castle.des
+	../util/lev_comp endgame.des
+	../util/lev_comp gehennom.des
+	../util/lev_comp knox.des
+	../util/lev_comp medusa.des
+	../util/lev_comp mines.des
+	../util/lev_comp oracle.des
+	../util/lev_comp sokoban.des
+	../util/lev_comp tower.des
+	../util/lev_comp yendor.des
+	../util/lev_comp gruelair.des
+	../util/lev_comp pmaze.des
+	../util/lev_comp dmaze.des
+	../util/lev_comp pool1.des
+	../util/lev_comp joust.des
+	touch spec_levs
+
+quest_levs: ../util/lev_comp \
+	Arch.des Barb.des Caveman.des Healer.des Knight.des Monk.des \
+	Priest.des Ranger.des Rogue.des Samurai.des Tourist.des Valkyrie.des \
+	Wizard.des
+	../util/lev_comp Arch.des
+	../util/lev_comp Barb.des
+	../util/lev_comp Caveman.des
+	../util/lev_comp Healer.des
+	../util/lev_comp Knight.des
+	../util/lev_comp Monk.des
+	../util/lev_comp Priest.des
+	../util/lev_comp Ranger.des
+	../util/lev_comp Rogue.des
+	../util/lev_comp Samurai.des
+	../util/lev_comp Tourist.des
+	../util/lev_comp Valkyrie.des
+	../util/lev_comp Wizard.des
+	touch quest_levs
+
+dungeon: dungeon.def ../util/makedefs ../util/dgn_comp
+	../util/makedefs -e
+	../util/dgn_comp dungeon.pdf
+
+spotless:
+	-rm -f spec_levs quest_levs *.lev $(VARDAT) dungeon dungeon.pdf
+	-rm -f nhdat x11tiles beostiles pet_mark.xbm pilemark.xbm rip.xpm mapbg.xpm
+	-rm -f rip.img GEM_RSC.RSC title.img nh16.img NetHack.ad
+### End Makefile.dat
+
+###
+### Start hints/devnull POST
+###
+### End hints/devnull POST

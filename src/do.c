@@ -147,7 +147,6 @@ const char *verb;
 // BEGIN POOL CHALLENGE CODE
     char          Pool_success[255];
     FILE          *Pool_flag = NULL;
-    struct passwd *NH_passwd;
 // END POOL CHALLENGE CODE
 
 
@@ -196,8 +195,7 @@ const char *verb;
                     You_hear("a boulder %s.", verb);
                 }
                 if (--u.poolchallenge_holesleft == 0) {
-                    NH_passwd = getpwnam("nhadmin");
-                    sprintf(Pool_success, "%s/challenge/Pool-%s-success", NH_passwd->pw_dir, plname);
+                    sprintf(Pool_success, "%s/challenge/Pool-%s-success", DEVNULL_PFX, plname);
                     pline("As the last pocket is filled, your foot knocks into a pebble which rolls away. It seems that rotational intertia has returned to normal.");
                     Pool_flag = fopen(Pool_success, "w");
                     if(NULL != Pool_flag) {

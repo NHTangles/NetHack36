@@ -5021,14 +5021,12 @@ makewish()
     char                    ZAPM_ignore[255];
     char                    ZAPM_accept[255];
     char                    ZAPM_success[255];
-    struct passwd   *NH_passwd;
 
     if(!u.zapmchallenge_ignore) {
-        NH_passwd = getpwnam("nhadmin");
 
-        sprintf(ZAPM_ignore, "%s/challenge/ZAPM-%s-ignore", NH_passwd->pw_dir, plname);
-        sprintf(ZAPM_accept, "%s/challenge/ZAPM-%s-accept", NH_passwd->pw_dir, plname);
-        sprintf(ZAPM_success, "%s/challenge/ZAPM-%s-success", NH_passwd->pw_dir, plname);
+        sprintf(ZAPM_ignore, "%s/challenge/ZAPM-%s-ignore", DEVNULL_PFX, plname);
+        sprintf(ZAPM_accept, "%s/challenge/ZAPM-%s-accept", DEVNULL_PFX, plname);
+        sprintf(ZAPM_success, "%s/challenge/ZAPM-%s-success", DEVNULL_PFX, plname);
 
         ZAPM_flag = fopen(ZAPM_ignore, "r");
         if(NULL == ZAPM_flag) {

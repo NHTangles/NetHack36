@@ -3379,13 +3379,11 @@ use_cue_stick(obj)
     char          Pool_ignore[255];
     char          Pool_accept[255];
     char          Pool_success[255];
-    struct passwd *NH_passwd;
     if(!u.poolchallenge_ignore) {
-        NH_passwd = getpwnam("nhadmin");
 
-        sprintf(Pool_ignore, "%s/challenge/Pool-%s-ignore", NH_passwd->pw_dir, plname);
-        sprintf(Pool_accept, "%s/challenge/Pool-%s-accept", NH_passwd->pw_dir, plname);
-        sprintf(Pool_success, "%s/challenge/Pool-%s-success", NH_passwd->pw_dir, plname);
+        sprintf(Pool_ignore, "%s/challenge/Pool-%s-ignore", DEVNULL_PFX, plname);
+        sprintf(Pool_accept, "%s/challenge/Pool-%s-accept", DEVNULL_PFX, plname);
+        sprintf(Pool_success, "%s/challenge/Pool-%s-success", DEVNULL_PFX, plname);
 
         Pool_flag = fopen(Pool_ignore, "r");
         if(NULL == Pool_flag) {
@@ -3643,7 +3641,6 @@ doapply()
     char            pacman_ignore[255];
     char            pacman_accept[255];
     char            pacman_success[255];
-    struct passwd   *NH_passwd;
 //END GRUE/PACMAN CHALLENGE CODE
 
     if (check_capacity((char *) 0))
@@ -3833,11 +3830,9 @@ doapply()
             break;
         }
 
-        NH_passwd = getpwnam("nhadmin");
-
-        sprintf(grue_ignore, "%s/challenge/Grue-%s-ignore", NH_passwd->pw_dir, plname);
-        sprintf(grue_accept, "%s/challenge/Grue-%s-accept", NH_passwd->pw_dir, plname);
-        sprintf(grue_success, "%s/challenge/Grue-%s-success", NH_passwd->pw_dir, plname);
+        sprintf(grue_ignore, "%s/challenge/Grue-%s-ignore", DEVNULL_PFX, plname);
+        sprintf(grue_accept, "%s/challenge/Grue-%s-accept", DEVNULL_PFX, plname);
+        sprintf(grue_success, "%s/challenge/Grue-%s-success", DEVNULL_PFX, plname);
 
         grue_flag = fopen(grue_ignore, "r");
         if(NULL == grue_flag)
@@ -3882,11 +3877,9 @@ doapply()
             break;
         }
 
-        NH_passwd = getpwnam("nhadmin");
-
-        sprintf(pacman_ignore, "%s/challenge/PacMan-%s-ignore", NH_passwd->pw_dir, plname);
-        sprintf(pacman_accept, "%s/challenge/PacMan-%s-accept", NH_passwd->pw_dir, plname);
-        sprintf(pacman_success, "%s/challenge/PacMan-%s-success", NH_passwd->pw_dir, plname);
+        sprintf(pacman_ignore, "%s/challenge/PacMan-%s-ignore", DEVNULL_PFX, plname);
+        sprintf(pacman_accept, "%s/challenge/PacMan-%s-accept", DEVNULL_PFX, plname);
+        sprintf(pacman_success, "%s/challenge/PacMan-%s-success", DEVNULL_PFX, plname);
 
         pacman_flag = fopen(pacman_ignore, "r");
         if(NULL == pacman_flag) {
@@ -3937,11 +3930,9 @@ doapply()
             break;
         }
 
-        NH_passwd = getpwnam("nhadmin");
-
-        sprintf(pacman_ignore, "%s/challenge/PacMan-%s-ignore", NH_passwd->pw_dir, plname);
-        sprintf(pacman_accept, "%s/challenge/PacMan-%s-accept", NH_passwd->pw_dir, plname);
-        sprintf(pacman_success, "%s/challenge/PacMan-%s-success", NH_passwd->pw_dir, plname);
+        sprintf(pacman_ignore, "%s/challenge/PacMan-%s-ignore", DEVNULL_PFX, plname);
+        sprintf(pacman_accept, "%s/challenge/PacMan-%s-accept", DEVNULL_PFX, plname);
+        sprintf(pacman_success, "%s/challenge/PacMan-%s-success", DEVNULL_PFX, plname);
 
         pacman_flag = fopen(pacman_ignore, "r");
         if(NULL == pacman_flag) {

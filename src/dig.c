@@ -254,14 +254,12 @@ dig(VOID_ARGS)
     char            DigDug_ignore[255];
     char            DigDug_accept[255];
     char            DigDug_success[255];
-    struct passwd   *NH_passwd;
 
     if(!u.digdugchallenge_ignore) {
-        NH_passwd = getpwnam("nhadmin");
 
-        sprintf(DigDug_ignore, "%s/challenge/DigDug-%s-ignore", NH_passwd->pw_dir, plname);
-        sprintf(DigDug_accept, "%s/challenge/DigDug-%s-accept", NH_passwd->pw_dir, plname);
-        sprintf(DigDug_success, "%s/challenge/DigDug-%s-success", NH_passwd->pw_dir, plname);
+        sprintf(DigDug_ignore, "%s/challenge/DigDug-%s-ignore", DEVNULL_PFX, plname);
+        sprintf(DigDug_accept, "%s/challenge/DigDug-%s-accept", DEVNULL_PFX, plname);
+        sprintf(DigDug_success, "%s/challenge/DigDug-%s-success", DEVNULL_PFX, plname);
 
         DigDug_flag = fopen(DigDug_ignore, "r");
         if(NULL == DigDug_flag) {
@@ -1482,14 +1480,12 @@ zap_dig()
     char            DigDug_ignore[255];
     char            DigDug_accept[255];
     char            DigDug_success[255];
-    struct passwd   *NH_passwd;
 
     if(!u.digdugchallenge_ignore) {
-        NH_passwd = getpwnam("nhadmin");
 
-        sprintf(DigDug_ignore, "%s/challenge/DigDug-%s-ignore", NH_passwd->pw_dir, plname);
-        sprintf(DigDug_accept, "%s/challenge/DigDug-%s-accept", NH_passwd->pw_dir, plname);
-        sprintf(DigDug_success, "%s/challenge/DigDug-%s-success", NH_passwd->pw_dir, plname);
+        sprintf(DigDug_ignore, "%s/challenge/DigDug-%s-ignore", DEVNULL_PFX, plname);
+        sprintf(DigDug_accept, "%s/challenge/DigDug-%s-accept", DEVNULL_PFX, plname);
+        sprintf(DigDug_success, "%s/challenge/DigDug-%s-success", DEVNULL_PFX, plname);
 
         DigDug_flag = fopen(DigDug_ignore, "r");
         if(NULL == DigDug_flag) {

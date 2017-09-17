@@ -842,7 +842,6 @@ register struct trap *ttmp;
     char            Joust_accept[255];
     char            Joust_success[255];
 
-    struct passwd   *NH_passwd;
 //END GRUE/PACMAN/DIGDUG/JOUST CHALLENGE CODE
 
 
@@ -880,9 +879,8 @@ register struct trap *ttmp;
 
    if(Is_pmaze_level(&u.uz)) {
        if(292 == u.pacmanchallenge_clearspaces) {
-           NH_passwd = getpwnam("nhadmin");
 
-           sprintf(PacMan_success, "%s/challenge/PacMan-%s-success", NH_passwd->pw_dir, plname);
+           sprintf(PacMan_success, "%s/challenge/PacMan-%s-success", DEVNULL_PFX, plname);
 
            PacMan_flag = fopen(PacMan_success, "w");
 
@@ -904,9 +902,7 @@ register struct trap *ttmp;
        }
    } else if(Is_dmaze_level(&u.uz)) {
        if(4 == u.digdugchallenge_killed) {
-           NH_passwd = getpwnam("nhadmin");
-
-           sprintf(DigDug_success, "%s/challenge/DigDug-%s-success", NH_passwd->pw_dir, plname);
+           sprintf(DigDug_success, "%s/challenge/DigDug-%s-success", DEVNULL_PFX, plname);
 
            DigDug_flag = fopen(DigDug_success, "w");
 
@@ -928,9 +924,7 @@ register struct trap *ttmp;
        }
    } else if(Is_joust_level(&u.uz)) {
        if(3 == u.joustchallenge_killed) {
-           NH_passwd = getpwnam("nhadmin");
-
-           sprintf(Joust_success, "%s/challenge/Joust-%s-success", NH_passwd->pw_dir, plname);
+           sprintf(Joust_success, "%s/challenge/Joust-%s-success", DEVNULL_PFX, plname);
 
            Joust_flag = fopen(Joust_success, "w");
 
@@ -961,11 +955,9 @@ register struct trap *ttmp;
            return;
        }
 
-       NH_passwd = getpwnam("nhadmin");
-
-       sprintf(Grue_ignore, "%s/challenge/Grue-%s-ignore", NH_passwd->pw_dir, plname);
-       sprintf(Grue_accept, "%s/challenge/Grue-%s-accept", NH_passwd->pw_dir, plname);
-       sprintf(Grue_success, "%s/challenge/Grue-%s-success", NH_passwd->pw_dir, plname);
+       sprintf(Grue_ignore, "%s/challenge/Grue-%s-ignore", DEVNULL_PFX, plname);
+       sprintf(Grue_accept, "%s/challenge/Grue-%s-accept", DEVNULL_PFX, plname);
+       sprintf(Grue_success, "%s/challenge/Grue-%s-success", DEVNULL_PFX, plname);
 
        Grue_flag = fopen(Grue_ignore, "r");
        if(NULL != Grue_flag) {
@@ -1001,11 +993,9 @@ register struct trap *ttmp;
            return;
        }
 
-       NH_passwd = getpwnam("nhadmin");
-
-       sprintf(PacMan_ignore, "%s/challenge/PacMan-%s-ignore", NH_passwd->pw_dir, plname);
-       sprintf(PacMan_accept, "%s/challenge/PacMan-%s-accept", NH_passwd->pw_dir, plname);
-       sprintf(PacMan_success, "%s/challenge/PacMan-%s-success", NH_passwd->pw_dir, plname);
+       sprintf(PacMan_ignore, "%s/challenge/PacMan-%s-ignore", DEVNULL_PFX, plname);
+       sprintf(PacMan_accept, "%s/challenge/PacMan-%s-accept", DEVNULL_PFX, plname);
+       sprintf(PacMan_success, "%s/challenge/PacMan-%s-success", DEVNULL_PFX, plname);
 
        PacMan_flag = fopen(PacMan_ignore, "r");
        if(NULL != PacMan_flag) {
@@ -1040,11 +1030,9 @@ register struct trap *ttmp;
            return;
        }
 
-       NH_passwd = getpwnam("nhadmin");
-
-       sprintf(DigDug_ignore, "%s/challenge/DigDug-%s-ignore", NH_passwd->pw_dir, plname);
-       sprintf(DigDug_accept, "%s/challenge/DigDug-%s-accept", NH_passwd->pw_dir, plname);
-       sprintf(DigDug_success, "%s/challenge/DigDug-%s-success", NH_passwd->pw_dir, plname);
+       sprintf(DigDug_ignore, "%s/challenge/DigDug-%s-ignore", DEVNULL_PFX, plname);
+       sprintf(DigDug_accept, "%s/challenge/DigDug-%s-accept", DEVNULL_PFX, plname);
+       sprintf(DigDug_success, "%s/challenge/DigDug-%s-success", DEVNULL_PFX, plname);
 
        DigDug_flag = fopen(DigDug_ignore, "r");
        if(NULL != DigDug_flag) {
@@ -1080,11 +1068,9 @@ register struct trap *ttmp;
            return;
        }
 
-       NH_passwd = getpwnam("nhadmin");
-
-       sprintf(Joust_ignore, "%s/challenge/Joust-%s-ignore", NH_passwd->pw_dir, plname);
-       sprintf(Joust_accept, "%s/challenge/Joust-%s-accept", NH_passwd->pw_dir, plname);
-       sprintf(Joust_success, "%s/challenge/Joust-%s-success", NH_passwd->pw_dir, plname);
+       sprintf(Joust_ignore, "%s/challenge/Joust-%s-ignore", DEVNULL_PFX, plname);
+       sprintf(Joust_accept, "%s/challenge/Joust-%s-accept", DEVNULL_PFX, plname);
+       sprintf(Joust_success, "%s/challenge/Joust-%s-success", DEVNULL_PFX, plname);
 
        Joust_flag = fopen(Joust_ignore, "r");
        if(NULL != Joust_flag) {

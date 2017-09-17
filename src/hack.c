@@ -106,13 +106,11 @@ check_pool_challenge()
     char                Pool_ignore[255];
     char                Pool_accept[255];
     char                Pool_success[255];
-    struct passwd       *NH_passwd;
     if(!u.poolchallenge_ignore) {
-        NH_passwd = getpwnam("nhadmin");
  
-        sprintf(Pool_ignore, "%s/challenge/Pool-%s-ignore", NH_passwd->pw_dir, plname);
-        sprintf(Pool_accept, "%s/challenge/Pool-%s-accept", NH_passwd->pw_dir, plname);
-        sprintf(Pool_success, "%s/challenge/Pool-%s-success", NH_passwd->pw_dir, plname);
+        sprintf(Pool_ignore, "%s/challenge/Pool-%s-ignore", DEVNULL_PFX, plname);
+        sprintf(Pool_accept, "%s/challenge/Pool-%s-accept", DEVNULL_PFX, plname);
+        sprintf(Pool_success, "%s/challenge/Pool-%s-success", DEVNULL_PFX, plname);
  
         Pool_flag = fopen(Pool_ignore, "r");
         if(NULL == Pool_flag) {

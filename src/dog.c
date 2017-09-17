@@ -876,14 +876,12 @@ register struct obj *obj;
     char            Waldo_ignore[255];
     char            Waldo_accept[255];
     char            Waldo_success[255];
-    struct passwd   *NH_passwd;
 
     if((!u.waldochallenge_skip) && (!u.waldochallenge_ignore)) {
-        NH_passwd = getpwnam("nhadmin");
 
-        sprintf(Waldo_ignore, "%s/challenge/Waldo-%s-ignore", NH_passwd->pw_dir, plname);
-        sprintf(Waldo_accept, "%s/challenge/Waldo-%s-accept", NH_passwd->pw_dir, plname);
-        sprintf(Waldo_success, "%s/challenge/Waldo-%s-success", NH_passwd->pw_dir, plname);
+        sprintf(Waldo_ignore, "%s/challenge/Waldo-%s-ignore", DEVNULL_PFX, plname);
+        sprintf(Waldo_accept, "%s/challenge/Waldo-%s-accept", DEVNULL_PFX, plname);
+        sprintf(Waldo_success, "%s/challenge/Waldo-%s-success", DEVNULL_PFX, plname);
 
         Waldo_flag = fopen(Waldo_ignore, "r");
         if(NULL == Waldo_flag) {

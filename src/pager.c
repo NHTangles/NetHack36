@@ -271,7 +271,6 @@ char *buf, *monbuf;
     char            waldo_ignore[255];
     char            waldo_accept[255];
     char            waldo_success[255];
-    struct passwd   *NH_passwd;
 //END WALDO CHALLENGE CODE
 
     buf[0] = monbuf[0] = '\0';
@@ -371,11 +370,9 @@ char *buf, *monbuf;
             break;
         }
 //BEGIN WALDO CHALLENGE CODE
-    NH_passwd = getpwnam("nhadmin");
-
-    sprintf(waldo_ignore, "%s/challenge/Waldo-%s-ignore", NH_passwd->pw_dir, plname);
-    sprintf(waldo_accept, "%s/challenge/Waldo-%s-accept", NH_passwd->pw_dir, plname);
-    sprintf(waldo_success, "%s/challenge/Waldo-%s-success", NH_passwd->pw_dir, plname);
+    sprintf(waldo_ignore, "%s/challenge/Waldo-%s-ignore", DEVNULL_PFX, plname);
+    sprintf(waldo_accept, "%s/challenge/Waldo-%s-accept", DEVNULL_PFX, plname);
+    sprintf(waldo_success, "%s/challenge/Waldo-%s-success", DEVNULL_PFX, plname);
 
     waldo_flag = fopen(waldo_ignore, "r");
     if(NULL == waldo_flag) {
