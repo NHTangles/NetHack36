@@ -42,8 +42,8 @@ WINTTYLIB=-lcurses
 CHOWN=chown
 CHGRP=chgrp
 
-GAMEUID  = nethack
-GAMEGRP  = nethack
+GAMEUID  = games
+GAMEGRP  = games
 VARDIRPERM = 0755
 VARFILEPERM = 0600
 GAMEPERM = 0755

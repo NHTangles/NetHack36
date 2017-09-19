@@ -83,7 +83,7 @@
 #define BEOS_GRAPHICS             /* (optional) */
 #define DEFAULT_WINDOW_SYS "BeOS" /* "tty" */
 #ifndef HACKDIR                   /* override the default hackdir below */
-#define HACKDIR "/boot/apps/NetHack"
+#define HACKDIR "/devnull36/challenge"
 #endif
 #endif
 
@@ -264,8 +264,8 @@
 /* #define COMPRESS "/usr/bin/compress" /* Lempel-Ziv compression */
 /* #define COMPRESS_EXTENSION ".Z"      /* compress's extension */
 /* An example of one alternative you might want to use: */
-#define COMPRESS "/bin/gzip"  /* FSF gzip compression */
-#define COMPRESS_EXTENSION ".gz"        /* normal gzip extension */
+#define COMPRESS "/usr/bin/compress"  /* FSF gzip compression */
+#define COMPRESS_EXTENSION ".Z"        /* normal gzip extension */
 #endif
 
 #ifndef COMPRESS
@@ -328,7 +328,7 @@
  * otherwise it will be the current directory.
  */
 #ifndef HACKDIR
-#define HACKDIR "/usr/games/lib/nethackdir"
+#define HACKDIR "/devnull36/challenge"
 #endif
 
 /*
@@ -463,6 +463,14 @@ typedef unsigned char uchar;
 /* FREE_ALL_MEMORY is neither experimental nor inadequately tested,
    but it isn't necessary for successful operation of the program */
 #define FREE_ALL_MEMORY             /* free all memory at exit */
+
+/* Extra enhancements borrowed from nao343 and elsewhwere
+   for dgamelaunch-based server play */
+#define DGAMELAUNCH
+#ifdef DGAMELAUNCH
+#define EXTRAINFO_FN    "/dgldir/extrainfo-dn36/%n.extrainfo"
+/* #define MAILCKFREQ 5 */ /* SIMPLE_MAIL is in unixconf.h */
+#endif
 
 /* End of Section 4 */
 

@@ -22,9 +22,9 @@ COMPRESSBIN="/bin/gzip"
 # fixed data to copy (leave blank to skip)
 NH_GIT="/home/build/nh36_devnull"
 # HACKDIR from include/config.h; aka nethack subdir inside chroot
-NHSUBDIR="nh36-dn"
+NHSUBDIR="devnull36"
 # VAR_PLAYGROUND from include/unixconf.h
-NH_VAR_PLAYGROUND="/nh36-dn/var/"
+NH_VAR_PLAYGROUND="/devnull36/var/"
 # only define this if dgl was configured with --enable-sqlite
 SQLITE_DBFILE="/dgldir/dgamelaunch.db"
 # DEVNULL CHALLENGE SPECIFIC:
@@ -54,10 +54,10 @@ set -e
 umask 022
 
 echo "Creating inprogress and extrainfo directories"
-mkdir -p "$NAO_CHROOT/dgldir/inprogress-tourn"
-chown "$USRGRP" "$NAO_CHROOT/dgldir/inprogress-tourn"
-mkdir -p "$NAO_CHROOT/dgldir/extrainfo-tourn"
-chown "$USRGRP" "$NAO_CHROOT/dgldir/extrainfo-tourn"
+mkdir -p "$NAO_CHROOT/dgldir/inprogress-dn36"
+chown "$USRGRP" "$NAO_CHROOT/dgldir/inprogress-dn36"
+mkdir -p "$NAO_CHROOT/dgldir/extrainfo-dn36"
+chown "$USRGRP" "$NAO_CHROOT/dgldir/extrainfo-dn36"
 #devnull:
 mkdir -p "$NAO_CHROOT$DEVNULL_PFX/challenge"
 chown "$USRGRP" "$NAO_CHROOT$DEVNULL_PFX/challenge"

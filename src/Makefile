@@ -15,7 +15,7 @@ MAKEFILE_SRC=1
 
 
 PREFIX=/opt/nethack/hardfought.org
-HACKDIR=/nh36-dn
+HACKDIR=/devnull36
 SHELLDIR = /tmp
 INSTDIR=$(PREFIX)$(HACKDIR)
 VARDIR = $(INSTDIR)/var
@@ -44,14 +44,14 @@ WINTTYLIB=-lcurses
 CHOWN=chown
 CHGRP=chgrp
 
-GAMEUID  = nethack
-GAMEGRP  = nethack
+GAMEUID  = games
+GAMEGRP  = games
 
 # Permissions - some places use setgid instead of setuid, for instance
 # See also the option "SECURE" in include/config.h
-GAMEPERM = 06755
+GAMEPERM = 0755
 FILEPERM = 0644
-VARFILEPERM = 0664
+VARFILEPERM = 0600
 EXEPERM  = 0755
 DIRPERM  = 0755
 VARDIRPERM = 0755
