@@ -3853,6 +3853,7 @@ doapply()
 
                     if(NULL != grue_flag) {
                         fclose(grue_flag);
+                        u.gruechallenge_successmsgd = 0;
 
                         pline("The Frobozz Company Inter-dimensional Portal Generator humms loudly for a few moments, flashes its lights briefly, and goes quiet.\n\n");
                         pline("Congratulations!  You have closed of the portal; the darkness doesn't feel quite as scary now.\n\n");

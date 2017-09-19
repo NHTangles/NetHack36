@@ -888,6 +888,7 @@ register struct trap *ttmp;
                fclose(PacMan_flag);
 
                pline("Congratulations!  You have cleared your way out of this maze.\n\n");
+               u.pacmanchallenge_successmsgd = 0;
            } else {
                pline("ERROR: I am unable to log your Challenge success; please email the Tournament administrators.\n\n");
            }
@@ -910,6 +911,7 @@ register struct trap *ttmp;
                fclose(DigDug_flag);
 
                pline("Congratulations!  You have defeated the villainous Fygar and his terrible Pookas.\n\n");
+               u.digdugchallenge_successmsgd = 0;
            } else {
                pline("ERROR: I am unable to log your Challenge success; please email the Tournament administrators.\n\n");
            }
@@ -932,6 +934,7 @@ register struct trap *ttmp;
                fclose(Joust_flag);
 
                pline("Congratulations!  You have defeated the villainous Shadow Lord with his dastardly Hunter and Bounder.\n\n");
+               u.joustchallenge_successmsgd = 0;
            } else {
                pline("ERROR: I am unable to log your Challenge success; please email the Tournament administrators.\n\n");
            }

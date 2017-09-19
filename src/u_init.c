@@ -882,12 +882,12 @@ u_init()
     u.kolchallenge_successmsgd = 1;
 
     u.gruechallenge_ignore = 0;
-    u.gruechallenge_successmsgd = 0;
+    u.gruechallenge_successmsgd = 1;
     u.gruechallenge_darkmoves = 0;
     u.gruechallenge_haslight = 0;
 
     u.pacmanchallenge_ignore = 0;
-    u.pacmanchallenge_successmsgd = 0;
+    u.pacmanchallenge_successmsgd = 1;
     u.pacmanchallenge_cantry = 1;
     u.pacmanchallenge_clearspaces = 0;
     u.pacmanchallenge_livesleft = 3;
@@ -896,7 +896,7 @@ u_init()
     u.zapmchallenge_successmsgd = 0;
 
     u.digdugchallenge_ignore = 0;
-    u.digdugchallenge_successmsgd = 0;
+    u.digdugchallenge_successmsgd = 1;
     u.digdugchallenge_cantry = 1;
     u.digdugchallenge_killed = 0;
     u.digdugchallenge_livesleft = 3;
@@ -904,7 +904,7 @@ u_init()
     u.digdugchallenge_returnlevel = 0;
 
     u.waldochallenge_ignore = 0;
-    u.waldochallenge_successmsgd = 0;
+    u.waldochallenge_successmsgd = 1;
     u.waldochallenge_gencounter = 100;
     u.waldochallenge_haveWaldo = 0;
     u.waldochallenge_haveWally = 0;
@@ -915,11 +915,11 @@ u_init()
     u.waldochallenge_skip = 0;
 
     u.poolchallenge_ignore = 0;
-    u.poolchallenge_successmsgd = 0;
+    u.poolchallenge_successmsgd = 1;
     u.poolchallenge_holesleft = 6;
 
     u.joustchallenge_ignore = 0;
-    u.joustchallenge_successmsgd = 0;
+    u.joustchallenge_successmsgd = 1;
     u.joustchallenge_cantry = 1;
     u.joustchallenge_killed = 0;
     u.joustchallenge_livesleft = 3;

@@ -559,6 +559,7 @@ register struct monst *mtmp;
                         pline("Congratulations!  You have found Waldo the Red (and White) and convinced him to return to his faithful companion Woof; you'll feel better about acquiring new companions yourself now.\n\n");
 
                         mtmp = christen_monst(mtmp, "the former Waldo");
+                        u.waldochallenge_successmsgd = 0;
                     } else {
                         pline("ERROR: I am unable to log your Challenge success; please email the Tournament administrators.\n\n");
                     }

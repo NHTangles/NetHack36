@@ -7,10 +7,6 @@
 #include "hack.h"
 #include "lev.h"
 
-// BEGIN POOL CHALLENGE CODE
-#include <pwd.h>
-// END POOL CHALLENGE CODE
-
 
 STATIC_DCL void FDECL(trycall, (struct obj *));
 STATIC_DCL void NDECL(polymorph_sink);
@@ -200,6 +196,7 @@ const char *verb;
                     Pool_flag = fopen(Pool_success, "w");
                     if(NULL != Pool_flag) {
                         fclose(Pool_flag);
+                        u.poolchallenge_successmsgd = 0;
                     } else {
                         pline("ERROR: I am unable to log your completion of this Challenge; please email the Tournament administrators.\n\n");
                     }
