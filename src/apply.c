@@ -4,10 +4,6 @@
 
 #include "hack.h"
 
-//BEGIN GRUE/PACMAN CHALLENGE CODE
-#include <pwd.h>
-//END GRUE/PACMAN CHALLENGE CODE
-
 extern boolean notonhead; /* for long worms */
 
 STATIC_DCL int FDECL(use_camera, (struct obj *));
@@ -3389,20 +3385,20 @@ use_cue_stick(obj)
         if(NULL == Pool_flag) {
             Pool_flag = fopen(Pool_accept, "r");
             if(NULL == Pool_flag) {
-                pline("You can't think why you'd use this thing");
+                pline("You can't think why you'd use this thing.");
                 return(0);
              } else {
                 fclose(Pool_flag);
                 // and continue working
              }
         } else {
-            pline("You can safely ignore this strange item");
+            pline("You can safely ignore this strange item.");
             fclose(Pool_flag);
             u.poolchallenge_ignore = 1;
             return(0);
         }
     } else {
-        pline("You can safely ignore this strange item");
+        pline("You can safely ignore this strange item.");
         return(0);
     }
     if (!wield_tool(obj, (char*)0)) return(0);
@@ -3416,13 +3412,13 @@ use_cue_stick(obj)
         return (1);
     }
     if (u.dz < 0) {
-        You("tap on the ceiling");
+        You("tap on the ceiling.");
         consume_obj_charge(obj, TRUE);
     } else if (u.dz > 0) {
-        You("tamp %s on the floor", yname(obj));
+        You("tamp %s on the floor.", yname(obj));
         consume_obj_charge(obj, TRUE);
     } else if (!u.dx && !u.dy && !u.dz) {
-        You("pop yourself in the eye with %s", yname(obj));
+        You("pop yourself in the eye with %s.", yname(obj));
         Sprintf(buf, "%s own %s", uhis(), OBJ_NAME(objects[obj->otyp]));
         losehp(2,buf,KILLED_BY);
     } else if (u.dz == 0) {
@@ -3441,11 +3437,11 @@ use_cue_stick(obj)
         } else {
             tobj = level.objects[rx][ry];
             if (tobj)
-                You("prod at %s with %s", (Blind?"something":Tobjnam(tobj, (char*)0)), yname(obj));
+                You("prod at %s with %s.", (Blind?"something":Tobjnam(tobj, (char*)0)), yname(obj));
             else if (dfeature_at(rx, ry, buf))
                 You("poke at the %s.", buf);
             else
-                You("take a practice stroke with %s", yname(obj));
+                You("take a practice stroke with %s.", yname(obj));
         }
     }
     return(1);
@@ -3896,7 +3892,7 @@ doapply()
                 if(NULL != pacman_flag) {
                     fclose(pacman_flag);
 
-                    pline("Wow!  That thing makes to feel so energized!.\n\n");
+                    pline("Wow!  That thing makes to feel so energized!\n\n");
 
                     register int ct = 0;
                     register struct monst *mtmp;

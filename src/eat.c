@@ -3,9 +3,6 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-//BEGIN PACMAN CHALLENGE CODE
-#include <pwd.h>
-//END PACMAN CHALLENGE CODE
 
 STATIC_PTR int NDECL(eatmdone);
 STATIC_PTR int NDECL(eatfood);
@@ -2385,7 +2382,7 @@ doeat()
                             fclose(PacMan_flag);
 
                             pline("Very Well.\n\nKnow then, adventurer, that long ago the necromancers Blinky, Pinky, Inky and Clyde (the four greatest villains of their age) stole away the only fruit ever borne by the now-aging Tree of Life.\n\n");
-                            pline("Though all four died in battle with the armies of Goodness and Light, the fruits were never recovered; they are rumored to have been hidden away in the Maze of Namco and are guarded by the restless spirits of these four terrible villains.\n\n");
+                            pline("Though all four died in battle with the armies of Goodness and Light, the fruits were never recovered. They are rumored to have been hidden away in the Maze of Namco and are guarded by the restless spirits of these four terrible villains.\n\n");
                             pline("You must find and explore the legendary Maze of Namco.  Beware, however, the ghosts of these monstrous villains which can kill with a single touch!\n\n");
 
                             pline("The Administrator has noted that you have accepted the Challenge and dissolves into a cloud of Drosophyllae with a smirk.\n\n");

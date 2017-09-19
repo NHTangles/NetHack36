@@ -4,11 +4,6 @@
 
 #include "hack.h"
 
-//BEGIN WALDO CHALLENGE CODE
-#include <pwd.h>
-//END WALDO CHALLENGE CODE
- 
-
 STATIC_DCL int NDECL(pet_type);
 
 void

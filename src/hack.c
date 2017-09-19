@@ -4,10 +4,6 @@
 
 #include "hack.h"
 
-//BEGIN POOL CHALLENGE CODE
-#include <pwd.h>
-//END POOL CHALLENGE CODE
-
 /* #define DEBUG */ /* uncomment for debugging */
 
 STATIC_DCL void NDECL(maybe_wail);

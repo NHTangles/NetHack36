@@ -4,10 +4,6 @@
 
 #include "hack.h"
 
-//BEGIN DIGDUG CHALLENGE CODE
-#include <pwd.h>
-//END DIGDUG CHALLENGE CODE
-
 
 static NEARDATA boolean did_dig_msg;
 
@@ -297,7 +293,7 @@ dig(VOID_ARGS)
                             pline("You must seek out their hiding places, recover Namco's wand and destroy them.  Beware, however, for these monstrous villains can kill with a single touch!\n\n");
 
                             pline("The Administrator has noted that you have accepted the Challenge and dissolves into the Earth with a smirk.\n\n");
-                            pline("The thought of digging when only a sliver of Earth is the only thing keeping back Fygar and his Pookas gives you the heebie-jeebies.\n\n");
+                            pline("The thought of digging when a mere sliver of Earth is the only thing keeping back Fygar and his Pookas gives you the heebie-jeebies.\n\n");
 
                             return(0);
                         } else {
@@ -1522,7 +1518,7 @@ zap_dig()
                             pline("You must seek out their hiding places, recover Namco's wand and destroy them.  Beware, however, for these monstrous villains can kill with a single touch!\n\n");
 
                             pline("The Administrator has noted that you have accepted the Challenge and dissolves into the Earth with a smirk.\n\n");
-                            pline("The thought of digging when only a sliver of Earth is the only thing keeping back Fygar and his Pookas gives you the heebie-jeebies.\n\n");
+                            pline("The thought of digging when a mere sliver of Earth is the only thing keeping back Fygar and his Pookas gives you the heebie-jeebies.\n\n");
 
                             return;
                         } else {

@@ -2,10 +2,6 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-//BEGIN GRUE CHALLENGE CODE
-#include <pwd.h>
-//END GRUE CHALLENGE CODE
-
 #include "hack.h"
 #include "func_tab.h"
 
@@ -3267,7 +3263,7 @@ register char *cmd;
                     fclose(grue_flag);
 
                     if(!u.gruechallenge_successmsgd) {
-                        pline("There's no reason to be afraid of a little darkness now, is there?.\n\n");
+                        pline("There's no reason to be afraid of a little darkness now, is there?\n\n");
                         u.gruechallenge_successmsgd = 1;
                     }
                 } else {  

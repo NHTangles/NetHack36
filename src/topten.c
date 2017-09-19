@@ -11,7 +11,6 @@
 #endif
 
 //BEGIN TOURNAMENT CODE
-#include <pwd.h>
 #include <stdio.h>
 #include <unistd.h>
 //END TOURNAMENT CODE

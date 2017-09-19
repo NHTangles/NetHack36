@@ -186,7 +186,7 @@ const char *verb;
 // BEGIN POOL CHALLENGE CODE
             } else if (Is_pool_level(&u.uz) && !u.poolchallenge_ignore) {
                 if (!Blind && cansee(x, y)) {
-                    pline_The("boulder falls into the pocket-dimension rift, plugging it");
+                    pline_The("boulder falls into the pocket-dimension rift, plugging it.");
                 } else {
                     You_hear("a boulder %s.", verb);
                 }

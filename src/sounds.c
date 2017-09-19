@@ -2,10 +2,6 @@
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
-//BEGIN WALDO CHALLENGE CODE
-#include <pwd.h>
-//END WALDO CHALLENGE CODE
-
 #include "hack.h"
 
 STATIC_DCL boolean FDECL(mon_is_gecko, (struct monst *));

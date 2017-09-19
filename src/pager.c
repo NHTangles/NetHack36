@@ -5,10 +5,6 @@
 /* This file contains the command routines dowhatis() and dohelp() and */
 /* a few other help related facilities */
 
-//BEGIN WALDO CHALLENGE CODE
-#include <pwd.h>
-//END WALDO CHALLENGE CODE
-
 #include "hack.h"
 #include "dlb.h"
 
