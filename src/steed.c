@@ -35,7 +35,12 @@ struct monst *mtmp;
         mtmp->mflee = 0;
         mtmp->mfleetim = 0;
 
-        mtmp->mtame += 1000;
+        if (!mtmp->mextra || !EDOG(mtmp)) {
+            newedog(mtmp);
+            initedog(mtmp);
+        }
+
+        mtmp->mtame += 100;
 
         return ((ptr->msize >= MZ_MEDIUM) &&
                 (!humanoid(ptr) || ptr->mlet == S_CENTAUR) &&

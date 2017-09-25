@@ -772,7 +772,11 @@ int x1, y1, x2, y2;
      */
 
     if (distmin(x1, y1, x2, y2) != 1) {
-        impossible("worm_cross checking for non-adjacent location?");
+
+//BEGIN JOUST CHALLENGE CODE
+        if(!Is_joust_level(&u.uz))
+//END JOUST CHALLENGE CODE
+            impossible("worm_cross checking for non-adjacent location?");
         return FALSE;
     }
     /* attempting to pass between worm segs is only relevant for diagonal */

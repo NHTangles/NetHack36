@@ -1307,7 +1307,7 @@ domove()
             if(!mtmp) {
                 mtmp = m_at(u.ux + u.dx, u.uy + u.dy);
                 if(!mtmp) {
-                    if(((test_move(u.ux, u.uy, u.dx, u.dy, DO_MOVE)) || (u.dx != -1))
+                    if(((test_move(u.ux, u.uy, u.dx, u.dy, DO_MOVE)) || (u.dy == -1))
                        && (test_move(u.ux, u.uy, u.dx, u.dy + 1, DO_MOVE))) {
                         u.dy++;
                     }
