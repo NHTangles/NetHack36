@@ -1,4 +1,4 @@
-/* NetHack 3.6	zap.c	$NHDT-Date: 1470819844 2016/08/10 09:04:04 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.263 $ */
+/* NetHack 3.6	zap.c	$NHDT-Date: 1505475171 2017/09/15 11:32:51 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.267 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2128,6 +2128,7 @@ backfire(otmp)
 struct obj *otmp;
 {
     int dmg;
+
     otmp->in_use = TRUE; /* in case losehp() is fatal */
     pline("%s suddenly explodes!", The(xname(otmp)));
     dmg = d(otmp->spe + 2, 6);
@@ -3071,6 +3072,7 @@ int range, *skipstart, *skipend;
 {
     int tr = (range / 4);
     int tmp = range - ((tr > 0) ? rnd(tr) : 0);
+
     *skipstart = tmp;
     *skipend = tmp - ((tmp / 4) * rnd(3));
     if (*skipend >= tmp)
@@ -3301,7 +3303,7 @@ struct obj **pobj; /* object tossed/used, set to NULL
                     if (levl[bhitpos.x][bhitpos.y].doormask == D_BROKEN
                         && *in_rooms(bhitpos.x, bhitpos.y, SHOPBASE)) {
                         shopdoor = TRUE;
-                        add_damage(bhitpos.x, bhitpos.y, 400L);
+                        add_damage(bhitpos.x, bhitpos.y, SHOP_DOOR_COST);
                     }
                 }
                 break;
@@ -3428,7 +3430,7 @@ int dx, dy;
         if (bhitpos.x == u.ux && bhitpos.y == u.uy) { /* ct == 9 */
             if (Fumbling || rn2(20) >= ACURR(A_DEX)) {
                 /* we hit ourselves */
-                (void) thitu(10 + obj->spe, dmgval(obj, &youmonst), obj,
+                (void) thitu(10 + obj->spe, dmgval(obj, &youmonst), &obj,
                              "boomerang");
                 endmultishot(TRUE);
                 break;
@@ -3881,10 +3883,10 @@ const char *fltxt;
 }
 
 void
-buzz(type,nd,sx,sy,dx,dy)
+buzz(type, nd, sx, sy, dx, dy)
 int type, nd;
-xchar sx,sy;
-int dx,dy;
+xchar sx, sy;
+int dx, dy;
 {
     dobuzz(type, nd, sx, sy, dx, dy, TRUE);
 }
@@ -3899,7 +3901,7 @@ int dx,dy;
  * called with dx = dy = 0 with vertical bolts
  */
 void
-dobuzz(type, nd, sx, sy, dx, dy,say)
+dobuzz(type, nd, sx, sy, dx, dy, say)
 register int type, nd;
 register xchar sx, sy;
 register int dx, dy;
@@ -4146,7 +4148,7 @@ boolean say; /* Announce out of sight hit/miss events if true */
                              ? "shatter"
                              /* "damage" indicates wall rather than door */
                              : abstype == ZT_ACID
-                             ? "damage"
+                                ? "damage"
                                 : abstype == ZT_DEATH
                                    ? "disintegrate"
                                    : "destroy",
@@ -4411,7 +4413,7 @@ short exploding_wand_typ;
                     lev->typ = ROOM;
                     if (see_it)
                         newsym(x, y);
-                    add_damage(x, y, (type >= 0) ? 300L : 0L);
+                    add_damage(x, y, (type >= 0) ? SHOP_BARS_COST : 0L);
                     if (type >= 0)
                         *shopdamage = TRUE;
                 } else {
@@ -4509,7 +4511,7 @@ short exploding_wand_typ;
         if (new_doormask >= 0) { /* door gets broken */
             if (*in_rooms(x, y, SHOPBASE)) {
                 if (type >= 0) {
-                    add_damage(x, y, 400L);
+                    add_damage(x, y, SHOP_DOOR_COST);
                     *shopdamage = TRUE;
                 } else /* caused by monster */
                     add_damage(x, y, 0L);

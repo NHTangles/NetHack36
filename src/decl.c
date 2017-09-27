@@ -264,9 +264,7 @@ NEARDATA char **viz_array = 0; /* used in cansee() and couldsee() macros */
 
 /* Global windowing data, defined here for multi-window-system support */
 NEARDATA winid WIN_MESSAGE = WIN_ERR;
-#ifndef STATUS_VIA_WINDOWPORT
 NEARDATA winid WIN_STATUS = WIN_ERR;
-#endif
 NEARDATA winid WIN_MAP = WIN_ERR, WIN_INVEN = WIN_ERR;
 char toplines[TBUFSZ];
 /* Windowing stuff that's really tty oriented, but present for all ports */
@@ -333,7 +331,7 @@ NEARDATA struct savefile_info sfrestinfo, sfsaveinfo = {
 struct plinemsg_type *plinemsg_types = (struct plinemsg_type *) 0;
 
 #ifdef PANICTRACE
-char *ARGV0;
+const char *ARGV0;
 #endif
 
 /* support for lint.h */
