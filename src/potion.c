@@ -1,4 +1,4 @@
-/* NetHack 3.6	potion.c	$NHDT-Date: 1455407631 2016/02/13 23:53:51 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.129 $ */
+/* NetHack 3.6	potion.c	$NHDT-Date: 1502753790 2017/08/14 23:36:30 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.138 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -406,6 +406,16 @@ boolean talk;
         if (talk)
             You(old ? "can hear again." : "are unable to hear anything.");
     }
+}
+
+void
+self_invis_message()
+{
+    pline("%s %s.",
+          Hallucination ? "Far out, man!  You"
+                        : "Gee!  All of a sudden, you",
+          See_invisible ? "can see right through yourself"
+                        : "can't see yourself");
 }
 
 STATIC_OVL void
@@ -1233,24 +1243,28 @@ const char *objphrase; /* "Your widget glows" or "Steed's saddle glows" */
     return res;
 }
 
+/* potion obj hits monster mon, which might be youmonst; obj always use up */
 void
-potionhit(mon, obj, your_fault)
-register struct monst *mon;
-register struct obj *obj;
-boolean your_fault;
+potionhit(mon, obj, how)
+struct monst *mon;
+struct obj *obj;
+int how;
 {
     const char *botlnam = bottlename();
     boolean isyou = (mon == &youmonst);
     int distance, tx, ty;
     struct obj *saddle = (struct obj *) 0;
-    boolean hit_saddle = FALSE;
+    boolean hit_saddle = FALSE, your_fault = (how <= POTHIT_HERO_THROW);
 
     if (isyou) {
         tx = u.ux, ty = u.uy;
         distance = 0;
         pline_The("%s crashes on your %s and breaks into shards.", botlnam,
                   body_part(HEAD));
-        losehp(Maybe_Half_Phys(rnd(2)), "thrown potion", KILLED_BY_AN);
+        losehp(Maybe_Half_Phys(rnd(2)),
+               (how == POTHIT_OTHER_THROW) ? "propelled potion" /* scatter */
+                                           : "thrown potion",
+               KILLED_BY_AN);
     } else {
         tx = mon->mx, ty = mon->my;
         /* sometimes it hits the saddle */
@@ -1304,6 +1318,7 @@ boolean your_fault;
         case POT_ACID:
             if (!Acid_resistance) {
                 int dmg;
+
                 pline("This burns%s!",
                       obj->blessed ? " a little"
                                    : obj->cursed ? " a lot" : "");
@@ -1333,15 +1348,22 @@ boolean your_fault;
         if (useeit && !affected)
             pline("%s %s wet.", buf, aobjnam(saddle, "get"));
     } else {
-        boolean angermon = your_fault;
+        boolean angermon = your_fault, cureblind = FALSE;
 
         switch (obj->otyp) {
-        case POT_HEALING:
-        case POT_EXTRA_HEALING:
         case POT_FULL_HEALING:
+            cureblind = TRUE;
+            /*FALLTHRU*/
+        case POT_EXTRA_HEALING:
+            if (!obj->cursed)
+                cureblind = TRUE;
+            /*FALLTHRU*/
+        case POT_HEALING:
+            if (obj->blessed)
+                cureblind = TRUE;
             if (mon->data == &mons[PM_PESTILENCE])
                 goto do_illness;
-        /*FALLTHRU*/
+            /*FALLTHRU*/
         case POT_RESTORE_ABILITY:
         case POT_GAIN_ABILITY:
         do_healing:
@@ -1351,6 +1373,8 @@ boolean your_fault;
                 if (canseemon(mon))
                     pline("%s looks sound and hale again.", Monnam(mon));
             }
+            if (cureblind)
+                mcureblindness(mon, canseemon(mon));
             break;
         case POT_SICKNESS:
             if (mon->data == &mons[PM_PESTILENCE])
@@ -1409,7 +1433,7 @@ boolean your_fault;
             break;
         case POT_BLINDNESS:
             if (haseyes(mon->data)) {
-                register int btmp = 64 + rn2(32)
+                int btmp = 64 + rn2(32)
                             + rn2(32) * !resist(mon, POTION_CLASS, 0, NOTELL);
 
                 btmp += mon->mblinded;
@@ -1524,7 +1548,8 @@ void
 potionbreathe(obj)
 register struct obj *obj;
 {
-    register int i, ii, isdone, kn = 0;
+    int i, ii, isdone, kn = 0;
+    boolean cureblind = FALSE;
 
     switch (obj->otyp) {
     case POT_RESTORE_ABILITY:
@@ -1559,18 +1584,25 @@ register struct obj *obj;
             u.mh++, context.botl = 1;
         if (u.uhp < u.uhpmax)
             u.uhp++, context.botl = 1;
+        cureblind = TRUE;
         /*FALLTHRU*/
     case POT_EXTRA_HEALING:
         if (Upolyd && u.mh < u.mhmax)
             u.mh++, context.botl = 1;
         if (u.uhp < u.uhpmax)
             u.uhp++, context.botl = 1;
+        if (!obj->cursed)
+            cureblind = TRUE;
         /*FALLTHRU*/
     case POT_HEALING:
         if (Upolyd && u.mh < u.mhmax)
             u.mh++, context.botl = 1;
         if (u.uhp < u.uhpmax)
             u.uhp++, context.botl = 1;
+        if (obj->blessed)
+            cureblind = TRUE;
+        if (cureblind)
+            make_blinded(0L, !u.ucreamed);
         exercise(A_CON, TRUE);
         break;
     case POT_SICKNESS:

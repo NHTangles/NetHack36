@@ -1,4 +1,4 @@
-/* NetHack 3.6	explode.c	$NHDT-Date: 1496103440 2017/05/30 00:17:20 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.49 $ */
+/* NetHack 3.6	explode.c	$NHDT-Date: 1503355817 2017/08/21 22:50:17 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.50 $ */
 /*      Copyright (C) 1990 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -90,7 +90,9 @@ int expltype;
 
     if (olet == MON_EXPLODE) {
         str = killer.name;
-        do_hallu = Hallucination && strstri(str, "'s explosion");
+        do_hallu = (Hallucination
+                    && (strstri(str, "'s explosion")
+                        || strstri(str, "s' explosion")));
         adtyp = AD_PHYS;
     } else
         switch (abs(type) % 10) {
@@ -568,7 +570,7 @@ struct obj *obj; /* only scatter this obj        */
     struct scatter_chain *schain = (struct scatter_chain *) 0;
     long total = 0L;
 
-    while ((otmp = individual_object ? obj : level.objects[sx][sy]) != 0) {
+    while ((otmp = (individual_object ? obj : level.objects[sx][sy])) != 0) {
         if (otmp->quan > 1L) {
             qtmp = otmp->quan - 1L;
             if (qtmp > LARGEST_INT)
@@ -582,8 +584,8 @@ struct obj *obj; /* only scatter this obj        */
         used_up = FALSE;
 
         /* 9 in 10 chance of fracturing boulders or statues */
-        if ((scflags & MAY_FRACTURE)
-            && ((otmp->otyp == BOULDER) || (otmp->otyp == STATUE))
+        if ((scflags & MAY_FRACTURE) != 0
+            && (otmp->otyp == BOULDER || otmp->otyp == STATUE)
             && rn2(10)) {
             if (otmp->otyp == BOULDER) {
                 if (cansee(sx, sy))
@@ -612,7 +614,7 @@ struct obj *obj; /* only scatter this obj        */
             used_up = TRUE;
 
             /* 1 in 10 chance of destruction of obj; glass, egg destruction */
-        } else if ((scflags & MAY_DESTROY)
+        } else if ((scflags & MAY_DESTROY) != 0
                    && (!rn2(10) || (objects[otmp->otyp].oc_material == GLASS
                                     || otmp->otyp == EGG))) {
             if (breaks(otmp, (xchar) sx, (xchar) sy))
@@ -620,8 +622,7 @@ struct obj *obj; /* only scatter this obj        */
         }
 
         if (!used_up) {
-            stmp = (struct scatter_chain *)
-                                         alloc(sizeof (struct scatter_chain));
+            stmp = (struct scatter_chain *) alloc(sizeof *stmp);
             stmp->next = (struct scatter_chain *) 0;
             stmp->obj = otmp;
             stmp->ox = sx;
@@ -677,7 +678,9 @@ struct obj *obj; /* only scatter this obj        */
                         if (bigmonst(youmonst.data))
                             hitvalu++;
                         hitu = thitu(hitvalu, dmgval(stmp->obj, &youmonst),
-                                     stmp->obj, (char *) 0);
+                                     &stmp->obj, (char *) 0);
+                        if (!stmp->obj)
+                            stmp->stopped = TRUE;
                         if (hitu) {
                             stmp->range -= 3;
                             stop_occupation();

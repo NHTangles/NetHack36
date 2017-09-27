@@ -325,9 +325,7 @@ E NEARDATA char **viz_array;           /* could see/in sight row pointers */
 
 /* Window system stuff */
 E NEARDATA winid WIN_MESSAGE;
-#ifndef STATUS_VIA_WINDOWPORT
 E NEARDATA winid WIN_STATUS;
-#endif
 E NEARDATA winid WIN_MAP, WIN_INVEN;
 
 /* pline (et al) for a single string argument (suppress compiler warning) */
@@ -389,6 +387,14 @@ E char *fqn_prefix_names[PREFIX_COUNT];
 
 E NEARDATA struct savefile_info sfcap, sfrestinfo, sfsaveinfo;
 
+struct opvar {
+    xchar spovartyp; /* one of SPOVAR_foo */
+    union {
+        char *str;
+        long l;
+    } vardata;
+};
+
 struct autopickup_exception {
     struct nhregex *regex;
     char *pattern;
@@ -413,7 +419,7 @@ struct plinemsg_type {
 E struct plinemsg_type *plinemsg_types;
 
 #ifdef PANICTRACE
-E char *ARGV0;
+E const char *ARGV0;
 #endif
 
 #undef E

@@ -443,7 +443,7 @@ xchar x, y;
 
     } else if (IS_WALL(lev->typ)) {
         if (*in_rooms(x, y, SHOPBASE)) {
-            add_damage(x, y, 10L * ACURRSTR);
+            add_damage(x, y, SHOP_WALL_DMG);
             dmgtxt = "damage";
         }
         digtxt = "chew a hole in the wall.";
@@ -473,7 +473,7 @@ xchar x, y;
 
     } else if (IS_DOOR(lev->typ)) {
         if (*in_rooms(x, y, SHOPBASE)) {
-            add_damage(x, y, 400L);
+            add_damage(x, y, SHOP_DOOR_COST);
             dmgtxt = "break";
         }
         if (lev->doormask & D_TRAPPED) {
@@ -723,9 +723,10 @@ int mode;
                          && In_sokoban(&u.uz))
                     pline_The("Sokoban walls resist your ability.");
                 else if (iflags.mention_walls)
-                    pline("It's %s.", IS_WALL(tmpr->typ) ? "a wall"
-                                        : IS_TREE(tmpr->typ) ? "a tree"
-                                          : "solid stone");
+                    pline("It's %s.",
+                          (IS_WALL(tmpr->typ) || tmpr->typ == SDOOR) ? "a wall"
+                          : IS_TREE(tmpr->typ) ? "a tree"
+                          : "solid stone");
             }
             return FALSE;
         }

@@ -4039,7 +4039,7 @@ void NetHackQtMainWindow::closeEvent(QCloseEvent* e)
 		if (dosave0()) {
 		    u.uhp = -1;
 		    NetHackQtBind::qt_exit_nhwindows(0);
-		    terminate(EXIT_SUCCESS);
+		    nh_terminate(EXIT_SUCCESS);
 		}
 		break;
 	    case 1:
@@ -4639,7 +4639,7 @@ void NetHackQtBind::qt_askname()
     // Quit
     clearlocks();
     qt_exit_nhwindows(0);
-    terminate(0);
+    nh_terminate(0);
 }
 
 void NetHackQtBind::qt_get_nh_event()
@@ -5286,15 +5286,11 @@ struct window_procs Qt_procs = {
     genl_preference_update,
     genl_getmsghistory,
     genl_putmsghistory,
-#ifdef STATUS_VIA_WINDOWPORT
     genl_status_init,
     genl_status_finish,
     genl_status_enablefield,
     genl_status_update,
-# ifdef STATUS_HILITES
-    genl_status_threshold,
-# endif
-#endif
+    genl_can_suspend_yes,
 };
 
 extern "C" void play_usersound(const char* filename, int volume)

@@ -1,4 +1,4 @@
-/* NetHack 3.6	extern.h	$NHDT-Date: 1496959470 2017/06/08 22:04:30 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.591 $ */
+/* NetHack 3.6	extern.h	$NHDT-Date: 1505170345 2017/09/11 22:52:25 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.604 $ */
 /* Copyright (c) Steve Creps, 1988.				  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -142,6 +142,7 @@ E int NDECL(getbones);
 /* ### botl.c ### */
 
 E char *NDECL(do_statusline1);
+E void NDECL(check_gold_symbol);
 E char *NDECL(do_statusline2);
 E int FDECL(xlev_to_rank, (int));
 E int FDECL(title_to_mon, (const char *, int *, int *));
@@ -152,16 +153,16 @@ E long NDECL(botl_score);
 E int FDECL(describe_level, (char *));
 E const char *FDECL(rank_of, (int, SHORT_P, BOOLEAN_P));
 E void NDECL(bot);
-#ifdef STATUS_VIA_WINDOWPORT
 E void FDECL(status_initialize, (BOOLEAN_P));
 E void NDECL(status_finish);
 E void FDECL(status_notify_windowport, (BOOLEAN_P));
+E void NDECL(status_eval_next_unhilite);
 #ifdef STATUS_HILITES
-E boolean FDECL(set_status_hilites, (char *op, BOOLEAN_P));
-E void FDECL(clear_status_hilites, (BOOLEAN_P));
-E char *FDECL(get_status_hilites, (char *, int));
+E boolean FDECL(parse_status_hl1, (char *op, BOOLEAN_P));
+E void NDECL(clear_status_hilites);
+E void NDECL(reset_status_hilites);
+E int NDECL(count_status_hilites);
 E boolean NDECL(status_hilite_menu);
-#endif
 #endif
 
 /* ### cmd.c ### */
@@ -198,7 +199,7 @@ E int NDECL(enter_explore_mode);
 E void FDECL(enlightenment, (int, int));
 E void FDECL(youhiding, (BOOLEAN_P, int));
 E void FDECL(show_conduct, (int));
-E void FDECL(bind_key, (UCHAR_P, const char *));
+E boolean FDECL(bind_key, (UCHAR_P, const char *));
 E void NDECL(dokeylist);
 E int FDECL(xytod, (SCHAR_P, SCHAR_P));
 E void FDECL(dtoxy, (coord *, int));
@@ -384,9 +385,9 @@ E void NDECL(heal_legs);
 /* ### do_name.c ### */
 
 E char *FDECL(coord_desc, (int, int, char *, CHAR_P));
-E boolean FDECL(getpos_menu, (coord *, BOOLEAN_P, int));
+E boolean FDECL(getpos_menu, (coord *, int));
 E int FDECL(getpos, (coord *, BOOLEAN_P, const char *));
-E void FDECL(getpos_sethilite, (void (*f)(int)));
+E void FDECL(getpos_sethilite, (void (*f)(int), boolean (*d)(int,int)));
 E void FDECL(new_mname, (struct monst *, int));
 E void FDECL(free_mname, (struct monst *));
 E void FDECL(new_oname, (struct obj *, int));
@@ -607,6 +608,7 @@ E int NDECL(donamelevel);
 E int NDECL(dooverview);
 E void FDECL(show_overview, (int, int));
 E void FDECL(forget_mapseen, (int));
+E void FDECL(rm_mapseen, (int));
 E void FDECL(init_mapseen, (d_level *));
 E void NDECL(recalc_mapseen);
 E void FDECL(mapseen_temple, (struct monst *));
@@ -666,7 +668,7 @@ E void VDECL(panic, (const char *, ...)) PRINTF_F(1, 2) NORETURN;
 E void FDECL(done, (int));
 E void FDECL(container_contents, (struct obj *, BOOLEAN_P,
                                   BOOLEAN_P, BOOLEAN_P));
-E void FDECL(terminate, (int)) NORETURN;
+E void FDECL(nh_terminate, (int)) NORETURN;
 E int NDECL(dovanquished);
 E int NDECL(num_genocides);
 E void FDECL(delayed_killer, (int, int, const char *));
@@ -767,6 +769,9 @@ E void FDECL(unlock_file, (const char *));
 #ifdef USER_SOUNDS
 E boolean FDECL(can_read_file, (const char *));
 #endif
+E void FDECL(config_error_init, (BOOLEAN_P, const char *, BOOLEAN_P));
+E void FDECL(config_error_add, (const char *, ...)) PRINTF_F(1, 2);
+E int NDECL(config_error_done);
 E boolean FDECL(read_config_file, (const char *, int));
 E void FDECL(check_recordfile, (const char *));
 E void NDECL(read_wizkit);
@@ -866,6 +871,7 @@ E char *FDECL(upstart, (char *));
 E char *FDECL(mungspaces, (char *));
 E char *FDECL(trimspaces, (char *));
 E char *FDECL(strip_newline, (char *));
+E char *FDECL(stripchars, (char *, const char *, const char *));
 E char *FDECL(eos, (char *));
 E boolean FDECL(str_end_is, (const char *, const char *));
 E char *FDECL(strkitten, (char *, CHAR_P));
@@ -1311,6 +1317,7 @@ E struct obj *FDECL(obj_nexto, (struct obj *));
 E struct obj *FDECL(obj_nexto_xy, (struct obj *, int, int, BOOLEAN_P));
 E struct obj *FDECL(obj_absorb, (struct obj **, struct obj **));
 E struct obj *FDECL(obj_meld, (struct obj **, struct obj **));
+E void FDECL(pudding_merge_message, (struct obj *, struct obj *));
 
 /* ### mkroom.c ### */
 
@@ -1529,7 +1536,7 @@ E void FDECL(Delay, (int));
 
 /* ### mthrowu.c ### */
 
-E int FDECL(thitu, (int, int, struct obj *, const char *));
+E int FDECL(thitu, (int, int, struct obj **, const char *));
 E int FDECL(ohitmon, (struct monst *, struct obj *, int, BOOLEAN_P));
 E void FDECL(thrwmu, (struct monst *));
 E int FDECL(spitmu, (struct monst *, struct attack *));
@@ -1564,6 +1571,7 @@ E int FDECL(rnd_misc_item, (struct monst *));
 E boolean FDECL(searches_for_item, (struct monst *, struct obj *));
 E boolean FDECL(mon_reflects, (struct monst *, const char *));
 E boolean FDECL(ureflects, (const char *, const char *));
+E void FDECL(mcureblindness, (struct monst *, BOOLEAN_P));
 E boolean FDECL(munstone, (struct monst *, BOOLEAN_P));
 E boolean FDECL(munslime, (struct monst *, BOOLEAN_P));
 
@@ -1679,7 +1687,7 @@ E boolean FDECL(match_optname, (const char *, const char *, int, BOOLEAN_P));
 E void NDECL(initoptions);
 E void NDECL(initoptions_init);
 E void NDECL(initoptions_finish);
-E void FDECL(parseoptions, (char *, BOOLEAN_P, BOOLEAN_P));
+E boolean FDECL(parseoptions, (char *, BOOLEAN_P, BOOLEAN_P));
 E int NDECL(doset);
 E int NDECL(dotogglepickup);
 E void NDECL(option_help);
@@ -1687,7 +1695,7 @@ E void FDECL(next_opt, (winid, const char *));
 E int FDECL(fruitadd, (char *, struct fruit *));
 E int FDECL(choose_classes_menu, (const char *, int, BOOLEAN_P,
                                   char *, char *));
-E void FDECL(parsebindings, (char *));
+E boolean FDECL(parsebindings, (char *));
 E void FDECL(add_menu_cmd_alias, (CHAR_P, CHAR_P));
 E char FDECL(get_menu_cmd_key, (CHAR_P));
 E char FDECL(map_menu_cmd, (CHAR_P));
@@ -1706,8 +1714,11 @@ E boolean FDECL(parsesymbols, (char *));
 E struct symparse *FDECL(match_sym, (char *));
 E void NDECL(set_playmode);
 E int FDECL(sym_val, (const char *));
+E int FDECL(query_color, (const char *));
+E int FDECL(query_attr, (const char *));
 E const char *FDECL(clr2colorname, (int));
 E int FDECL(match_str2clr, (char *));
+E int FDECL(match_str2attr, (const char *, BOOLEAN_P));
 E boolean FDECL(add_menu_coloring, (char *));
 E boolean FDECL(get_menu_coloring, (char *, int *, int *));
 E void NDECL(free_menu_coloring);
@@ -1835,12 +1846,6 @@ E void VDECL(There, (const char *, ...)) PRINTF_F(1, 2);
 E void VDECL(verbalize, (const char *, ...)) PRINTF_F(1, 2);
 E void VDECL(raw_printf, (const char *, ...)) PRINTF_F(1, 2);
 E void VDECL(impossible, (const char *, ...)) PRINTF_F(1, 2);
-E const char *FDECL(align_str, (ALIGNTYP_P));
-E void FDECL(mstatusline, (struct monst *));
-E void NDECL(ustatusline);
-E void NDECL(self_invis_message);
-E char *FDECL(piousness, (BOOLEAN_P, const char *));
-E void FDECL(pudding_merge_message, (struct obj *, struct obj *));
 
 /* ### polyself.c ### */
 
@@ -1878,12 +1883,13 @@ E void FDECL(make_stoned, (long, const char *, int, const char *));
 E void FDECL(make_vomiting, (long, BOOLEAN_P));
 E boolean FDECL(make_hallucinated, (long, BOOLEAN_P, long));
 E void FDECL(make_deaf, (long, BOOLEAN_P));
+E void NDECL(self_invis_message);
 E int NDECL(dodrink);
 E int FDECL(dopotion, (struct obj *));
 E int FDECL(peffects, (struct obj *));
 E void FDECL(healup, (int, int, BOOLEAN_P, BOOLEAN_P));
 E void FDECL(strange_feeling, (struct obj *, const char *));
-E void FDECL(potionhit, (struct monst *, struct obj *, BOOLEAN_P));
+E void FDECL(potionhit, (struct monst *, struct obj *, int));
 E void FDECL(potionbreathe, (struct obj *));
 E int NDECL(dodip);
 E void FDECL(mongrantswish, (struct monst **));
@@ -1934,6 +1940,10 @@ E void NDECL(clearpriests);
 E void FDECL(restpriest, (struct monst *, BOOLEAN_P));
 E void FDECL(newepri, (struct monst *));
 E void FDECL(free_epri, (struct monst *));
+E const char *FDECL(align_str, (ALIGNTYP_P));
+E char *FDECL(piousness, (BOOLEAN_P, const char *));
+E void FDECL(mstatusline, (struct monst *));
+E void NDECL(ustatusline);
 
 /* ### quest.c ### */
 
@@ -1955,6 +1965,7 @@ E void NDECL(unload_qtlist);
 E short FDECL(quest_info, (int));
 E const char *NDECL(ldrname);
 E boolean FDECL(is_quest_artifact, (struct obj *));
+E struct obj *FDECL(find_quest_artifact, (unsigned));
 E void FDECL(com_pager, (int));
 E void FDECL(qt_pager, (int));
 E struct permonst *NDECL(qt_montype);
@@ -2252,6 +2263,11 @@ E boolean
 FDECL(dig_corridor, (coord *, coord *, BOOLEAN_P, SCHAR_P, SCHAR_P));
 E void FDECL(fill_room, (struct mkroom *, BOOLEAN_P));
 E boolean FDECL(load_special, (const char *));
+E xchar FDECL(selection_getpoint, (int, int, struct opvar *));
+E struct opvar *FDECL(selection_opvar, (char *));
+E void FDECL(opvar_free_x, (struct opvar *));
+E void FDECL(set_selection_floodfillchk, (int FDECL((*), (int,int))));
+E void FDECL(selection_floodfill, (struct opvar *, int, int, BOOLEAN_P));
 
 /* ### spell.c ### */
 
@@ -2406,6 +2422,7 @@ E void NDECL(climb_pit);
 E boolean FDECL(fire_damage, (struct obj *, BOOLEAN_P, XCHAR_P, XCHAR_P));
 E int FDECL(fire_damage_chain,
             (struct obj *, BOOLEAN_P, BOOLEAN_P, XCHAR_P, XCHAR_P));
+E boolean FDECL(lava_damage, (struct obj *, XCHAR_P, XCHAR_P));
 E void acid_damage(struct obj *);
 E int FDECL(water_damage, (struct obj *, const char *, BOOLEAN_P));
 E void FDECL(water_damage_chain, (struct obj *, BOOLEAN_P));
@@ -2507,6 +2524,7 @@ E int FDECL(hide_privileges, (BOOLEAN_P));
 E void FDECL(newegd, (struct monst *));
 E void FDECL(free_egd, (struct monst *));
 E boolean FDECL(grddead, (struct monst *));
+E void NDECL(vault_summon_gd);
 E char FDECL(vault_occupied, (char *));
 E void NDECL(invault);
 E int FDECL(gd_move, (struct monst *));
@@ -2724,16 +2742,11 @@ E void FDECL(genl_putmsghistory, (const char *, BOOLEAN_P));
 #ifdef HANGUPHANDLING
 E void NDECL(nhwindows_hangup);
 #endif
-#ifdef STATUS_VIA_WINDOWPORT
 E void NDECL(genl_status_init);
 E void NDECL(genl_status_finish);
 E void FDECL(genl_status_enablefield,
              (int, const char *, const char *, BOOLEAN_P));
-E void FDECL(genl_status_update, (int, genericptr_t, int, int));
-#ifdef STATUS_HILITES
-E void FDECL(genl_status_threshold, (int, int, anything, int, int, int));
-#endif
-#endif
+E void FDECL(genl_status_update, (int, genericptr_t, int, int, int, unsigned long *));
 
 E void FDECL(dump_open_log, (time_t));
 E void NDECL(dump_close_log);

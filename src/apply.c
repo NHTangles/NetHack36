@@ -12,7 +12,7 @@ STATIC_DCL boolean FDECL(its_dead, (int, int, int *));
 STATIC_DCL int FDECL(use_stethoscope, (struct obj *));
 STATIC_DCL void FDECL(use_whistle, (struct obj *));
 STATIC_DCL void FDECL(use_magic_whistle, (struct obj *));
-STATIC_DCL void FDECL(use_leash, (struct obj *));
+STATIC_DCL int FDECL(use_leash, (struct obj *));
 STATIC_DCL int FDECL(use_mirror, (struct obj *));
 STATIC_DCL void FDECL(use_bell, (struct obj **));
 STATIC_DCL void FDECL(use_candelabrum, (struct obj *));
@@ -38,6 +38,8 @@ STATIC_DCL void FDECL(add_class, (char *, CHAR_P));
 STATIC_DCL void FDECL(setapplyclasses, (char *));
 STATIC_PTR boolean FDECL(check_jump, (genericptr_t, int, int));
 STATIC_DCL boolean FDECL(is_valid_jump_pos, (int, int, int, BOOLEAN_P));
+STATIC_DCL boolean FDECL(get_valid_jump_position, (int, int));
+STATIC_DCL boolean FDECL(get_valid_polearm_position, (int, int));
 STATIC_DCL boolean FDECL(find_poleable_mon, (coord *, int, int));
 
 #ifdef AMIGA
@@ -445,6 +447,8 @@ struct obj *obj;
     } else {
         You(whistle_str, obj->cursed ? "shrill" : "high");
         wake_nearby();
+        if (obj->cursed)
+            vault_summon_gd();
     }
 }
 
@@ -569,6 +573,10 @@ unleash_all()
 
 #define MAXLEASHED 2
 
+/* TODO:
+ *  This ought to exclude various other things, such as lights and gas
+ *  spore, is_whirly() critters, ethereal creatures, possibly others.
+ */
 static boolean
 leashable(mtmp)
 struct monst *mtmp;
@@ -577,82 +585,102 @@ struct monst *mtmp;
 }
 
 /* ARGSUSED */
-STATIC_OVL void
+STATIC_OVL int
 use_leash(obj)
 struct obj *obj;
 {
     coord cc;
-    register struct monst *mtmp;
+    struct monst *mtmp;
     int spotmon;
 
+    if (u.uswallow) {
+        /* if the leash isn't in use, assume we're trying to leash
+           the engulfer; if it is use, distinguish between removing
+           it from the engulfer versus from some other creature
+           (note: the two in-use cases can't actually occur; all
+           leashes are released when the hero gets engulfed) */
+        You_cant((!obj->leashmon
+                  ? "leash %s from inside."
+                  : (obj->leashmon == (int) u.ustuck->m_id)
+                    ? "unleash %s from inside."
+                    : "unleash anything from inside %s."),
+                 noit_mon_nam(u.ustuck));
+        return 0;
+    }
     if (!obj->leashmon && number_leashed() >= MAXLEASHED) {
         You("cannot leash any more pets.");
-        return;
+        return 0;
     }
 
     if (!get_adjacent_loc((char *) 0, (char *) 0, u.ux, u.uy, &cc))
-        return;
+        return 0;
 
-    if ((cc.x == u.ux) && (cc.y == u.uy)) {
+    if (cc.x == u.ux && cc.y == u.uy) {
         if (u.usteed && u.dz > 0) {
             mtmp = u.usteed;
             spotmon = 1;
             goto got_target;
         }
         pline("Leash yourself?  Very funny...");
-        return;
+        return 0;
     }
+
+    /*
+     * From here on out, return value is 1 == a move is used.
+     */
 
     if (!(mtmp = m_at(cc.x, cc.y))) {
         There("is no creature there.");
-        return;
+        if (glyph_is_invisible(levl[cc.x][cc.y].glyph)) {
+            unmap_object(cc.x, cc.y);
+            newsym(cc.x, cc.y);
+        }
+        return 1;
     }
 
     spotmon = canspotmon(mtmp);
-got_target:
+ got_target:
 
-    if (!mtmp->mtame) {
-        if (!spotmon)
-            There("is no creature there.");
-        else
-            pline("%s %s leashed!", Monnam(mtmp),
-                  (!obj->leashmon) ? "cannot be" : "is not");
-        return;
-    }
-    if (!obj->leashmon) {
+    if (!spotmon && !glyph_is_invisible(levl[cc.x][cc.y].glyph)) {
+        /* for the unleash case, we don't verify whether this unseen
+           monster is the creature attached to the current leash */
+        You("fail to %sleash something.", obj->leashmon ? "un" : "");
+        /* trying again will work provided the monster is tame
+           (and also that it doesn't change location by retry time) */
+        map_invisible(cc.x, cc.y);
+    } else if (!mtmp->mtame) {
+        pline("%s %s leashed!", Monnam(mtmp),
+              (!obj->leashmon) ? "cannot be" : "is not");
+    } else if (!obj->leashmon) {
+        /* applying a leash which isn't currently in use */
         if (mtmp->mleashed) {
             pline("This %s is already leashed.",
-                  spotmon ? l_monnam(mtmp) : "monster");
-            return;
-        }
-        if (!leashable(mtmp)) {
+                  spotmon ? l_monnam(mtmp) : "creature");
+        } else if (!leashable(mtmp)) {
             pline("The leash won't fit onto %s%s.", spotmon ? "your " : "",
                   l_monnam(mtmp));
-            return;
+        } else {
+            You("slip the leash around %s%s.", spotmon ? "your " : "",
+                l_monnam(mtmp));
+            mtmp->mleashed = 1;
+            obj->leashmon = (int) mtmp->m_id;
+            mtmp->msleeping = 0;
         }
-
-        You("slip the leash around %s%s.", spotmon ? "your " : "",
-            l_monnam(mtmp));
-        mtmp->mleashed = 1;
-        obj->leashmon = (int) mtmp->m_id;
-        mtmp->msleeping = 0;
-        return;
-    }
-    if (obj->leashmon != (int) mtmp->m_id) {
-        pline("This leash is not attached to that creature.");
-        return;
     } else {
-        if (obj->cursed) {
+        /* applying a leash which is currently in use */
+        if (obj->leashmon != (int) mtmp->m_id) {
+            pline("This leash is not attached to that creature.");
+        } else if (obj->cursed) {
             pline_The("leash would not come off!");
-            obj->bknown = TRUE;
-            return;
+            obj->bknown = 1;
+        } else {
+            mtmp->mleashed = 0;
+            obj->leashmon = 0;
+            You("remove the leash from %s%s.",
+                spotmon ? "your " : "", l_monnam(mtmp));
         }
-        mtmp->mleashed = 0;
-        obj->leashmon = 0;
-        You("remove the leash from %s%s.", spotmon ? "your " : "",
-            l_monnam(mtmp));
     }
-    return;
+    return 1;
 }
 
 /* assuming mtmp->mleashed has been checked */
@@ -1196,6 +1224,9 @@ struct obj **optr;
             end_burn(obj, TRUE);
         /* candles are now gone */
         useupall(obj);
+        /* candelabrum's weight is changing */
+        otmp->owt = weight(otmp);
+        update_inventory();
     }
 }
 
@@ -1564,6 +1595,15 @@ boolean showmsg;
 
 static int jumping_is_magic;
 
+STATIC_OVL boolean
+get_valid_jump_position(x,y)
+int x,y;
+{
+    return (isok(x, y)
+            && (ACCESSIBLE(levl[x][y].typ) || Passes_walls)
+            && is_valid_jump_pos(x, y, jumping_is_magic, FALSE));
+}
+
 void
 display_jump_positions(state)
 int state;
@@ -1577,9 +1617,7 @@ int state;
             for (dy = -4; dy <= 4; dy++) {
                 x = dx + (int) u.ux;
                 y = dy + (int) u.uy;
-                if (isok(x, y)
-                    && (ACCESSIBLE(levl[x][y].typ) || Passes_walls)
-                    && is_valid_jump_pos(x, y, jumping_is_magic, FALSE))
+                if (get_valid_jump_position(x, y))
                     tmp_at(x, y);
             }
     } else {
@@ -1678,7 +1716,7 @@ int magic; /* 0=Physical, otherwise skill level */
     cc.x = u.ux;
     cc.y = u.uy;
     jumping_is_magic = magic;
-    getpos_sethilite(display_jump_positions);
+    getpos_sethilite(display_jump_positions, get_valid_jump_position);
     if (getpos(&cc, TRUE, "the desired position") < 0)
         return 0; /* user pressed ESC */
     if (!is_valid_jump_pos(cc.x, cc.y, magic, TRUE)) {
@@ -2751,9 +2789,8 @@ struct obj *obj;
                         int hitu, hitvalu;
 
                         hitvalu = 8 + otmp->spe;
-                        hitu = thitu(hitvalu,
-                                     dmgval(otmp, &youmonst),
-                                     otmp, (char *)0);
+                        hitu = thitu(hitvalu, dmgval(otmp, &youmonst),
+                                     &otmp, (char *)0);
                         if (hitu) {
                             pline_The("%s hits you as you try to snatch it!",
                                       the(onambuf));
@@ -2851,6 +2888,15 @@ int min_range, max_range;
 static int polearm_range_min = -1;
 static int polearm_range_max = -1;
 
+STATIC_OVL boolean
+get_valid_polearm_position(x,y)
+int x,y;
+{
+    return (isok(x, y) && ACCESSIBLE(levl[x][y].typ)
+            && distu(x, y) >= polearm_range_min
+            && distu(x, y) <= polearm_range_max);
+}
+
 void
 display_polearm_positions(state)
 int state;
@@ -2864,9 +2910,7 @@ int state;
             for (dy = -4; dy <= 4; dy++) {
                 x = dx + (int) u.ux;
                 y = dy + (int) u.uy;
-                if (isok(x, y) && ACCESSIBLE(levl[x][y].typ)
-                    && distu(x, y) >= polearm_range_min
-                    && distu(x, y) <= polearm_range_max) {
+                if (get_valid_polearm_position(x, y)) {
                     tmp_at(x, y);
                 }
             }
@@ -2936,7 +2980,7 @@ struct obj *obj;
         cc.x = hitm->mx;
         cc.y = hitm->my;
     }
-    getpos_sethilite(display_polearm_positions);
+    getpos_sethilite(display_polearm_positions, get_valid_polearm_position);
     if (getpos(&cc, TRUE, "the spot to hit") < 0)
         return res; /* ESC; uses turn iff polearm became wielded */
 
@@ -3537,7 +3581,7 @@ doapply()
         use_tinning_kit(obj);
         break;
     case LEASH:
-        use_leash(obj);
+        res = use_leash(obj);
         break;
     case SADDLE:
         res = use_saddle(obj);

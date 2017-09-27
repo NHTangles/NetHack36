@@ -1278,7 +1278,7 @@ int how;
             destroy_nhwindow(WIN_INVEN),  WIN_INVEN = WIN_ERR;
         display_nhwindow(WIN_MESSAGE, TRUE);
         destroy_nhwindow(WIN_MAP),  WIN_MAP = WIN_ERR;
-#ifndef STATUS_VIA_WINDOWPORT
+#ifndef STATUS_HILITES
         destroy_nhwindow(WIN_STATUS),  WIN_STATUS = WIN_ERR;
 #endif
         destroy_nhwindow(WIN_MESSAGE),  WIN_MESSAGE = WIN_ERR;
@@ -1458,7 +1458,7 @@ int how;
         raw_print("");
         raw_print("");
     }
-    terminate(EXIT_SUCCESS);
+    nh_terminate(EXIT_SUCCESS);
 }
 
 void
@@ -1533,7 +1533,7 @@ boolean identified, all_containers, reportempty;
 
 /* should be called with either EXIT_SUCCESS or EXIT_FAILURE */
 void
-terminate(status)
+nh_terminate(status)
 int status;
 {
     program_state.in_moveloop = 0; /* won't be returning to normal play */
@@ -1550,7 +1550,7 @@ int status;
 #ifdef VMS
     /*
      *  This is liable to draw a warning if compiled with gcc, but it's
-     *  more important to flag panic() -> really_done() -> terminate()
+     *  more important to flag panic() -> really_done() -> nh_terminate()
      *  as __noreturn__ then to avoid the warning.
      */
     /* don't call exit() if already executing within an exit handler;
