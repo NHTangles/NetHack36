@@ -83,6 +83,12 @@ TELEPORT_REGION:levregion(01,01,20,19),levregion(20,00,70,19)
 REGION:(00,00,36,16),lit,"ordinary"
 STAIR:levregion(01,03,20,19),(00,00,36,15),up
 STAIR:levregion(61,03,75,19),(00,00,36,15),down
+# BEGIN DIGDUG CHALLENGE CODE
+# can't easily get inside the town without digging, so would
+# be a little unfair to generate the digdug portal inside
+BRANCH:levregion(01,00,79,20),(0,0,36,15)
+# END DIGDUG CHALLENGE CODE
+
 
 # shame we can't make polluted fountains
 FOUNTAIN:(16,09)
