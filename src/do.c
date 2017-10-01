@@ -192,7 +192,7 @@ const char *verb;
                 }
                 if (--u.poolchallenge_holesleft == 0) {
                     sprintf(Pool_success, "%s/challenge/Pool-%s-success", DEVNULL_PFX, plname);
-                    pline("As the last pocket is filled, your foot knocks into a pebble which rolls away. It seems that rotational intertia has returned to normal.");
+                    pline("As the last pocket is filled, your foot knocks into a pebble which rolls away. It seems that rotational inertia has returned to normal.");
                     Pool_flag = fopen(Pool_success, "w");
                     if(NULL != Pool_flag) {
                         fclose(Pool_flag);
