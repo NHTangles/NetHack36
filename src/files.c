@@ -2100,7 +2100,7 @@ int src;
 #ifdef SYSCF
     int n;
 #endif
-    char *bufp, *altp, buf[BUFSZ];
+    char *bufp, *altp, buf[4 * BUFSZ];
     uchar translate[MAXPCHARS];
     int len;
 
