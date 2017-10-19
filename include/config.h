@@ -470,8 +470,9 @@ typedef unsigned char uchar;
 #ifdef DGAMELAUNCH
 #define EXTRAINFO_FN    "/dgldir/extrainfo-dn36/%n.extrainfo"
 /* #define MAILCKFREQ 5 */ /* SIMPLE_MAIL is in unixconf.h */
-#define DUMPLOG   /* End-of-game dump logs */
 #endif
+
+#define DUMPLOG   /* End-of-game dump logs */
 #ifdef DUMPLOG
 
 #ifndef DUMPLOG_MSG_COUNT
@@ -479,7 +480,7 @@ typedef unsigned char uchar;
 #endif
 
 #ifndef DUMPLOG_FILE
-#define DUMPLOG_FILE        "/tmp/nethack.%n.%d.log"
+#define DUMPLOG_FILE        "/dgldir/userdata/%N/%n/dn36/dumplog/%t.dn36.txt"
 /* DUMPLOG_FILE allows following placeholders:
    %% literal '%'
    %v version (eg. "3.6.1-0")
