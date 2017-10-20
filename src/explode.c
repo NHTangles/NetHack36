@@ -412,22 +412,8 @@ int expltype;
                     mtmp->mhp -= (idamres + idamnonres);
                 }
                 if (mtmp->mhp <= 0) {
-                    if (!context.mon_moving) {
+                    if (mdef ? (mtmp == mdef) : !context.mon_moving) {
                         killed(mtmp);
-                    } else if (mdef && mtmp == mdef) {
-                        /* 'mdef' killed self trying to cure being turned
-                         * into slime due to some action by the player.
-                         * Hero gets the credit (experience) and most of
-                         * the blame (possible loss of alignment and/or
-                         * luck and/or telepathy depending on mtmp) but
-                         * doesn't break pacifism.  xkilled()'s message
-                         * would be "you killed <mdef>" so give our own.
-                         */
-                        if (cansee(mtmp->mx, mtmp->my) || canspotmon(mtmp))
-                            pline("%s is %s!", Monnam(mtmp),
-                                  nonliving(mtmp->data) ? "destroyed"
-                                                        : "killed");
-                        xkilled(mtmp, 0);
                     } else
                         monkilled(mtmp, "", (int) adtyp);
                 } else if (!context.mon_moving) {

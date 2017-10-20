@@ -2226,9 +2226,7 @@ boolean stoning; /* True: stop petrification, False: cure stun && confusion */
         if (mon->mhp <= 0) {
             pline("%s dies!", Monnam(mon));
             if (by_you)
-                /* hero gets credit (experience) and blame (possible loss
-                   of alignment and/or luck and/or telepathy depending on
-                   mon) for the kill but does not break pacifism conduct */
+                /* In 3.6.0 this breaks paci conduct, fixed later */
                 xkilled(mon, 0);
             else
                 mondead(mon);
@@ -2409,13 +2407,16 @@ boolean by_you; /* true: if mon kills itself, hero gets credit/blame */
            'mon' could have taken damage so might die */
         if (mon->mhp <= 0) {
             if (by_you) {
-                /* mon killed self but hero gets credit and blame (except
-                   for pacifist conduct); xkilled()'s message would say
-                   "You killed/destroyed <mon>" so give our own message */
+                /* mon killed self but hero gets credit and blame
+                   xkilled()'s message would say
+                   "You killed/destroyed <mon>" so give our own message
+                   In 3.6.0-devnull we include this to fix a crash bug
+                   but we don't preserve paci conduct, for consistency
+                   with the unstoning/acid case */
                 if (vis)
                     pline("%s is %s by the fire!", Monnam(mon),
                           nonliving(mon->data) ? "destroyed" : "killed");
-                xkilled(mon, 0);
+                xkilled(mon, 1);
             } else
                 monkilled(mon, "fire", AD_FIRE);
         } else {
