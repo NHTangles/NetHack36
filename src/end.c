@@ -56,7 +56,7 @@ STATIC_DCL boolean FDECL(should_query_disclose_option, (int, char *));
 #ifdef DUMPLOG
 STATIC_DCL void NDECL(dump_plines);
 #endif
-STATIC_DCL void FDECL(dump_everything, (int));
+STATIC_DCL void FDECL(dump_everything, (int, time_t));
 STATIC_DCL int NDECL(num_extinct);
 
 #if defined(__BEOS__) || defined(MICRO) || defined(WIN32) || defined(OS2)
@@ -632,8 +632,7 @@ dump_plines()
     extern char *saved_plines[];
     extern unsigned saved_pline_index;
 
-    Strcpy(buf, " ");
-    putstr(0, 0, "");
+    Strcpy(buf, " "); /* one space for indentation */
     putstr(0, 0, "Latest messages:");
     for (i = 0, j = (int) saved_pline_index; i < DUMPLOG_MSG_COUNT;
          ++i, j = (j + 1) % DUMPLOG_MSG_COUNT) {
@@ -649,27 +648,46 @@ dump_plines()
 }
 #endif
 
+/*ARGUSED*/
 STATIC_OVL void
-dump_everything(how)
+dump_everything(how, when)
 int how;
+time_t when; /* date+time at end of game */
 {
 #ifdef DUMPLOG
     struct obj *obj;
-    char pbuf[BUFSZ];
+    char pbuf[BUFSZ], datetimebuf[24]; /* [24]: room for 64-bit bogus value */
 
     dump_redirect(TRUE);
     if (!iflags.in_dumplog)
         return;
 
-    init_symbols();
+    init_symbols(); /* revert to default symbol set */
 
-    for (obj = invent; obj; obj = obj->nobj) {
-        makeknown(obj->otyp);
-        obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
-        if (Is_container(obj) || obj->otyp == STATUE)
-            obj->cknown = obj->lknown = 1;
-    }
+    /* let folks know this was a /dev/null/nethack tribute game */
+    Sprintf(pbuf, "/dev/null/nethack tribute tournament, November 2017");
+    putstr(0, 0, pbuf);
 
+    /* one line version ID, which includes build date+time;
+       it's conceivable that the game started with a different
+       build date+time or even with an older nethack version,
+       but we only have access to the one it finished under */
+    putstr(0, 0, getversionstring(pbuf));
+    putstr(0, 0, "");
+
+    /* game start and end date+time to disambiguate version date+time */
+    Strcpy(datetimebuf, yyyymmddhhmmss(ubirthday));
+    Sprintf(pbuf, "Game began %4.4s-%2.2s-%2.2s %2.2s:%2.2s:%2.2s",
+            &datetimebuf[0], &datetimebuf[4], &datetimebuf[6],
+            &datetimebuf[8], &datetimebuf[10], &datetimebuf[12]);
+    Strcpy(datetimebuf, yyyymmddhhmmss(when));
+    Sprintf(eos(pbuf), ", ended %4.4s-%2.2s-%2.2s %2.2s:%2.2s:%2.2s.",
+            &datetimebuf[0], &datetimebuf[4], &datetimebuf[6],
+            &datetimebuf[8], &datetimebuf[10], &datetimebuf[12]);
+    putstr(0, 0, pbuf);
+    putstr(0, 0, "");
+
+    /* character name and basic role info */
     Sprintf(pbuf, "%s, %s %s %s %s", plname,
             aligns[1 - u.ualign.type].adj,
             genders[flags.female].adj,
@@ -724,14 +742,7 @@ boolean taken;
         ask = should_query_disclose_option('i', &defquery);
         c = ask ? yn_function(qbuf, ynqchars, defquery) : defquery;
         if (c == 'y') {
-            struct obj *obj;
-
-            for (obj = invent; obj; obj = obj->nobj) {
-                makeknown(obj->otyp);
-                obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
-                if (Is_container(obj) || obj->otyp == STATUE)
-                    obj->cknown = obj->lknown = 1;
-            }
+            /* caller has already ID'd everything */
             (void) display_inventory((char *) 0, TRUE);
             container_contents(invent, TRUE, TRUE, FALSE);
         }
@@ -1102,10 +1113,26 @@ int how;
     if (have_windows)
         display_nhwindow(WIN_MESSAGE, FALSE);
 
-    if (strcmp(flags.end_disclose, "none") && how != PANICKED)
-        disclose(how, taken);
+    if (how != PANICKED) {
+        struct obj *obj;
 
-    dump_everything(how);
+        /*
+         * This is needed for both inventory disclosure and dumplog.
+         * Both are optional, so do it once here instead of duplicating
+         * it in both of those places.
+         */
+        for (obj = invent; obj; obj = obj->nobj) {
+            makeknown(obj->otyp);
+            obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
+            if (Is_container(obj) || obj->otyp == STATUE)
+                obj->cknown = obj->lknown = 1;
+        }
+
+        if (strcmp(flags.end_disclose, "none"))
+            disclose(how, taken);
+
+        dump_everything(how, endtime);
+    }
 
     /* finish_paybill should be called after disclosure but before bones */
     if (bones_ok && taken)
@@ -1255,11 +1282,6 @@ int how;
 
         /* count the points for artifacts */
         artifact_score(invent, TRUE, endwin);
-#ifdef DUMPLOG
-        dump_redirect(TRUE);
-        artifact_score(invent, TRUE, endwin);
-        dump_redirect(FALSE);
-#endif
 
         viz_array[0][0] |= IN_SIGHT; /* need visibility for naming */
         mtmp = mydogs;
@@ -1354,7 +1376,7 @@ int how;
             plur(umoney), moves, plur(moves));
     dump_forward_putstr(endwin, 0, pbuf, done_stopprint);
     Sprintf(pbuf,
-        "You were level %d with a maximum of %d hit point%s when you %s.",
+            "You were level %d with a maximum of %d hit point%s when you %s.",
             u.ulevel, u.uhpmax, plur(u.uhpmax), ends[how]);
     dump_forward_putstr(endwin, 0, pbuf, done_stopprint);
     dump_forward_putstr(endwin, 0, "", done_stopprint);

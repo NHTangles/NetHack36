@@ -933,7 +933,7 @@ anything threshold;
 #endif /* STATUS_VIA_WINDOWPORT */
 
 STATIC_VAR struct window_procs dumplog_windowprocs_backup;
-STATIC_PTR FILE *dumplog_file;
+STATIC_VAR FILE *dumplog_file;
 
 #ifdef DUMPLOG
 STATIC_VAR time_t dumplog_now;
@@ -1052,8 +1052,8 @@ void
 dump_close_log()
 {
     if (dumplog_file) {
-        fclose(dumplog_file);
-        dumplog_file = NULL;
+        (void) fclose(dumplog_file);
+        dumplog_file = (FILE *) 0;
     }
 }
 
