@@ -27,7 +27,7 @@ get_strength_str()
         else if (st < STR18(100))
             Sprintf(buf, "18/%02d", st - 18);
         else
-            Sprintf(buf, "18/%0**");
+            Sprintf(buf, "18/**");
     } else
         Sprintf(buf, "%-1d", st);
 
