@@ -1,4 +1,4 @@
-/* NetHack 3.6	hack.c	$NHDT-Date: 1496619131 2017/06/04 23:32:11 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.175 $ */
+/* NetHack 3.6	hack.c	$NHDT-Date: 1508549436 2017/10/21 01:30:36 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.180 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -315,14 +315,30 @@ moverock()
                 feel_location(sx, sy);
         cannot_push:
             if (throws_rocks(youmonst.data)) {
+                boolean
+                    canpickup = (!Sokoban
+                                 /* similar exception as in can_lift():
+                                    when poly'd into a giant, you can
+                                    pick up a boulder if you have a free
+                                    slot or into the overflow ('#') slot
+                                    unless already carrying at least one */
+                              && (inv_cnt(FALSE) < 52 || !carrying(BOULDER))),
+                    willpickup = (canpickup && autopick_testobj(otmp, TRUE));
+
                 if (u.usteed && P_SKILL(P_RIDING) < P_BASIC) {
                     You("aren't skilled enough to %s %s from %s.",
-                        (flags.pickup && !Sokoban) ? "pick up" : "push aside",
+                        willpickup ? "pick up" : "push aside",
                         the(xname(otmp)), y_monnam(u.usteed));
                 } else {
-                    pline("However, you can easily %s.",
-                          (flags.pickup && !Sokoban) ? "pick it up"
-                                                     : "push it aside");
+                    /*
+                     * willpickup:  you easily pick it up
+                     * canpickup:   you could easily pick it up
+                     * otherwise:   you easily push it aside
+                     */
+                    pline("However, you %seasily %s.",
+                          (willpickup || !canpickup) ? "" : "could ",
+                          (willpickup || canpickup) ? "pick it up"
+                                                    : "push it aside");
                     sokoban_guilt();
                     break;
                 }
@@ -1172,7 +1188,7 @@ trapmove(x, y, desttrap)
 int x, y;              /* targetted destination, <u.ux+u.dx,u.uy+u.dy> */
 struct trap *desttrap; /* nonnull if another trap at <x,y> */
 {
-    boolean anchored;
+    boolean anchored = FALSE;
     const char *predicament, *culprit;
     char *steedname = !u.usteed ? (char *) 0 : y_monnam(u.usteed);
 
@@ -1191,6 +1207,8 @@ struct trap *desttrap; /* nonnull if another trap at <x,y> */
         /* [why does diagonal movement give quickest escape?] */
         if ((u.dx && u.dy) || !rn2(5))
             u.utrap--;
+        if (!u.utrap)
+            goto wriggle_free;
         break;
     case TT_PIT:
         if (desttrap && desttrap->tseen
@@ -1282,6 +1300,7 @@ struct trap *desttrap; /* nonnull if another trap at <x,y> */
                     Norep("You are %s %s.", predicament, culprit);
             }
         } else {
+wriggle_free:
             if (u.usteed)
                 pline("%s finally %s free.", upstart(steedname),
                       !anchored ? "lurches" : "wrenches the ball");
@@ -1643,10 +1662,7 @@ domove()
         }
         return;
     }
-    if (glyph_is_invisible(levl[x][y].glyph)) {
-        unmap_object(x, y);
-        newsym(x, y);
-    }
+    (void) unmap_invisible(x, y);
     /* not attacking an animal, so we try to move */
     if ((u.dx || u.dy) && u.usteed && stucksteed(FALSE)) {
         nomul(0);

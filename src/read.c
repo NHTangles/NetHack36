@@ -1,4 +1,4 @@
-/* NetHack 3.6	read.c	$NHDT-Date: 1467718299 2016/07/05 11:31:39 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.140 $ */
+/* NetHack 3.6	read.c	$NHDT-Date: 1508479721 2017/10/20 06:08:41 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.148 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -194,6 +194,7 @@ doread()
         return 1;
     } else if (scroll->otyp == T_SHIRT || scroll->otyp == ALCHEMY_SMOCK) {
         char buf[BUFSZ];
+
         if (Blind) {
             You_cant("feel any Braille writing.");
             return 0;
@@ -241,10 +242,13 @@ doread()
                       : card_msgs[scroll->o_id % (SIZE(card_msgs) - 1)]);
         }
         /* Make a credit card number */
-        pline("\"%d0%d %d%d1 0%d%d0\"", ((scroll->o_id % 89) + 10),
-              (scroll->o_id % 4), (((scroll->o_id * 499) % 899999) + 100000),
-              (scroll->o_id % 10), (!(scroll->o_id % 3)),
-              ((scroll->o_id * 7) % 10));
+        pline("\"%d0%d %ld%d1 0%d%d0\"",
+              (((int) scroll->o_id % 89) + 10),
+              ((int) scroll->o_id % 4),
+              ((((long) scroll->o_id * 499L) % 899999L) + 100000L),
+              ((int) scroll->o_id % 10),
+              (!((int) scroll->o_id % 3)),
+              (((int) scroll->o_id * 7) % 10));
         if(!u.uconduct.literate++)
             livelog_write_string(LL_CONDUCT,
                     "became literate by reading a credit card");
@@ -356,6 +360,8 @@ doread()
     }
     scroll->in_use = TRUE; /* scroll, not spellbook, now being read */
     if (scroll->otyp != SCR_BLANK_PAPER) {
+        boolean silently = !can_chant(&youmonst);
+
         /* a few scroll feedback messages describe something happening
            to the scroll itself, so avoid "it disappears" for those */
         nodisappear = (scroll->otyp == SCR_FIRE
@@ -365,7 +371,7 @@ doread()
             pline(nodisappear
                       ? "You %s the formula on the scroll."
                       : "As you %s the formula on it, the scroll disappears.",
-                  is_silent(youmonst.data) ? "cogitate" : "pronounce");
+                  silently ? "cogitate" : "pronounce");
         else
             pline(nodisappear ? "You read the scroll."
                               : "As you read the scroll, it disappears.");
@@ -374,8 +380,7 @@ doread()
                 pline("Being so trippy, you screw up...");
             else
                 pline("Being confused, you %s the magic words...",
-                      is_silent(youmonst.data) ? "misunderstand"
-                                               : "mispronounce");
+                      silently ? "misunderstand" : "mispronounce");
         }
     }
     if (!seffects(scroll)) {
@@ -1731,6 +1736,7 @@ boolean confused, helmet_protects, byu, skip_uswallow;
         }
     } else
         dmg = 0;
+    wake_nearto(u.ux, u.uy, 4 * 4);
     /* Must be before the losehp(), for bones files */
     if (!flooreffects(otmp2, u.ux, u.uy, "fall")) {
         place_object(otmp2, u.ux, u.uy);
@@ -1796,7 +1802,10 @@ boolean confused, byu;
                 pline("%s is killed.", Monnam(mtmp));
                 mondied(mtmp);
             }
+        } else {
+            wakeup(mtmp, byu);
         }
+        wake_nearto(x, y, 4 * 4);
     } else if (u.uswallow && mtmp == u.ustuck) {
         obfree(otmp2, (struct obj *) 0);
         /* fall through to player */

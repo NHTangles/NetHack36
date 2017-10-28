@@ -1,4 +1,4 @@
-/* NetHack 3.6	options.c	$NHDT-Date: 1505214875 2017/09/12 11:14:35 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.302 $ */
+/* NetHack 3.6	options.c	$NHDT-Date: 1508827592 2017/10/24 06:46:32 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.316 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -129,11 +129,10 @@ static struct Bool_Opt {
     { "fullscreen", &iflags.wc2_fullscreen, FALSE, SET_IN_FILE },
     { "goldX", &iflags.goldX, FALSE, SET_IN_GAME },
     { "help", &flags.help, TRUE, SET_IN_GAME },
+    { "herecmd_menu", &iflags.herecmd_menu, FALSE, SET_IN_GAME },
     { "hilite_pet", &iflags.wc_hilite_pet, FALSE, SET_IN_GAME }, /*WC*/
     { "hilite_pile", &iflags.hilite_pile, FALSE, SET_IN_GAME },
-#ifdef STATUS_HILITES
     { "hitpointbar", &iflags.wc2_hitpointbar, FALSE, SET_IN_GAME }, /*WC2*/
-#endif
 #ifndef MAC
     { "ignintr", &flags.ignintr, FALSE, SET_IN_GAME },
 #else
@@ -654,7 +653,7 @@ initoptions()
      * lists of usernames into arrays with one name per element.
      */
 #endif
-#endif
+#endif /* SYSCF */
     initoptions_finish();
 }
 
@@ -724,6 +723,12 @@ initoptions_init()
     iflags.bouldersym = 0;
 
     iflags.travelcc.x = iflags.travelcc.y = -1;
+
+    /* for "special achievement" tracking (see obj.h,
+       create_object(sp_lev.c), addinv_core1(invent.c) */
+    iflags.mines_prize_type = LUCKSTONE;
+    iflags.soko_prize_type1 = BAG_OF_HOLDING;
+    iflags.soko_prize_type2 = AMULET_OF_REFLECTION;
 
     /* assert( sizeof flags.inv_order == sizeof def_inv_order ); */
     (void) memcpy((genericptr_t) flags.inv_order,
@@ -811,12 +816,12 @@ initoptions_finish()
             config_error_done();
         }
     } else
-#endif
-        {
-            config_error_init(TRUE, (char *) 0, FALSE);
-            read_config_file((char *) 0, SET_IN_FILE);
-            config_error_done();
-        }
+#endif /* !MAC */
+    /*else*/ {
+        config_error_init(TRUE, (char *) 0, FALSE);
+        read_config_file((char *) 0, SET_IN_FILE);
+        config_error_done();
+    }
 
     (void) fruitadd(pl_fruit, (struct fruit *) 0);
     /*
@@ -830,6 +835,19 @@ initoptions_finish()
     if (iflags.bouldersym)
         update_bouldersym();
     reglyph_darkroom();
+
+#ifdef STATUS_HILITES
+    /*
+     * A multi-interface binary might only support status highlighting
+     * for some of the interfaces; check whether we asked for it but are
+     * using one which doesn't.
+     */
+    if (iflags.hilite_delta && !wc2_supported("statushilites")) {
+        raw_printf("Status highlighting not supported for %s interface.",
+                   windowprocs.name);
+        iflags.hilite_delta = 0;
+    }
+#endif
     return;
 }
 
@@ -1595,7 +1613,7 @@ int hide_mask;
 }
 
 STATIC_OVL int
-msgtype_count()
+msgtype_count(VOID_ARGS)
 {
     int c = 0;
     struct plinemsg_type *tmp = plinemsg_types;
@@ -1736,7 +1754,7 @@ char *tmpstr;
 
 boolean
 get_menu_coloring(str, color, attr)
-char *str;
+const char *str;
 int *color, *attr;
 {
     struct menucoloring *tmpmc;
@@ -1793,7 +1811,7 @@ int idx; /* 0 .. */
 }
 
 STATIC_OVL int
-count_menucolors()
+count_menucolors(VOID_ARGS)
 {
     int count = 0;
     struct menucoloring *tmp = menu_colorings;
@@ -2172,8 +2190,9 @@ boolean tinitial, tfrom_file;
             symset[PRIMARY].name = dupstr(op);
             if (!read_sym_file(PRIMARY)) {
                 clear_symsetentry(PRIMARY, TRUE);
-                config_error_add("Unable to load symbol set \"%s\" from \"%s\"",
-                           op, SYMBOLS);
+                config_error_add(
+                               "Unable to load symbol set \"%s\" from \"%s\"",
+                                 op, SYMBOLS);
                 return FALSE;
             } else {
                 switch_symbols(symset[PRIMARY].name != (char *) 0);
@@ -2558,11 +2577,12 @@ boolean tinitial, tfrom_file;
         return warning_opts(opts, fullname);
     }
 
-#ifdef BACKWARD_COMPAT
     /* boulder:symbol */
     fullname = "boulder";
     if (match_optname(opts, fullname, 7, TRUE)) {
+#ifdef BACKWARD_COMPAT
         int clash = 0;
+
         if (duplicate)
             complain_about_duplicate(opts, 1);
         if (negated) {
@@ -2583,7 +2603,7 @@ boolean tinitial, tfrom_file;
                symbol which is not good - reject it*/
             config_error_add(
                 "Badoption - boulder symbol '%c' conflicts with a %s symbol.",
-                opts[0], (clash == 1) ? "monster" : "warning");
+                             opts[0], (clash == 1) ? "monster" : "warning");
         } else {
             /*
              * Override the default boulder symbol.
@@ -2597,8 +2617,12 @@ boolean tinitial, tfrom_file;
             need_redraw = TRUE;
         }
         return retval;
-    }
+#else
+        config_error_add("'%s' no longer supported; use S_boulder:c instead",
+                         fullname);
+        return FALSE;
 #endif
+    }
 
     /* name:string */
     fullname = "name";
@@ -2866,7 +2890,8 @@ boolean tinitial, tfrom_file;
                 op++;
             }
             if (badopt) {
-                config_error_add("Unknown %s parameter '%s'", "pickup_types", op);
+                config_error_add("Unknown %s parameter '%s'",
+                                 "pickup_types", op);
                 return FALSE;
             }
         }
@@ -3351,6 +3376,7 @@ boolean tinitial, tfrom_file;
             return FALSE;
         return retval;
     }
+
 #ifdef WINCHAIN
     fullname = "windowchain";
     if (match_optname(opts, fullname, 3, TRUE)) {
@@ -3465,9 +3491,10 @@ boolean tinitial, tfrom_file;
             return retval;
         }
     }
-#ifdef STATUS_HILITES
     /* hilite fields in status prompt */
-    if (match_optname(opts, "hilite_status", 13, TRUE)) {
+    fullname = "hilite_status";
+    if (match_optname(opts, fullname, 13, TRUE)) {
+#ifdef STATUS_HILITES
         if (duplicate)
             complain_about_duplicate(opts, 1);
         op = string_for_opt(opts, TRUE);
@@ -3481,11 +3508,16 @@ boolean tinitial, tfrom_file;
         if (!parse_status_hl1(op, tfrom_file))
             return FALSE;
         return retval;
+#else
+        config_error_add("'%s' is not supported", fullname);
+        return FALSE;
+#endif
     }
 
     /* control over whether highlights should be displayed, and for how long */
     fullname = "statushilites";
     if (match_optname(opts, fullname, 9, TRUE)) {
+#ifdef STATUS_HILITES
         if (negated) {
             iflags.hilite_delta = 0L;
         } else {
@@ -3497,12 +3529,15 @@ boolean tinitial, tfrom_file;
         if (!tfrom_file)
             reset_status_hilites();
         return retval;
-    }
+#else
+        config_error_add("'%s' is not supported", fullname);
+        return FALSE;
 #endif
+    }
 
-#if defined(BACKWARD_COMPAT)
     fullname = "DECgraphics";
     if (match_optname(opts, fullname, 3, TRUE)) {
+#ifdef BACKWARD_COMPAT
         boolean badflag = FALSE;
 
         if (duplicate)
@@ -3525,9 +3560,16 @@ boolean tinitial, tfrom_file;
             }
         }
         return retval;
-    }
+#else
+        config_error_add("'%s' no longer supported; use 'symset:%s' instead",
+                         fullname, fullname);
+        return FALSE;
+#endif
+    } /* "DECgraphics" */
+
     fullname = "IBMgraphics";
     if (match_optname(opts, fullname, 3, TRUE)) {
+#ifdef BACKWARD_COMPAT
         const char *sym_name = fullname;
         boolean badflag = FALSE;
 
@@ -3558,11 +3600,16 @@ boolean tinitial, tfrom_file;
             }
         }
         return retval;
-    }
+#else
+        config_error_add("'%s' no longer supported; use 'symset:%s' instead",
+                         fullname, fullname);
+        return FALSE;
 #endif
-#ifdef MAC_GRAPHICS_ENV
+    } /* "IBMgraphics" */
+
     fullname = "MACgraphics";
     if (match_optname(opts, fullname, 3, TRUE)) {
+#if defined(MAC_GRAPHICS_ENV) && defined(BACKWARD_COMPAT)
         boolean badflag = FALSE;
 
         if (duplicate)
@@ -3587,8 +3634,18 @@ boolean tinitial, tfrom_file;
             }
         }
         return retval;
-    }
+#else   /* !(MAC_GRAPHICS_ENV && BACKWARD_COMPAT) */
+        config_error_add("'%s' %s; use 'symset:%s' instead",
+                         fullname,
+#ifdef MAC_GRAPHICS_ENV /* implies BACKWARD_COMPAT is not defined */
+                         "no longer supported",
+#else
+                         "is not supported",
 #endif
+                         fullname);
+        return FALSE;
+#endif  /* ?(MAC_GRAPHICS_ENV && BACKWARD_COMPAT) */
+    } /* "MACgraphics" */
 
     /* OK, if we still haven't recognized the option, check the boolean
      * options list
@@ -3612,7 +3669,9 @@ boolean tinitial, tfrom_file;
 
             if (op) {
                 if (negated) {
-                    config_error_add("Negated boolean '%s' should not have a parameter", boolopt[i].name);
+                    config_error_add(
+                           "Negated boolean '%s' should not have a parameter",
+                                     boolopt[i].name);
                     return FALSE;
                 }
                 if (!strcmp(op, "true") || !strcmp(op, "yes")) {
@@ -3667,15 +3726,28 @@ boolean tinitial, tfrom_file;
                 vision_full_recalc = 1; /* delayed recalc */
                 if (iflags.use_color)
                     need_redraw = TRUE; /* darkroom refresh */
-            } else if (boolopt[i].addr == &iflags.wc_tiled_map
-                       || boolopt[i].addr == &flags.showrace
+            } else if (boolopt[i].addr == &iflags.wc_ascii_map) {
+                /* toggling ascii_map; set tiled_map to its opposite;
+                   what does it mean to turn off ascii map if tiled map
+                   isn't supported? -- right now, we do nothing */
+                iflags.wc_tiled_map = negated;
+                need_redraw = TRUE;
+            } else if (boolopt[i].addr == &iflags.wc_tiled_map) {
+                /* toggling tiled_map; set ascii_map to its opposite;
+                   as with ascii_map, what does it mean to turn off tiled
+                   map if ascii map isn't supported? */
+                iflags.wc_ascii_map = negated;
+                need_redraw = TRUE;
+            } else if (boolopt[i].addr == &flags.showrace
                        || boolopt[i].addr == &iflags.use_inverse
                        || boolopt[i].addr == &iflags.hilite_pile
                        || boolopt[i].addr == &iflags.hilite_pet) {
                 need_redraw = TRUE;
-            } else if ((boolopt[i].addr) == &iflags.wc2_hitpointbar) {
+#ifdef STATUS_HILITES
+            } else if (boolopt[i].addr == &iflags.wc2_hitpointbar) {
                 status_initialize(REASSESS_ONLY);
                 need_redraw = TRUE;
+#endif
 #ifdef TEXTCOLOR
             } else if (boolopt[i].addr == &iflags.use_color) {
                 need_redraw = TRUE;
@@ -3964,7 +4036,7 @@ int nset;
 }
 
 int
-count_apes()
+count_apes(VOID_ARGS)
 {
     return count_ape_maps((int *) 0, (int *) 0);
 }
@@ -4117,9 +4189,13 @@ doset() /* changing options via menu by Per Liboriussen */
              "Other settings:",
              MENU_UNSELECTED);
 
-    for (i = 0; othropt[i].name; i++)
-        opts_add_others(tmpwin, othropt[i].name, othropt[i].code,
-                        NULL, othropt[i].othr_count_func());
+    for (i = 0; (name = othropt[i].name) != 0; i++) {
+        if ((is_wc_option(name) && !wc_supported(name))
+            || (is_wc2_option(name) && !wc2_supported(name)))
+            continue;
+        opts_add_others(tmpwin, name, othropt[i].code,
+                        (char *) 0, othropt[i].othr_count_func());
+    }
 
 #ifdef PREFIXES_IN_USE
     any = zeroany;
@@ -5038,6 +5114,7 @@ boolean setinitial, setfromfile;
                 assign_graphics(ROGUESET);
         } else if (!rogueflag)
             assign_graphics(PRIMARY);
+        preference_update("symset");
         need_redraw = TRUE;
         return TRUE;
 
@@ -5465,7 +5542,8 @@ const char *mapping;
     ape = (struct autopickup_exception *) alloc(sizeof *ape);
     ape->regex = regex_init();
     if (!regex_compile(text, ape->regex)) {
-        config_error_add("%s: %s", APE_regex_error, regex_error_desc(ape->regex));
+        config_error_add("%s: %s", APE_regex_error,
+                         regex_error_desc(ape->regex));
         regex_free(ape->regex);
         free((genericptr_t) ape);
         return 0;
@@ -6037,10 +6115,12 @@ struct wc_Opt wc2_options[] = { { "fullscreen", WC2_FULLSCREEN },
                                 { "softkeyboard", WC2_SOFTKEYBOARD },
                                 { "wraptext", WC2_WRAPTEXT },
                                 { "use_darkgray", WC2_DARKGRAY },
-#ifdef STATUS_HILITES
                                 { "hitpointbar", WC2_HITPOINTBAR },
                                 { "hilite_status", WC2_HILITE_STATUS },
-#endif
+                                /* name shown in 'O' menu is different */
+                                { "status hilite rules", WC2_HILITE_STATUS },
+                                /* statushilites doesn't have its own bit */
+                                { "statushilites", WC2_HILITE_STATUS },
                                 { (char *) 0, 0L } };
 
 /*
@@ -6122,13 +6202,11 @@ STATIC_OVL boolean
 wc_supported(optnam)
 const char *optnam;
 {
-    int k = 0;
+    int k;
 
-    while (wc_options[k].wc_name) {
-        if (!strcmp(wc_options[k].wc_name, optnam)
-            && (windowprocs.wincap & wc_options[k].wc_bit))
-            return TRUE;
-        k++;
+    for (k = 0; wc_options[k].wc_name; ++k) {
+        if (!strcmp(wc_options[k].wc_name, optnam))
+            return (windowprocs.wincap & wc_options[k].wc_bit) ? TRUE : FALSE;
     }
     return FALSE;
 }
@@ -6182,13 +6260,12 @@ STATIC_OVL boolean
 wc2_supported(optnam)
 const char *optnam;
 {
-    int k = 0;
+    int k;
 
-    while (wc2_options[k].wc_name) {
-        if (!strcmp(wc2_options[k].wc_name, optnam)
-            && (windowprocs.wincap2 & wc2_options[k].wc_bit))
-            return TRUE;
-        k++;
+    for (k = 0; wc2_options[k].wc_name; ++k) {
+        if (!strcmp(wc2_options[k].wc_name, optnam))
+            return (windowprocs.wincap2 & wc2_options[k].wc_bit) ? TRUE
+                                                                 : FALSE;
     }
     return FALSE;
 }

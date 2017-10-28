@@ -1,4 +1,4 @@
-/* NetHack 3.6	invent.c	$NHDT-Date: 1498078873 2017/06/21 21:01:13 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.214 $ */
+/* NetHack 3.6	invent.c	$NHDT-Date: 1508827592 2017/10/24 06:46:32 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.220 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -392,7 +392,7 @@ struct obj **potmp, **pobj;
         otmp->quan += obj->quan;
         /* temporary special case for gold objects!!!! */
         if (otmp->oclass == COIN_CLASS)
-            otmp->owt = weight(otmp);
+            otmp->owt = weight(otmp), otmp->bknown = 0;
         /* and puddings!!!1!!one! */
         else if (!Is_pudding(otmp))
             otmp->owt += obj->owt;
@@ -515,16 +515,25 @@ struct obj *obj;
         }
         set_artifact_intrinsic(obj, 1, W_ART);
     }
-    if (is_mines_prize(obj) && obj->record_achieve_special) {
+
+    /* "special achievements" aren't discoverable during play, they
+       end up being recorded in XLOGFILE at end of game, nowhere else;
+       record_achieve_special overloads corpsenm which is ordinarily
+       initialized to NON_PM (-1) rather than to 0; any special prize
+       must never be a corpse, egg, tin, figurine, or statue because
+       their use of obj->corpsenm for monster type would conflict,
+       nor be a leash (corpsenm overloaded for m_id of leashed
+       monster) or a novel (corpsenm overloaded for novel index) */
+    if (is_mines_prize(obj)) {
         if(!u.uachieve.mines_luckstone) 
             livelog_write_string(LL_ACHIEVE, "acquired the luckstone from Mines' End");
         u.uachieve.mines_luckstone = 1;
-        obj->record_achieve_special = 0;
-    } else if (is_soko_prize(obj) && obj->record_achieve_special) {
+        obj->record_achieve_special = NON_PM;
+    } else if (is_soko_prize(obj)) {
         if(!u.uachieve.finish_sokoban) 
             livelog_write_string(LL_ACHIEVE, "completed Sokoban");
         u.uachieve.finish_sokoban = 1;
-        obj->record_achieve_special = 0;
+        obj->record_achieve_special = NON_PM;
     }
 }
 
@@ -1238,6 +1247,8 @@ register const char *let, *word;
              || (!strcmp(word, "charge") && !is_chargeable(otmp))
              || (!strcmp(word, "open") && otyp != TIN)
              || (!strcmp(word, "call") && !objtyp_is_callable(otyp))
+             || (!strcmp(word, "adjust") && otmp->oclass == COIN_CLASS
+                 && !usegold)
              ) {
                 foo--;
             }
@@ -3552,12 +3563,16 @@ int
 doorganize() /* inventory organizer by Del Lamb */
 {
     struct obj *obj, *otmp, *splitting, *bumped;
-    int ix, cur, trycnt;
+    int ix, cur, trycnt, goldstacks;
     char let;
-    char alphabet[52 + 1], buf[52 + 1];
+#define GOLD_INDX   0
+#define GOLD_OFFSET 1
+#define OVRFLW_INDX (GOLD_OFFSET + 52) /* past gold and 2*26 letters */
+    char lets[1 + 52 + 1 + 1]; /* room for '$a-zA-Z#\0' */
     char qbuf[QBUFSZ];
-    char allowall[3]; /* { ALLOW_COUNT, ALL_CLASSES, 0 } */
+    char allowall[4]; /* { ALLOW_COUNT, ALL_CLASSES, 0, 0 } */
     const char *adj_type;
+    boolean ever_mind = FALSE;
 
     if (!invent) {
         You("aren't carrying anything to adjust.");
@@ -3570,6 +3585,20 @@ doorganize() /* inventory organizer by Del Lamb */
     allowall[0] = ALLOW_COUNT;
     allowall[1] = ALL_CLASSES;
     allowall[2] = '\0';
+    for (goldstacks = 0, otmp = invent; otmp; otmp = otmp->nobj) {
+        /* gold should never end up in a letter slot, nor should two '$'
+           slots occur, but if they ever do, allow #adjust to handle them
+           (in the past, things like this have happened, usually due to
+           bknown being erroneously set on one stack, clear on another;
+           object merger isn't fooled by that anymore) */
+        if (otmp->oclass == COIN_CLASS
+            && (otmp->invlet != GOLD_SYM || ++goldstacks > 1)) {
+            allowall[1] = COIN_CLASS;
+            allowall[2] = ALL_CLASSES;
+            allowall[3] = '\0';
+            break;
+        }
+    }
     if (!(obj = getobj(allowall, "adjust")))
         return 0;
 
@@ -3583,39 +3612,43 @@ doorganize() /* inventory organizer by Del Lamb */
         }
 
     /* initialize the list with all lower and upper case letters */
-    for (ix = 0, let = 'a'; let <= 'z';)
-        alphabet[ix++] = let++;
+    lets[GOLD_INDX] = (obj->oclass == COIN_CLASS) ? GOLD_SYM : ' ';
+    for (ix = GOLD_OFFSET, let = 'a'; let <= 'z';)
+        lets[ix++] = let++;
     for (let = 'A'; let <= 'Z';)
-        alphabet[ix++] = let++;
-    alphabet[ix] = '\0';
+        lets[ix++] = let++;
+    lets[OVRFLW_INDX] = ' ';
+    lets[sizeof lets - 1] = '\0';
     /* for floating inv letters, truncate list after the first open slot */
     if (!flags.invlet_constant && (ix = inv_cnt(FALSE)) < 52)
-        alphabet[ix + (splitting ? 0 : 1)] = '\0';
+        lets[ix + (splitting ? 0 : 1)] = '\0';
 
-    /* blank out all the letters currently in use in the inventory */
-    /* except those that will be merged with the selected object   */
+    /* blank out all the letters currently in use in the inventory
+       except those that will be merged with the selected object */
     for (otmp = invent; otmp; otmp = otmp->nobj)
         if (otmp != obj && !mergable(otmp, obj)) {
             let = otmp->invlet;
             if (let >= 'a' && let <= 'z')
-                alphabet[let - 'a'] = ' ';
+                lets[GOLD_OFFSET + let - 'a'] = ' ';
             else if (let >= 'A' && let <= 'Z')
-                alphabet[let - 'A' + 26] = ' ';
+                lets[GOLD_OFFSET + let - 'A' + 26] = ' ';
+            /* overflow defaults to off, but it we find a stack using that
+               slot, switch to on -- the opposite of normal invlet handling */
+            else if (let == NOINVSYM)
+                lets[OVRFLW_INDX] = NOINVSYM;
         }
 
     /* compact the list by removing all the blanks */
-    for (ix = cur = 0; alphabet[ix]; ix++)
-        if (alphabet[ix] != ' ')
-            buf[cur++] = alphabet[ix];
-    if (!cur && obj->invlet == NOINVSYM)
-        buf[cur++] = NOINVSYM;
-    buf[cur] = '\0';
+    for (ix = cur = 0; lets[ix]; ix++)
+        if (lets[ix] != ' ' && cur++ < ix)
+            lets[cur - 1] = lets[ix];
+    lets[cur] = '\0';
     /* and by dashing runs of letters */
     if (cur > 5)
-        compactify(buf);
+        compactify(lets);
 
     /* get 'to' slot to use as destination */
-    Sprintf(qbuf, "Adjust letter to what [%s]%s?", buf,
+    Sprintf(qbuf, "Adjust letter to what [%s]%s?", lets,
             invent ? " (? see used letters)" : "");
     for (trycnt = 1; ; ++trycnt) {
         let = yn_function(qbuf, (char *) 0, '\0');
@@ -3634,10 +3667,19 @@ doorganize() /* inventory organizer by Del Lamb */
         noadjust:
             if (splitting)
                 (void) merged(&splitting, &obj);
-            pline1(Never_mind);
+            if (!ever_mind)
+                pline1(Never_mind);
             return 0;
+        } else if (let == GOLD_SYM && obj->oclass != COIN_CLASS) {
+            pline("Only gold coins may be moved into the '%c' slot.",
+                  GOLD_SYM);
+            ever_mind = TRUE;
+            goto noadjust;
         }
-        if ((letter(let) && let != '@') || index(buf, let))
+        /* letter() classifies '@' as one; compactify() can put '-' in lets;
+           the only thing of interest that index() might find is '$' or '#'
+           since letter() catches everything else that we put into lets[] */
+        if ((letter(let) && let != '@') || (index(lets, let) && let != '-'))
             break; /* got one */
         if (trycnt == 5)
             goto noadjust;

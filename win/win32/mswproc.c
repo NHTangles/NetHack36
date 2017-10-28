@@ -75,6 +75,8 @@ COLORREF status_fg_color = RGB(0xFF, 0xFF, 0xFF);
 COLORREF message_bg_color = RGB(0, 0, 0);
 COLORREF message_fg_color = RGB(0xFF, 0xFF, 0xFF);
 
+strbuf_t raw_print_strbuf = { 0 };
+
 /* Interface definition, for windows.c */
 struct window_procs mswin_procs = {
     "MSWIN",
@@ -86,7 +88,7 @@ struct window_procs mswin_procs = {
         | WC_VARY_MSGCOUNT | WC_WINDOWCOLORS | WC_PLAYER_SELECTION
         | WC_SPLASH_SCREEN | WC_POPUP_DIALOG | WC_MOUSE_SUPPORT,
 #ifdef STATUS_HILITES
-    WC2_HITPOINTBAR | WC2_FLUSH_STATUS |
+    WC2_HITPOINTBAR | WC2_FLUSH_STATUS | WC2_HILITE_STATUS |
 #endif
     0L, mswin_init_nhwindows, mswin_player_selection, mswin_askname,
     mswin_get_nh_event, mswin_exit_nhwindows, mswin_suspend_nhwindows,
@@ -258,8 +260,6 @@ mswin_init_nhwindows(int *argc, char **argv)
 void
 mswin_player_selection(void)
 {
-    int nRole;
-
     logDebug("mswin_player_selection()\n");
 
     if (iflags.wc_player_selection == VIA_DIALOG) {
@@ -309,7 +309,7 @@ mswin_player_selection(void)
             }
         } else {
             /* select a role */
-            if (mswin_player_selection_window(&nRole) == IDCANCEL) {
+            if (!mswin_player_selection_window()) {
                 bail(0);
             }
         }
@@ -717,8 +717,7 @@ mswin_exit_nhwindows(const char *str)
 
     /* Write Window settings to the registry */
     mswin_write_reg();
-    while (max_brush)
-        DeleteObject(brush_table[--max_brush]);
+
 }
 
 /* Prepare the window to be suspended. */
@@ -1238,6 +1237,7 @@ void
 mswin_wait_synch()
 {
     logDebug("mswin_wait_synch()\n");
+    mswin_raw_print_flush();
 }
 
 /*
@@ -1294,6 +1294,40 @@ mswin_print_glyph(winid wid, XCHAR_P x, XCHAR_P y, int glyph, int bkglyph)
 }
 
 /*
+ * mswin_raw_print_accumulate() accumulate the given text into
+ *   raw_print_strbuf.
+ */
+void
+mswin_raw_print_accumulate(const char * str, boolean bold)
+{
+    bold; // ignored for now
+
+    if (raw_print_strbuf.str != NULL) strbuf_append(&raw_print_strbuf, "\n");
+    strbuf_append(&raw_print_strbuf, str);
+}
+
+/*
+ * mswin_raw_print_flush() - display any text found in raw_print_strbuf in a
+ *   dialog box and clear raw_print_strbuf.
+ */
+void
+mswin_raw_print_flush()
+{
+    if (raw_print_strbuf.str != NULL) {
+        int wlen = strlen(raw_print_strbuf.str) + 1;
+        TCHAR * wbuf = (TCHAR *) alloc(wlen * sizeof(TCHAR));
+        if (wbuf != NULL) {
+            NHMessageBox(GetNHApp()->hMainWnd,
+                            NH_A2W(raw_print_strbuf.str, wbuf, wlen),
+                            MB_ICONINFORMATION | MB_OK);
+            free(wbuf);
+        }
+        strbuf_empty(&raw_print_strbuf);
+    }
+}
+
+
+/*
 raw_print(str)  -- Print directly to a screen, or otherwise guarantee that
                    the user sees str.  raw_print() appends a newline to str.
                    It need not recognize ASCII control characters.  This is
@@ -1305,14 +1339,12 @@ raw_print(str)  -- Print directly to a screen, or otherwise guarantee that
 void
 mswin_raw_print(const char *str)
 {
-    TCHAR wbuf[255];
     logDebug("mswin_raw_print(%s)\n", str);
+
     if (str && *str) {
         extern int redirect_stdout;
         if (!redirect_stdout)
-            NHMessageBox(GetNHApp()->hMainWnd,
-                         NH_A2W(str, wbuf, sizeof(wbuf)),
-                         MB_ICONINFORMATION | MB_OK);
+            mswin_raw_print_accumulate(str, FALSE);
         else
             fprintf(stdout, "%s", str);
     }
@@ -1326,11 +1358,14 @@ possible).
 void
 mswin_raw_print_bold(const char *str)
 {
-    TCHAR wbuf[255];
     logDebug("mswin_raw_print_bold(%s)\n", str);
-    if (str && *str)
-        NHMessageBox(GetNHApp()->hMainWnd, NH_A2W(str, wbuf, sizeof(wbuf)),
-                     MB_ICONINFORMATION | MB_OK);
+    if (str && *str) {
+        extern int redirect_stdout;
+        if (!redirect_stdout)
+            mswin_raw_print_accumulate(str, TRUE);
+        else
+            fprintf(stdout, "%s", str);
+    }
 }
 
 /*
@@ -2202,7 +2237,10 @@ mswin_popup_destroy(HWND hWnd)
     }
     DrawMenuBar(GetNHApp()->hMainWnd);
 
-    ShowWindow(hWnd, SW_HIDE);
+    /* Don't hide the permanent inventory window ... leave it showing */
+    if (!flags.perm_invent || mswin_winid_from_handle(hWnd) != WIN_INVEN)
+        ShowWindow(hWnd, SW_HIDE);
+
     GetNHApp()->hPopupWnd = NULL;
 
     mswin_layout_main_window(hWnd);

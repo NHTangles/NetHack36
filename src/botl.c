@@ -1,4 +1,4 @@
-/* NetHack 3.6	botl.c	$NHDT-Date: 1469930895 2016/07/31 02:08:15 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.75 $ */
+/* NetHack 3.6	botl.c	$NHDT-Date: 1506903619 2017/10/02 00:20:19 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.81 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,7 +12,9 @@ const char *const enc_stat[] = { "",         "Burdened",  "Stressed",
 
 STATIC_OVL NEARDATA int mrank_sz = 0; /* loaded by max_rank_sz (from u_init) */
 STATIC_DCL const char *NDECL(rank);
+#ifdef STATUS_HILITES
 STATIC_DCL void NDECL(bot_via_windowport);
+#endif
 
 static char *
 get_strength_str()
@@ -1060,6 +1062,7 @@ int anytype;
     return buf;
 }
 
+#ifdef STATUS_HILITES
 STATIC_OVL void
 s_to_anything(a, buf, anytype)
 anything *a;
@@ -1107,6 +1110,7 @@ int anytype;
     }
     return;
 }
+#endif /* STATUS_HILITES */
 
 STATIC_OVL int
 percentage(bl, maxbl)
@@ -1790,7 +1794,7 @@ boolean from_configfile;
             numeric = TRUE;
             tmp = tmpbuf;
             if (strlen(tmp) > 0) {
-                dt = blstats[0][fld].anytype;
+                dt = initblstats[fld].anytype;
                 if (percent)
                     dt = ANY_INT;
                 (void) s_to_anything(&hilite.value, tmp, dt);
@@ -2330,7 +2334,7 @@ int fld;
 }
 
 int
-count_status_hilites()
+count_status_hilites(VOID_ARGS)
 {
     int count;
     status_hilite_linestr_gather();
@@ -2589,7 +2593,7 @@ int fld;
         nopts++;
     }
 
-    if (fld != BL_CAP && (at == ANY_INT || at == ANY_LONG || at == ANY_UINT)) {
+    if (fld != BL_CAP && fld != BL_HUNGER && (at == ANY_INT || at == ANY_LONG || at == ANY_UINT)) {
         any = zeroany;
         any.a_int = onlybeh = BL_TH_VAL_ABSOLUTE;
         add_menu(tmpwin, NO_GLYPH, &any, 'n', 0, ATR_NONE,
@@ -2605,7 +2609,7 @@ int fld;
         nopts++;
     }
 
-    if (initblstats[fld].anytype == ANY_STR || fld == BL_CAP) {
+    if (initblstats[fld].anytype == ANY_STR || fld == BL_CAP || fld == BL_HUNGER) {
         any = zeroany;
         any.a_int = onlybeh = BL_TH_TEXTMATCH;
         Sprintf(buf, "%s text match", initblstats[fld].fldname);
@@ -2874,7 +2878,7 @@ choose_value:
             hilite.rel = TXT_VALUE;
             Strcpy(hilite.textmatch, aligntxt[rv]);
         } else if (fld == BL_HUNGER) {
-            const char *hutxt[] = {"Satiated", "", "Hungry", "Weak",
+            const char *hutxt[] = {"Satiated", (char *)0, "Hungry", "Weak",
                                    "Fainting", "Fainted", "Starved"};
             int rv = query_arrayvalue(qry_buf,
                                       hutxt,

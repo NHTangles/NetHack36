@@ -408,11 +408,8 @@ register struct obj *obj;
             map_invisible(rx, ry);
         return res;
     }
-    if (glyph_is_invisible(levl[rx][ry].glyph)) {
-        unmap_object(rx, ry);
-        newsym(rx, ry);
+    if (unmap_invisible(rx,ry))
         pline_The("invisible monster must have moved.");
-    }
 
     lev = &levl[rx][ry];
     switch (lev->typ) {
@@ -631,10 +628,7 @@ struct obj *obj;
 
     if (!(mtmp = m_at(cc.x, cc.y))) {
         There("is no creature there.");
-        if (glyph_is_invisible(levl[cc.x][cc.y].glyph)) {
-            unmap_object(cc.x, cc.y);
-            newsym(cc.x, cc.y);
-        }
+        (void) unmap_invisible(cc.x, cc.y);
         return 1;
     }
 
@@ -1775,10 +1769,10 @@ int magic; /* 0=Physical, otherwise skill level */
             temp = -temp;
         if (range < temp)
             range = temp;
-        (void) walk_path(&uc, &cc, hurtle_step, (genericptr_t) &range);
-        /* hurtle_step results in (u.ux, u.uy) == (cc.x, cc.y) and usually
-         * moves the ball if punished, but does not handle all the effects
-         * of landing on the final position.
+        (void) walk_path(&uc, &cc, hurtle_jump, (genericptr_t) &range);
+        /* hurtle_jump -> hurtle_step results in <u.ux,u.uy> == <cc.x,cc.y>
+         * and usually moves the ball if punished, but does not handle all
+         * the effects of landing on the final position.
          */
         teleds(cc.x, cc.y, FALSE);
         sokoban_guilt();
@@ -1957,9 +1951,8 @@ struct obj *obj;
         if (ABASE(idx) >= AMAX(idx))
             continue;
         val_limit = AMAX(idx);
-        /* don't recover strength lost from hunger */
-        if (idx == A_STR && u.uhs >= WEAK)
-            val_limit--;
+        /* this used to adjust 'val_limit' for A_STR when u.uhs was
+           WEAK or worse, but that's handled via ATEMP(A_STR) now */
         if (Fixed_abil) {
             /* potion/spell of restore ability override sustain ability
                intrinsic but unicorn horn usage doesn't */
@@ -3030,11 +3023,7 @@ struct obj *obj;
         }
     } else {
         /* no monster here and no statue seen or remembered here */
-        if (glyph_is_invisible(glyph)) {
-            /* now you know that nothing is there... */
-            unmap_object(bhitpos.x, bhitpos.y);
-            newsym(bhitpos.x, bhitpos.y);
-        }
+        (void) unmap_invisible(bhitpos.x, bhitpos.y);
         You("miss; there is no one there to hit.");
     }
     u_wipe_engr(2); /* same as for melee or throwing */
