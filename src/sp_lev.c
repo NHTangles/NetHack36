@@ -1753,7 +1753,6 @@ struct mkroom *croom;
     schar x, y;
     char c;
     boolean named; /* has a name been supplied in level description? */
-    boolean rndobj = TRUE; /* object is randomly generated */
 
     named = o->name.str ? TRUE : FALSE;
 
@@ -1766,10 +1765,9 @@ struct mkroom *croom;
 
     if (!c)
         otmp = mkobj_at(RANDOM_CLASS, x, y, !named);
-    else if (o->id != -1) {
-        rndobj = FALSE;
+    else if (o->id != -1)
         otmp = mksobj_at(o->id, x, y, TRUE, !named);
-    } else {
+    else {
         /*
          * The special levels are compiled with the default "text" object
          * class characters.  We must convert them to the internal format.
@@ -1947,9 +1945,7 @@ struct mkroom *croom;
      * "prize" and then set record_achieve_special (maps to corpsenm)
      * for the object.  That field will later be checked to find out if
      * the player obtained the prize. */
-    /* if object is on the prize level and not randomly generated,
-     * it must be the one */
-    if ((is_mines_prize(otmp) || is_soko_prize(otmp)) && !rndobj) {
+    if (is_mines_prize(otmp) || is_soko_prize(otmp)) {
         otmp->record_achieve_special = 1;
     }
 

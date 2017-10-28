@@ -515,14 +515,12 @@ struct obj *obj;
         }
         set_artifact_intrinsic(obj, 1, W_ART);
     }
-    if (obj->otyp == LUCKSTONE && obj->record_achieve_special == 1) {
+    if (is_mines_prize(obj) && obj->record_achieve_special) {
         if(!u.uachieve.mines_luckstone) 
             livelog_write_string(LL_ACHIEVE, "acquired the luckstone from Mines' End");
         u.uachieve.mines_luckstone = 1;
         obj->record_achieve_special = 0;
-    } else if ((obj->otyp == AMULET_OF_REFLECTION
-                || obj->otyp == BAG_OF_HOLDING)
-               && obj->record_achieve_special == 1) {
+    } else if (is_soko_prize(obj) && obj->record_achieve_special) {
         if(!u.uachieve.finish_sokoban) 
             livelog_write_string(LL_ACHIEVE, "completed Sokoban");
         u.uachieve.finish_sokoban = 1;
