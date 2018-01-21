@@ -1,4 +1,4 @@
-/* NetHack 3.6	extern.h	$NHDT-Date: 1508549428 2017/10/21 01:30:28 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.619 $ */
+/* NetHack 3.6	extern.h	$NHDT-Date: 1514769568 2018/01/01 01:19:28 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.622 $ */
 /* Copyright (c) Steve Creps, 1988.				  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1402,6 +1402,7 @@ E void FDECL(restore_cham, (struct monst *));
 E boolean FDECL(hideunder, (struct monst *));
 E void FDECL(hide_monst, (struct monst *));
 E void FDECL(mon_animal_list, (BOOLEAN_P));
+E boolean FDECL(validvamp, (struct monst *, int *, int));
 E int FDECL(select_newcham_form, (struct monst *));
 E void FDECL(mgender_from_permonst, (struct monst *, struct permonst *));
 E int FDECL(newcham,
@@ -1886,6 +1887,8 @@ E const char *FDECL(mbodypart, (struct monst *, int));
 E const char *FDECL(body_part, (int));
 E int NDECL(poly_gender);
 E void FDECL(ugolemeffects, (int, int));
+E boolean NDECL(ugenocided);
+E const char *NDECL(udeadinside);
 
 /* ### potion.c ### */
 
