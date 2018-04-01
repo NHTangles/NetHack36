@@ -1,4 +1,4 @@
-/* NetHack 3.6	wintty.c	$NHDT-Date: 1506908980 2017/10/02 01:49:40 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.140 $ */
+/* NetHack 3.6	wintty.c	$NHDT-Date: 1520825319 2018/03/12 03:28:39 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.142 $ */
 /* Copyright (c) David Cohrs, 1991                                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1527,7 +1527,7 @@ winid window;
     case NHW_MAP:
         /* cheap -- clear the whole thing and tell nethack to redraw botl */
         context.botlx = 1;
-    /* fall into ... */
+        /*FALLTHRU*/
     case NHW_BASE:
         clear_screen();
         break;
@@ -1917,7 +1917,8 @@ struct WinDesc *cw;
             /* special case: '0' is also the default ball class */
             if (!counting && index(gacc, morc))
                 goto group_accel;
-        /* fall through to count the zero */
+            /* fall through to count the zero */
+            /*FALLTHRU*/
         case '1':
         case '2':
         case '3':
@@ -2197,6 +2198,7 @@ boolean blocking; /* with ttys, all windows are blocking */
             tty_display_nhwindow(WIN_MESSAGE, TRUE);
             return;
         }
+        /*FALLTHRU*/
     case NHW_BASE:
         (void) fflush(stdout);
         break;
@@ -2365,7 +2367,13 @@ register int x, y; /* not xchar: perhaps xchar is unsigned and
         }
         debugpline4("bad curs positioning win %d %s (%d,%d)", window, s, x,
                     y);
-        return;
+        /* This return statement caused a functional difference between DEBUG and
+           non-DEBUG operation, so it is being commented out. It caused tty_curs()
+           to fail to move the cursor to the location it needed to be if the x,y
+           range checks failed, leaving the next piece of output to be displayed
+           at whatever random location the cursor happened to be at prior. */
+
+        /* return; */
     }
 #endif
     x += cw->offx;

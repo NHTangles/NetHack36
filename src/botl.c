@@ -1296,9 +1296,8 @@ merge_bestcolor(bestcolor, newcolor)
 int *bestcolor;
 int newcolor;
 {
-    int batr, bclr, natr, nclr;
+    int natr = HL_UNDEF, nclr = NO_COLOR;
 
-    split_clridx(*bestcolor, &bclr, &batr);
     split_clridx(newcolor, &nclr, &natr);
 
     if (nclr != NO_COLOR)
@@ -1356,7 +1355,6 @@ int *colorptr;
         /* there are hilites set here */
         int max_pc = 0, min_pc = 100;
         int max_val = 0, min_val = LARGEST_INT;
-        boolean changed = FALSE;
         boolean exactmatch = FALSE;
 
         hl = blstats[idx][fldidx].thresholds;
@@ -1383,14 +1381,11 @@ int *colorptr;
             case BL_TH_UPDOWN:
                 if (chg < 0 && hl->rel == LT_VALUE) {
                     merge_bestcolor(&bestcolor, hl->coloridx);
-                    changed = TRUE;
                 } else if (chg > 0 && hl->rel == GT_VALUE) {
                     merge_bestcolor(&bestcolor, hl->coloridx);
-                    changed = TRUE;
                 } else if (hl->rel == EQ_VALUE && chg) {
                     merge_bestcolor(&bestcolor, hl->coloridx);
                     min_val = max_val = hl->value.a_int;
-                    changed = TRUE;
                 }
                 break;
             case BL_TH_VAL_ABSOLUTE:
@@ -2741,7 +2736,7 @@ choose_value:
 
     if (behavior == BL_TH_VAL_PERCENTAGE
         || behavior == BL_TH_VAL_ABSOLUTE) {
-        char inbuf[BUFSZ], buf[BUFSZ];
+        char inbuf[BUFSZ] = DUMMY, buf[BUFSZ];
         int val;
         boolean skipltgt = FALSE;
         boolean gotnum = FALSE;
@@ -2903,7 +2898,7 @@ choose_value:
             hilite.rel = TXT_VALUE;
             Strcpy(hilite.textmatch, rolelist[rv]);
         } else {
-            char inbuf[BUFSZ];
+            char inbuf[BUFSZ] = DUMMY;
 
             inbuf[0] = '\0';
             getlin(qry_buf, inbuf);

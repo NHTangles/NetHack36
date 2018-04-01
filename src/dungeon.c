@@ -1,4 +1,4 @@
-/* NetHack 3.6	dungeon.c	$NHDT-Date: 1491958681 2017/04/12 00:58:01 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.79 $ */
+/* NetHack 3.6	dungeon.c	$NHDT-Date: 1517912411 2018/02/06 10:20:11 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.83 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1220,16 +1220,16 @@ int upflag;
            destination instead of its enclosing region.
            Note: up vs down doesn't matter in this case
            because both specify the same exclusion area. */
-        place_lregion(dndest.nlx, dndest.nly, dndest.nhx, dndest.nhy, 0, 0, 0,
-                      0, LR_DOWNTELE, (d_level *) 0);
+        place_lregion(dndest.nlx, dndest.nly, dndest.nhx, dndest.nhy,
+                      0, 0, 0, 0, LR_DOWNTELE, (d_level *) 0);
     else if (up)
-        place_lregion(updest.lx, updest.ly, updest.hx, updest.hy, updest.nlx,
-                      updest.nly, updest.nhx, updest.nhy, LR_UPTELE,
-                      (d_level *) 0);
+        place_lregion(updest.lx, updest.ly, updest.hx, updest.hy,
+                      updest.nlx, updest.nly, updest.nhx, updest.nhy,
+                      LR_UPTELE, (d_level *) 0);
     else
-        place_lregion(dndest.lx, dndest.ly, dndest.hx, dndest.hy, dndest.nlx,
-                      dndest.nly, dndest.nhx, dndest.nhy, LR_DOWNTELE,
-                      (d_level *) 0);
+        place_lregion(dndest.lx, dndest.ly, dndest.hx, dndest.hy,
+                      dndest.nlx, dndest.nly, dndest.nhx, dndest.nhy,
+                      LR_DOWNTELE, (d_level *) 0);
 }
 
 /* place you on the special staircase */
@@ -2034,17 +2034,24 @@ int
 donamelevel()
 {
     mapseen *mptr;
-    char nbuf[BUFSZ]; /* Buffer for response */
+    char nbuf[BUFSZ] = DUMMY; /* Buffer for response */
 
     if (!(mptr = find_mapseen(&u.uz)))
         return 0;
 
+#ifdef EDIT_GETLIN
+    if (mptr->custom) {
+        (void) strncpy(nbuf, mptr->custom, BUFSZ);
+        nbuf[BUFSZ-1] = '\0';
+    }
+#else
     if (mptr->custom) {
         char tmpbuf[BUFSZ];
         Sprintf(tmpbuf, "Replace annotation \"%.30s%s\" with?", mptr->custom,
                 strlen(mptr->custom) > 30 ? "..." : "");
         getlin(tmpbuf, nbuf);
     } else
+#endif
         getlin("What do you want to call this dungeon level?", nbuf);
     if (index(nbuf, '\033'))
         return 0;
@@ -2590,7 +2597,7 @@ recalc_mapseen()
                 }
                 if (is_drawbridge_wall(x, y) < 0)
                     break;
-            /* else FALLTHRU */
+                /*FALLTHRU*/
             case DBWALL:
             case DRAWBRIDGE_DOWN:
                 if (Is_stronghold(&u.uz))

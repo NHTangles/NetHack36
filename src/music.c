@@ -1,4 +1,4 @@
-/* NetHack 3.6	music.c	$NHDT-Date: 1514504228 2017/12/28 23:37:08 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.46 $ */
+/* NetHack 3.6	music.c	$NHDT-Date: 1517877381 2018/02/06 00:36:21 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.47 $ */
 /*      Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -76,7 +76,9 @@ int distance;
                 && (mtmp->mstrategy & STRAT_WAITMASK) != 0)
                 mtmp->mstrategy &= ~STRAT_WAITMASK;
             else if (distm < distance / 3
-                     && !resist(mtmp, TOOL_CLASS, 0, NOTELL))
+                     && !resist(mtmp, TOOL_CLASS, 0, NOTELL)
+                     /* some monsters are immune */
+                     && onscary(0, 0, mtmp))
                 monflee(mtmp, 0, FALSE, TRUE);
         }
     }
@@ -300,7 +302,7 @@ int force;
                 case THRONE:
                     if (cansee(x, y))
                         pline_The("throne falls into a chasm.");
-                /* Falls into next case */
+                    /*FALLTHRU*/
                 case ROOM:
                 case CORR: /* Try to make a pit */
                 do_pit:
@@ -476,10 +478,10 @@ struct obj *instr;
     pc_speaker(&itmp, "C");
 #endif
 
-#define PLAY_NORMAL   0
-#define PLAY_STUNNED  1
-#define PLAY_CONFUSED 2
-#define PLAY_HALLU    4
+#define PLAY_NORMAL   0x00
+#define PLAY_STUNNED  0x01
+#define PLAY_CONFUSED 0x02
+#define PLAY_HALLU    0x04
     mode = PLAY_NORMAL;
     if (Stunned)
         mode |= PLAY_STUNNED;
@@ -607,7 +609,7 @@ int
 do_play_instrument(instr)
 struct obj *instr;
 {
-    char buf[BUFSZ], c = 'y';
+    char buf[BUFSZ] = DUMMY, c = 'y';
     char *s;
     int x, y;
     boolean ok;

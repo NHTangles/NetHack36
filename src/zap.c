@@ -1,4 +1,4 @@
-/* NetHack 3.6	zap.c	$NHDT-Date: 1513297348 2017/12/15 00:22:28 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.270 $ */
+/* NetHack 3.6	zap.c	$NHDT-Date: 1520705645 2018/03/10 18:14:05 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.271 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -137,6 +137,7 @@ struct obj *otmp;
     boolean wake = TRUE; /* Most 'zaps' should wake monster */
     boolean reveal_invis = FALSE, learn_it = FALSE;
     boolean dbldam = Role_if(PM_KNIGHT) && u.uhave.questart;
+    boolean helpful_gesture = FALSE;
     int dmg, otyp = otmp->otyp;
     const char *zap_type_text = "spell";
     struct obj *obj;
@@ -192,6 +193,8 @@ struct obj *otmp;
             mon_adjust_speed(mtmp, 1, otmp);
             m_dowear(mtmp, FALSE); /* might want speed boots */
         }
+        if (mtmp->mtame)
+            helpful_gesture = TRUE;
         break;
     case WAN_UNDEAD_TURNING:
     case SPE_TURN_UNDEAD:
@@ -426,7 +429,7 @@ struct obj *otmp;
     }
     if (wake) {
         if (mtmp->mhp > 0) {
-            wakeup(mtmp, TRUE);
+            wakeup(mtmp, helpful_gesture ? FALSE : TRUE);
             m_respond(mtmp);
             if (mtmp->isshk && !*u.ushops)
                 hot_pursuit(mtmp);
@@ -2406,6 +2409,7 @@ boolean ordinary;
     case WAN_LIGHT: /* (broken wand) */
         /* assert( !ordinary ); */
         damage = d(obj->spe, 25);
+        /*FALLTHRU*/
     case EXPENSIVE_CAMERA:
         if (!damage)
             damage = 5;
@@ -4136,7 +4140,8 @@ boolean say; /* Announce out of sight hit/miss events if true */
 
                 switch (bounce) {
                 case 0:
-                    dx = -dx; /* fall into... */
+                    dx = -dx;
+                    /*FALLTHRU*/
                 case 1:
                     dy = -dy;
                     break;
@@ -5048,7 +5053,8 @@ int triesleft;
 void
 makewish()
 {
-    char buf[BUFSZ], promptbuf[BUFSZ];
+    static char buf[BUFSZ] = DUMMY;
+    char promptbuf[BUFSZ];
     char bufcpy[BUFSZ];
     struct obj *otmp, nothing;
     int tries = 0;

@@ -1,4 +1,4 @@
-/* NetHack 3.6	mon.c	$NHDT-Date: 1514769571 2018/01/01 01:19:31 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.246 $ */
+/* NetHack 3.6	mon.c	$NHDT-Date: 1522540516 2018/03/31 23:55:16 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.250 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -86,14 +86,21 @@ mon_sanity_check()
         if (DEADMONSTER(mtmp))
             continue;
         x = mtmp->mx, y = mtmp->my;
-        if (!isok(x, y) && !(mtmp->isgd && x == 0 && y == 0))
+        if (!isok(x, y) && !(mtmp->isgd && x == 0 && y == 0)) {
             impossible("mon (%s) claims to be at <%d,%d>?",
                        fmt_ptr((genericptr_t) mtmp), x, y);
-        else if (level.monsters[x][y] != mtmp)
+        } else if (mtmp == u.usteed) {
+            /* steed is in fmon list but not on the map; its
+               <mx,my> coordinates should match hero's location */
+            if (x != u.ux || y != u.uy)
+                impossible("steed (%s) claims to be at <%d,%d>?",
+                           fmt_ptr((genericptr_t) mtmp), x, y);
+        } else if (level.monsters[x][y] != mtmp) {
             impossible("mon (%s) at <%d,%d> is not there!",
                        fmt_ptr((genericptr_t) mtmp), x, y);
-        else if (mtmp->wormno)
+        } else if (mtmp->wormno) {
             sanity_check_worm(mtmp);
+        }
     }
 
     for (x = 0; x < COLNO; x++)
@@ -104,6 +111,9 @@ mon_sanity_check()
                         break;
                 if (!m)
                     impossible("map mon (%s) at <%d,%d> not in fmon list!",
+                               fmt_ptr((genericptr_t) mtmp), x, y);
+                else if (mtmp == u.usteed)
+                    impossible("steed (%s) is on the map at <%d,%d>!",
                                fmt_ptr((genericptr_t) mtmp), x, y);
                 else if ((mtmp->mx != x || mtmp->my != y)
                          && mtmp->data != &mons[PM_LONG_WORM])
@@ -2761,7 +2771,6 @@ boolean via_attack;
             }
         }
     }
-
 }
 
 /* wake up a monster, possibly making it angry in the process */
@@ -2771,9 +2780,6 @@ register struct monst *mtmp;
 boolean via_attack;
 {
     mtmp->msleeping = 0;
-    finish_meating(mtmp);
-    if (via_attack)
-        setmangry(mtmp, TRUE);
     if (mtmp->m_ap_type) {
         seemimic(mtmp);
     } else if (context.forcefight && !context.mon_moving
@@ -2781,6 +2787,9 @@ boolean via_attack;
         mtmp->mundetected = 0;
         newsym(mtmp->mx, mtmp->my);
     }
+    finish_meating(mtmp);
+    if (via_attack)
+        setmangry(mtmp, TRUE);
 }
 
 /* Wake up nearby monsters without angering them. */
@@ -3051,7 +3060,8 @@ struct monst *mon;
 int shiftflags;
 {
     struct permonst *ptr = 0;
-    unsigned mndx, was_female = mon->female;
+    int mndx;
+    unsigned was_female = mon->female;
     boolean msg = FALSE, dochng = FALSE;
 
     if ((shiftflags & SHIFT_MSG)
@@ -3277,7 +3287,7 @@ struct monst *mon;
 
     /* for debugging: allow control of polymorphed monster */
     if (wizard && iflags.mon_polycontrol) {
-        char pprompt[BUFSZ], buf[BUFSZ];
+        char pprompt[BUFSZ], buf[BUFSZ] = DUMMY;
         int monclass;
 
         Sprintf(pprompt, "Change %s @ %s into what kind of monster?",

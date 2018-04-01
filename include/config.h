@@ -11,7 +11,7 @@
  *              For "UNIX" select BSD, ULTRIX, SYSV, or HPUX in unixconf.h.
  *              A "VMS" option is not needed since the VMS C-compilers
  *              provide it (no need to change sec#1, vmsconf.h handles it).
- *              MacOSX uses the UNIX configruation, not the old MAC one.
+ *              MacOSX uses the UNIX configuration, not the old MAC one.
  */
 
 #define UNIX /* delete if no fork(), exec() available */
@@ -524,7 +524,6 @@ typedef unsigned char uchar;
    but it isn't necessary for successful operation of the program */
 #define FREE_ALL_MEMORY             /* free all memory at exit */
 
-
 /* Extra enhancements borrowed from nao343 and elsewhwere
    for dgamelaunch-based server play */
 #define DGAMELAUNCH
@@ -533,6 +532,10 @@ typedef unsigned char uchar;
 #define MAILCKFREQ 5  /* SIMPLE_MAIL is in unixconf.h */
 #endif
 
+/* EDIT_GETLIN makes the string input in TTY, Qt4, and X11
+   so some prompts will remember the previously input text
+   (within the same session) */
+/* #define EDIT_GETLIN */
 
 #define DUMPLOG   /* End-of-game dump logs */
 #ifdef DUMPLOG
