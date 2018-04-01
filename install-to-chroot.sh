@@ -81,13 +81,10 @@ chmod 644 "$NAO_CHROOT/$NHSUBDIR/nhdat"
 cp "$NETHACK_GIT/dat/symbols" "$NAO_CHROOT/$NHSUBDIR"
 chmod 644 "$NAO_CHROOT/$NHSUBDIR/symbols"
 
-# 3.6.x uses sysconf. Copy this in only if it
-# doesn't already exist
+echo "Copying sysconf file"
 SYSCF="$NAO_CHROOT/$NHSUBDIR/sysconf"
-if [ -n "$SYSCF" -a ! -e "$SYSCF" ]; then
-  cp "$NETHACK_GIT/sys/unix/sysconf" "$SYSCF"
-  chmod 644 $SYSCF
-fi
+cp "$NETHACK_GIT/sys/unix/sysconf" "$SYSCF"
+chmod 644 $SYSCF
 
 echo "Creating NetHack variable dir stuff."
 mkdir -p "$NAO_CHROOT/$NHSUBDIR/var"
@@ -106,6 +103,15 @@ chown -R "$USRGRP" "$NAO_CHROOT/$NHSUBDIR/var/xlogfile"
 touch "$NAO_CHROOT/$NHSUBDIR/var/livelog"
 chown -R "$USRGRP" "$NAO_CHROOT/$NHSUBDIR/var/livelog"
 
+RECOVER="$NETHACK_GIT/util/recover"
+
+if [ -n "$RECOVER" -a -e "$RECOVER" ]; then
+  echo "Copying $RECOVER"
+  cp "$RECOVER" "$NAO_CHROOT/$NHSUBDIR/var"
+  LIBS="$LIBS `findlibs $RECOVER`"
+  cd "$NAO_CHROOT"
+fi
+
 LIBS=`for lib in $LIBS; do echo $lib; done | sort | uniq`
 echo "Copying libraries:" $LIBS
 for lib in $LIBS; do
@@ -119,5 +125,4 @@ for lib in $LIBS; do
 done
 
 echo "Finished."
-
 
