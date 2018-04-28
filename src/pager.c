@@ -1,5 +1,6 @@
-/* NetHack 3.6	pager.c	$NHDT-Date: 1519529752 2018/02/25 03:35:52 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.120 $ */
+/* NetHack 3.6	pager.c	$NHDT-Date: 1523142395 2018/04/07 23:06:35 $  $NHDT-Branch: NetHack-3.6.0 $:$NHDT-Revision: 1.123 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
+/*-Copyright (c) Robert Patrick Rankin, 2018. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /* This file contains the command routines dowhatis() and dohelp() and */
@@ -418,6 +419,9 @@ char *buf, *monbuf;
         if ((mtmp = m_at(x, y)) != 0) {
             look_at_monster(buf, monbuf, mtmp, x, y);
             pm = mtmp->data;
+        } else if (Hallucination) {
+            /* 'monster' must actually be a statue */
+            Strcpy(buf, rndmonnam((char *) 0));
         }
     } else if (glyph_is_object(glyph)) {
         look_at_object(buf, x, y, glyph); /* fill in buf[] */
