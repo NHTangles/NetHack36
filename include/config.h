@@ -80,7 +80,7 @@
 #define BEOS_GRAPHICS             /* (optional) */
 #define DEFAULT_WINDOW_SYS "BeOS" /* "tty" */
 #ifndef HACKDIR                   /* override the default hackdir below */
-#define HACKDIR "/nhdev"
+#define HACKDIR "/nh361"
 #endif
 #endif
 
@@ -220,7 +220,7 @@
 
 /* alternative paniclog format, better suited for public servers with
    many players, as it saves the player name and the game start time */
-/* #define PANICLOG_FMT2 */
+#define PANICLOG_FMT2
 
 /*
  *      PERSMAX, POINTSMIN, ENTRYMAX, PERS_IS_UID:
@@ -355,7 +355,7 @@
  * otherwise it will be the current directory.
  */
 #ifndef HACKDIR
-#define HACKDIR "/nhdev"
+#define HACKDIR "/nh361"
 #endif
 
 /*
@@ -465,7 +465,7 @@ typedef unsigned char uchar;
  *  FALSE: Show all errors as normal, with line numbers and context.
  */
 #ifndef CONFIG_ERROR_SECURE
-# define CONFIG_ERROR_SECURE TRUE
+# define CONFIG_ERROR_SECURE FALSE
 #endif
 
 /*
@@ -529,7 +529,7 @@ typedef unsigned char uchar;
    for dgamelaunch-based server play */
 #define DGAMELAUNCH
 #ifdef DGAMELAUNCH
-#define EXTRAINFO_FN    "/dgldir/extrainfo-nhdev/%n.extrainfo"
+#define EXTRAINFO_FN    "/dgldir/extrainfo-nh361/%n.extrainfo"
 #define MAILCKFREQ 5  /* SIMPLE_MAIL is in unixconf.h */
 #endif
 

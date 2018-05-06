@@ -8,24 +8,24 @@
 
 # autonamed chroot directory. Can rename.
 DATESTAMP=`date +%Y%m%d-%H%M%S`
-NAO_CHROOT="/usr/games/lib"
+NAO_CHROOT="/opt/games/hardfought.org"
 #NAO_CHROOT=/opt/nethack/chroot
 # config outside of chroot
 DGL_CONFIG="/opt/nethack/dgamelaunch.conf"
 # already compiled versions of dgl and nethack
 DGL_GIT="/home/build/dgamelaunch"
-NETHACK_GIT="/home/build/wizmode_builds/NetHack36"
+NETHACK_GIT="/home/build/NetHack36"
 # the user & group from dgamelaunch config file.
 USRGRP="games:games"
 # COMPRESS from include/config.h; the compression binary to copy. leave blank to skip.
 COMPRESSBIN="/bin/gzip"
 # fixed data to copy (leave blank to skip)
-NH_GIT="/home/build/wizmode_builds/NetHack36"
+NH_GIT="/home/build/NetHack36"
 NH_BRANCH="hardfought"
 # HACKDIR from include/config.h; aka nethack subdir inside chroot
-NHSUBDIR="nethackdir"
+NHSUBDIR="nh361"
 # VAR_PLAYGROUND from include/unixconf.h
-NH_VAR_PLAYGROUND="/nethackdir/var/"
+NH_VAR_PLAYGROUND="/nh361/var/"
 # only define this if dgl was configured with --enable-sqlite
 SQLITE_DBFILE="/dgldir/dgamelaunch.db"
 # END OF CONFIG
