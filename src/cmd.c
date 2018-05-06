@@ -2796,6 +2796,14 @@ int final;
         you_have_X(buf);
     }
 
+    if (u.uconduct.elbereth == 0) {
+        you_have_never("engraved Elbereth");
+    } else if (wizard) {
+        Sprintf(buf, "engraved Elbereth %ld time%s", u.uconduct.elbereth,
+                plur(u.uconduct.elbereth));
+        you_have_X(buf);
+    }
+
     ngenocided = num_genocides();
     if (ngenocided == 0) {
         you_have_never("genocided any monsters");
