@@ -52,8 +52,8 @@ set -e
 umask 022
 
 echo "Creating inprogress and extrainfo directories"
-mkdir -p "$NAO_CHROOT/dgldir/inprogress-nh361"
-chown "$USRGRP" "$NAO_CHROOT/dgldir/inprogress-nh361"
+mkdir -p "$NAO_CHROOT/dgldir/inprogress-nh361-hdf"
+chown "$USRGRP" "$NAO_CHROOT/dgldir/inprogress-nh361-hdf"
 mkdir -p "$NAO_CHROOT/dgldir/extrainfo-nh361"
 chown "$USRGRP" "$NAO_CHROOT/dgldir/extrainfo-nh361"
 
