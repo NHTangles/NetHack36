@@ -23,9 +23,9 @@ COMPRESSBIN="/bin/gzip"
 NH_GIT="/home/build/NetHack36"
 NH_BRANCH="hardfought"
 # HACKDIR from include/config.h; aka nethack subdir inside chroot
-NHSUBDIR="nh361"
+NHSUBDIR="nh361-hdf"
 # VAR_PLAYGROUND from include/unixconf.h
-NH_VAR_PLAYGROUND="/nh361/var/"
+NH_VAR_PLAYGROUND="/nh361-hdf/var/"
 # only define this if dgl was configured with --enable-sqlite
 SQLITE_DBFILE="/dgldir/dgamelaunch.db"
 # END OF CONFIG

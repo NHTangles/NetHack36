@@ -80,7 +80,7 @@
 #define BEOS_GRAPHICS             /* (optional) */
 #define DEFAULT_WINDOW_SYS "BeOS" /* "tty" */
 #ifndef HACKDIR                   /* override the default hackdir below */
-#define HACKDIR "/nh361"
+#define HACKDIR "/nh361-hdf"
 #endif
 #endif
 
@@ -355,7 +355,7 @@
  * otherwise it will be the current directory.
  */
 #ifndef HACKDIR
-#define HACKDIR "/nh361"
+#define HACKDIR "/nh361-hdf"
 #endif
 
 /*
