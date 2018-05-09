@@ -91,6 +91,8 @@ mkdir -p "$NAO_CHROOT/$NHSUBDIR/var"
 chown -R "$USRGRP" "$NAO_CHROOT/$NHSUBDIR/var"
 mkdir -p "$NAO_CHROOT/$NHSUBDIR/var/save"
 chown -R "$USRGRP" "$NAO_CHROOT/$NHSUBDIR/var/save"
+mkdir -p "$NAO_CHROOT/$NHSUBDIR/var/whereis"
+chown -R "$USRGRP" "$NAO_CHROOT/$NHSUBDIR/var/whereis"
 
 touch "$NAO_CHROOT/$NHSUBDIR/var/logfile"
 chown -R "$USRGRP" "$NAO_CHROOT/$NHSUBDIR/var/logfile"
