@@ -399,7 +399,7 @@ xchar e_type;
     ep->engr_txt = (char *) (ep + 1);
     Strcpy(ep->engr_txt, s);
     /* engraving Elbereth shows wisdom */
-    if (!in_mklev && !strcmp(s, "Elbereth")) {
+    if (!in_mklev && !strcmpi(s, "Elbereth")) {
         exercise(A_WIS, TRUE);
         u.uconduct.elbereth++;
     }
