@@ -2790,7 +2790,7 @@ int final;
 
     if (!u.uconduct.literate) {
         you_have_been("illiterate");
-    } else if (wizard) {
+    } else {
         Sprintf(buf, "read items or engraved %ld time%s", u.uconduct.literate,
                 plur(u.uconduct.literate));
         you_have_X(buf);
@@ -2798,7 +2798,7 @@ int final;
 
     if (u.uconduct.elbereth == 0) {
         you_have_never("engraved Elbereth");
-    } else if (wizard) {
+    } else {
         Sprintf(buf, "engraved Elbereth %ld time%s", u.uconduct.elbereth,
                 plur(u.uconduct.elbereth));
         you_have_X(buf);
