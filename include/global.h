@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 
-/* #define BETA  */ /* development or beta testing [MRS] */
+#define BETA   /* development or beta testing [MRS] */
 
 #define DEBUG 
 
@@ -364,4 +364,10 @@ struct savefile_info {
 #define LL_DUMP_ASC   0x0100 /* Log URL for dumplog if ascended */
 #define LL_DUMP_ALL   0x0200 /* Log dumplog url for all games */
 #define LL_DEBUG      0x8000 /* For debugging messages and other spam */ 
+/* Supply nethack_enter macro if not supplied by port */
+#ifndef nethack_enter
+#define nethack_enter(argc, argv) ((void) 0)
+#endif
+
+
 #endif /* GLOBAL_H */
