@@ -92,9 +92,10 @@ MAXPLAYERS=10
 # 0x20 - Break conduct - see also LLC_TURNS below.
 # 0x40 - Artifact obtained (#name Sting, dip for Excalibur)
 # 0x80 - Genocides 
+# 0x100 - Killed (named) tame monster
 # 0x8000 - Livelog debug msgs (currently only 'enter new level')
 # Enabled at compile time by defining LIVELOGFILE in config.h
-# LIVELOG=0xFF
+# LIVELOG=0x0FFF
 
 # Do not livelog breaking of conducts before this turncount
 # Cuts down on spam
