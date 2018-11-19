@@ -1995,11 +1995,57 @@ register struct monst *mtmp;
     if (mtmp->data == &mons[PM_MEDUSA]) {
         u.uachieve.killed_medusa = 1;
         livelog_write_string(LL_ACHIEVE|LL_UMONST, "killed Medusa");
-    } else if (unique_corpstat(mtmp->data))
-        livelog_printf(LL_UMONST, "%s %s",
-              nonliving(mtmp->data) ? "destroyed" : "killed",
-              noit_mon_nam(mtmp));
-    
+    } else if (unique_corpstat(mtmp->data)) {
+        switch(mvitals[tmp].died) {
+            case 1:
+                livelog_printf(LL_UMONST, "%s %s",
+                    nonliving(mtmp->data) ? "destroyed" : "killed",
+                    noit_mon_nam(mtmp));
+                break;
+            case 5:
+            case 10:
+            case 50:
+            case 100:
+            case 150:
+            case 200:
+            case 250:
+                livelog_printf(LL_UMONST, "%s %s (%d times)",
+                    nonliving(mtmp->data) ? "destroyed" : "killed",
+                    noit_mon_nam(mtmp), mvitals[tmp].died);
+                break;
+            default:
+                /* don't spam the log every time */
+                break;
+        }
+    }
+
+    /* TNNT code for anything that triggers when a monster dies (NOT when the
+     * player kills a monster) goes here. */
+    bigrm = (slev && !strcmp(slev->proto, "bigrm"));
+    orctown = (slev && !strcmp(slev->proto, "minetn") && slev->which_level == 1);
+    if (bigrm || (orctown && mtmp->data->mlet == S_ORC)) {
+        /* A_AVENGED_ORCTOWN: all orcs in Orctown (minetn-1) are dead */
+        /* A_CLEARED_BIGROOM: all hostiles in Big Room are dead */
+        struct monst * mtmp;
+        boolean didit = TRUE;
+        for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+            if (DEADMONSTER(mtmp) || mtmp == &youmonst)
+                continue;
+            if ((bigrm && !mtmp->mpeaceful)
+                || (orctown && mtmp->data->mlet == S_ORC)) {
+                didit = FALSE;
+                break;
+            }
+        }
+        if (didit) {
+            if (bigrm)
+                tnnt_achieve(A_CLEARED_BIGROOM);
+            else if (orctown)
+                tnnt_achieve(A_AVENGED_ORCTOWN);
+        }
+    }
+
+>>>>>>> 0c9ddd5... livelog - don't spam log with lots of not-so-unique kills
     if (glyph_is_invisible(levl[mtmp->mx][mtmp->my].glyph))
         unmap_object(mtmp->mx, mtmp->my);
     m_detach(mtmp, mptr);
