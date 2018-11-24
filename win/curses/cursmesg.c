@@ -114,7 +114,7 @@ curses_message_win_puts(const char *message, boolean recursed)
         tmpstr = curses_break_str(message, (width - 2), 1);
         mvwprintw(win, my, mx, "%s", tmpstr);
         mx += strlen(tmpstr);
-        if (strlen(tmpstr) < (width - 2)) {
+        if (strlen(tmpstr) < (size_t) (width - 2)) {
             mx++;
         }
         free(tmpstr);
@@ -138,7 +138,7 @@ curses_block(boolean noscroll)
 /* noscroll - blocking because of msgtype = stop/alert */
 /* else blocking because window is full, so need to scroll after */
 {
-    int height, width, ret;
+    int height, width, ret = 0;
     WINDOW *win = curses_get_nhwin(MESSAGE_WIN);
     char *resp = " \n\033"; /* space, enter, esc */
 
@@ -225,6 +225,8 @@ void
 curses_last_messages()
 {
     boolean border = curses_window_has_border(MESSAGE_WIN);
+    nhprev_mesg *mesg;
+    int i;
 
     if (border) {
         mx = 1;
@@ -234,8 +236,6 @@ curses_last_messages()
         my = 0;
     }
 
-    nhprev_mesg *mesg;
-    int i;
     for (i = (num_messages - 1); i > 0; i--) {
         mesg = get_msg_line(TRUE, i);
         if (mesg && mesg->str && strcmp(mesg->str, ""))
@@ -295,8 +295,8 @@ curses_prev_mesg()
 }
 
 
-/* Shows Count: at the bottom of the message window,
-   popup_dialog is not currently implemented for this function */
+/* Shows Count: in a separate window, or at the bottom of the message
+window, depending on the user's settings */
 
 void
 curses_count_window(const char *count_text)
@@ -314,30 +314,42 @@ curses_count_window(const char *count_text)
 
     counting = TRUE;
 
-    curses_get_window_xy(MESSAGE_WIN, &winx, &winy);
-    curses_get_window_size(MESSAGE_WIN, &messageh, &messagew);
+    if (iflags.wc_popup_dialog) {       /* Display count in popup window */
+        startx = 1;
+        starty = 1;
 
-    if (curses_window_has_border(MESSAGE_WIN)) {
-        winx++;
-        winy++;
-    }
+        if (countwin == NULL) {
+            countwin = curses_create_window(25, 1, UP);
+        }
 
-    winy += messageh - 1;
+    } else {                    /* Display count at bottom of message window */
 
-    if (countwin == NULL) {
+        curses_get_window_xy(MESSAGE_WIN, &winx, &winy);
+        curses_get_window_size(MESSAGE_WIN, &messageh, &messagew);
+
+        if (curses_window_has_border(MESSAGE_WIN)) {
+            winx++;
+            winy++;
+        }
+
+        winy += messageh - 1;
+
+        if (countwin == NULL) {
+            pline("#");
 #ifndef PDCURSES
-        countwin = newwin(1, 25, winy, winx);
+            countwin = newwin(1, 25, winy, winx);
 #endif /* !PDCURSES */
-    }
+        }
 #ifdef PDCURSES
-    else {
-        curses_destroy_win(countwin);
-    }
+        else {
+            curses_destroy_win(countwin);
+        }
 
-    countwin = newwin(1, 25, winy, winx);
+        countwin = newwin(1, 25, winy, winx);
 #endif /* PDCURSES */
-    startx = 0;
-    starty = 0;
+        startx = 0;
+        starty = 0;
+    }
 
     mvwprintw(countwin, starty, startx, "%s", count_text);
     wrefresh(countwin);
@@ -484,7 +496,7 @@ curses_message_win_getline(const char *prompt, char *answer, int buffer)
             p_answer[--len] = '\0';
             mvwaddch(win, my, --mx, ' ');
             /* try to unwrap back to the previous line if there is one */
-            if (nlines > 1 && strlen(linestarts[nlines - 2]) < width) {
+            if (nlines > 1 && strlen(linestarts[nlines - 2]) < (size_t) width) {
                 mvwaddstr(win, my - 1, border_space, linestarts[nlines - 2]);
                 if (nlines-- > height) {
                     unscroll_window(MESSAGE_WIN);

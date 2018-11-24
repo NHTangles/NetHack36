@@ -1,4 +1,4 @@
-/* NetHack 3.6	steed.c	$NHDT-Date: 1541806894 2018/11/09 23:41:34 $  $NHDT-Branch: NetHack-3.6.2-beta01 $:$NHDT-Revision: 1.54 $ */
+/* NetHack 3.6	steed.c	$NHDT-Date: 1542765364 2018/11/21 01:56:04 $  $NHDT-Branch: NetHack-3.6.2-beta01 $:$NHDT-Revision: 1.57 $ */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -221,7 +221,7 @@ boolean force;      /* Quietly force this animal */
     if (Wounded_legs) {
         Your("%s are in no shape for riding.", makeplural(body_part(LEG)));
         if (force && wizard && yn("Heal your legs?") == 'y')
-            HWounded_legs = EWounded_legs = 0;
+            HWounded_legs = EWounded_legs = 0L;
         else
             return (FALSE);
     }
@@ -529,7 +529,7 @@ int reason; /* Player was thrown off etc. */
             return;
         }
         if (!have_spot) {
-            You("can't. There isn't anywhere for you to stand.");
+            You("can't.  There isn't anywhere for you to stand.");
             return;
         }
         if (!has_mname(mtmp)) {
@@ -542,12 +542,8 @@ int reason; /* Player was thrown off etc. */
     }
     /* While riding, Wounded_legs refers to the steed's legs;
        after dismounting, it reverts to the hero's legs. */
-    if (repair_leg_damage) {
-        /* [TODO: make heal_legs() take a parameter to handle this] */
-        in_steed_dismounting = TRUE;
-        heal_legs();
-        in_steed_dismounting = FALSE;
-    }
+    if (repair_leg_damage)
+        heal_legs(1);
 
     /* Release the steed and saddle */
     u.usteed = 0;
@@ -708,6 +704,8 @@ int x, y;
                    (mon == u.usteed) ? "steed" : "defunct monster");
         return;
     }
+    if (level.monsters[x][y])
+        impossible("placing monster over another?");
     mon->mx = x, mon->my = y;
     level.monsters[x][y] = mon;
 }

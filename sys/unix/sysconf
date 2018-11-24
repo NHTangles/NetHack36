@@ -119,7 +119,7 @@ LLC_TURNS=3000
 #   %D current time, YYYYMMDDhhmmss format
 #   %n player name
 #   %N first character of player name
-DUMPLOGFILE=/dgldir/userdata/%N/%n/nh361/dumplog/%t.nh361.txt
+DUMPLOGFILE=/dgldir/userdata/%N/%n/nh362/dumplog/%t.nh362.txt
 
 # Number of bones file pools.
 # The pool you belong to is determined at game start. You will
@@ -162,7 +162,7 @@ OPTIONS=pickup_burden:unencumbered
 OPTIONS=hilite_pet
 OPTIONS=hilite_pile
 OPTIONS=msg_window:reversed
-OPTIONS=number_pad:1
+OPTIONS=number_pad:0
 OPTIONS=sortloot:full
 OPTIONS=time
 

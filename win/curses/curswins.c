@@ -46,7 +46,7 @@ static void clear_map(void);
 WINDOW *
 curses_create_window(int width, int height, orient orientation)
 {
-    int mapx, mapy, maph, mapw = 0;
+    int mapx = 0, mapy = 0, maph = 0, mapw = 0;
     int startx = 0;
     int starty = 0;
     WINDOW *win;
@@ -598,8 +598,8 @@ curses_draw_map(int sx, int sy, int ex, int ey)
 
     /* Horizontal scrollbar */
     if ((sx > 0) || (ex < (COLNO - 1))) {
-        sbsx = (sx * ((float) (ex - sx + 1) / COLNO));
-        sbex = (ex * ((float) (ex - sx + 1) / COLNO));
+        sbsx = (sx * ((long) (ex - sx + 1) / COLNO));
+        sbex = (ex * ((long) (ex - sx + 1) / COLNO));
 
         for (count = 0; count < sbsx; count++) {
             write_char(mapwin, count + bspace, ey - sy + 1 + bspace, hsb_back);
@@ -616,8 +616,8 @@ curses_draw_map(int sx, int sy, int ex, int ey)
 
     /* Vertical scrollbar */
     if ((sy > 0) || (ey < (ROWNO - 1))) {
-        sbsy = (sy * ((float) (ey - sy + 1) / ROWNO));
-        sbey = (ey * ((float) (ey - sy + 1) / ROWNO));
+        sbsy = (sy * ((long) (ey - sy + 1) / ROWNO));
+        sbey = (ey * ((long) (ey - sy + 1) / ROWNO));
 
         for (count = 0; count < sbsy; count++) {
             write_char(mapwin, ex - sx + 1 + bspace, count + bspace, vsb_back);

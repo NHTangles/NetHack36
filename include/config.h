@@ -46,6 +46,7 @@
 #define TTY_GRAPHICS /* good old tty based graphics */
 #define CURSES_GRAPHICS
 #endif
+/* #define CURSES_GRAPHICS *//* Curses interface - Karl Garrison*/
 /* #define X11_GRAPHICS */   /* X11 interface */
 /* #define QT_GRAPHICS */    /* Qt interface */
 /* #define GNOME_GRAPHICS */ /* Gnome interface */
@@ -81,7 +82,7 @@
 #define BEOS_GRAPHICS             /* (optional) */
 #define DEFAULT_WINDOW_SYS "BeOS" /* "tty" */
 #ifndef HACKDIR                   /* override the default hackdir below */
-#define HACKDIR "/nh361-hdf"
+#define HACKDIR "/nh362-hdf"
 #endif
 #endif
 
@@ -117,6 +118,12 @@
 
 #ifndef DEFAULT_WINDOW_SYS
 #define DEFAULT_WINDOW_SYS "tty"
+#endif
+
+#ifdef CURSES_GRAPHICS
+#ifndef DEFAULT_WINDOW_SYS
+#define DEFAULT_WINDOW_SYS "curses"
+#endif
 #endif
 
 #ifdef X11_GRAPHICS
@@ -356,7 +363,7 @@
  * otherwise it will be the current directory.
  */
 #ifndef HACKDIR
-#define HACKDIR "/nh361-hdf"
+#define HACKDIR "/nh362-hdf"
 #endif
 
 /*
@@ -533,6 +540,10 @@ typedef unsigned char uchar;
 #define EXTRAINFO_FN    "/dgldir/extrainfo-nh362/%n.extrainfo"
 #define MAILCKFREQ 5  /* SIMPLE_MAIL is in unixconf.h */
 #endif
+
+/* EXTRA_SANITY_CHECKS adds extra impossible calls,
+ * probably not useful for normal play */
+/* #define EXTRA_SANITY_CHECKS */
 
 /* EDIT_GETLIN makes the string input in TTY, Qt4, and X11
    so some prompts will remember the previously input text

@@ -99,7 +99,7 @@ static struct win_choices {
     { &tty_procs, win_tty_init CHAINR(0) },
 #endif
 #ifdef CURSES_GRAPHICS
-    { &curses_procs, 0 CHAINR(0) },
+    { &curses_procs, 0 },
 #endif
 #ifdef X11_GRAPHICS
     { &X11_procs, win_X11_init CHAINR(0) },

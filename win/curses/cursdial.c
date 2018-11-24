@@ -7,6 +7,13 @@
 #include "func_tab.h"
 #include <ctype.h>
 
+#if defined(FILENAME_CMP)
+#define strcasecmp FILENAME_CMP
+#endif
+#if defined(STRNCMPI)
+#define strncasecmp strncmpi
+#endif
+
 /* Dialog windows for curses interface */
 
 
@@ -73,17 +80,28 @@ curses_line_input_dialog(const char *prompt, char *answer, int buffer)
 {
     int map_height, map_width, maxwidth, remaining_buf, winx, winy, count;
     WINDOW *askwin, *bwin;
-    char input[buffer];
     char *tmpstr;
     int prompt_width = strlen(prompt) + buffer + 1;
     int prompt_height = 1;
     int height = prompt_height;
+#if __STDC_VERSION__ >= 199901L
+    char input[buffer];
+#else
+#ifndef BUFSZ
+#define BUFSZ 256
+#endif
+    char input[BUFSZ];
+
+    buffer = BUFSZ - 1;
+#endif
 
     maxwidth = term_cols - 2;
 
     if (iflags.window_inited) {
-        if (!iflags.wc_popup_dialog)
-            return curses_message_win_getline(prompt, answer, buffer);
+        if (!iflags.wc_popup_dialog) {
+            curses_message_win_getline(prompt, answer, buffer);
+            return;
+        }
         curses_get_window_size(MAP_WIN, &map_height, &map_width);
         if ((prompt_width + 2) > map_width)
             maxwidth = map_width - 2;
@@ -267,7 +285,7 @@ curses_character_input_dialog(const char *prompt, const char *choices,
         }
 
         if (choices != NULL) {
-            for (count = 0; count < strlen(choices); count++) {
+            for (count = 0; (size_t) count < strlen(choices); count++) {
                 if (choices[count] == answer) {
                     break;
                 }
@@ -398,11 +416,9 @@ curses_ext_cmd()
             ret = -1;
         }
         for (count = 0; extcmdlist[count].ef_txt; count++) {
-            if (!wizard && (extcmdlist[count].flags & WIZMODECMD))
-                continue;
             if (!(extcmdlist[count].flags & AUTOCOMPLETE))
                 continue;
-            if (strlen(extcmdlist[count].ef_txt) > prompt_width) {
+            if (strlen(extcmdlist[count].ef_txt) > (size_t) prompt_width) {
                 if (strncasecmp(cur_choice, extcmdlist[count].ef_txt,
                                 prompt_width) == 0) {
                     if ((extcmdlist[count].ef_txt[prompt_width] ==
@@ -853,7 +869,7 @@ menu_win_size(nhmenu *menu)
         } else {
             /* Add space for accelerator */
             curentrywidth = strlen(menu_item_ptr->str) + 4;
-#if 0 // FIXME: menu glyphs
+#if 0 /* FIXME: menu glyphs */
             if (menu_item_ptr->glyph != NO_GLYPH
                         && iflags.use_menu_glyphs)
                 curentrywidth += 2;

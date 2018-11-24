@@ -817,3 +817,4 @@ curses_preference_update(const char *pref)
         doredraw();
     }
 }
+

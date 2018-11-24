@@ -5,6 +5,10 @@
 
 /* main.c - MSDOS, OS/2, ST, Amiga, and Windows NetHack */
 
+#ifdef WIN32
+#include "win32api.h" /* for GetModuleFileName */
+#endif
+
 #include "hack.h"
 #include "dlb.h"
 
@@ -20,10 +24,6 @@
 #ifdef GNUDOS
 #include <sys/stat.h>
 #endif
-#endif
-
-#ifdef WIN32
-#include "win32api.h" /* for GetModuleFileName */
 #endif
 
 #ifdef __DJGPP__
@@ -98,8 +98,12 @@ char *argv[];
     nethack_enter(argc, argv);
 
     sys_early_init();
-#ifdef WIN32
+#if defined(WIN32) && defined(TTY_GRAPHICS)
     Strcpy(default_window_sys, "tty");
+#else
+#if defined(CURSES_GRAPHICS)
+    Strcpy(default_window_sys, "curses");    
+#endif
 #endif
 
     resuming = pcmain(argc, argv);
@@ -173,6 +177,10 @@ _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);*/
     choose_windows(DEFAULT_WINDOW_SYS);
 #else
     choose_windows(default_window_sys);
+    if (argc > 1
+        && !strcmpi(default_window_sys, "mswin")
+        && strstri(argv[0], "nethackw.exe"))
+        iflags.windowtype_locked = TRUE;
 #endif
 
 #if !defined(AMIGA) && !defined(GNUDOS)
@@ -345,6 +353,13 @@ _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);*/
             argv++;
 	}
 
+#ifdef WIN32
+	if (argcheck(argc, argv, ARG_WINDOWS) == 1) {
+	    argc--;
+	    argv++;
+	}
+#endif
+
         if (argc > 1 && !strncmp(argv[1], "-d", 2) && argv[1][2] != 'e') {
             /* avoid matching "-dec" for DECgraphics; since the man page
              * says -d directory, hope nobody's using -desomething_else
@@ -493,9 +508,9 @@ _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);*/
     } else {
         iflags.use_background_glyph = TRUE;
     }
-#endif
-#endif
-#endif
+#endif /* TTY_GRAPHICS */
+#endif /* WIN32 */
+#endif /* MSDOS || WIN32 */
 
 #if defined(MSDOS) || defined(WIN32)
     init_nhwindows(&argc, argv);
