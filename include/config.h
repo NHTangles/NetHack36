@@ -44,7 +44,7 @@
  */
 #if !defined(NOTTYGRAPHICS)
 #define TTY_GRAPHICS /* good old tty based graphics */
-#define CURSES_GRAPHICS
+/* #define CURSES_GRAPHICS */
 #endif
 /* #define CURSES_GRAPHICS *//* Curses interface - Karl Garrison*/
 /* #define X11_GRAPHICS */   /* X11 interface */
@@ -82,7 +82,7 @@
 #define BEOS_GRAPHICS             /* (optional) */
 #define DEFAULT_WINDOW_SYS "BeOS" /* "tty" */
 #ifndef HACKDIR                   /* override the default hackdir below */
-#define HACKDIR "/nh362-hdf"
+#define HACKDIR "/nh361-hdf"
 #endif
 #endif
 
@@ -363,7 +363,7 @@
  * otherwise it will be the current directory.
  */
 #ifndef HACKDIR
-#define HACKDIR "/nh362-hdf"
+#define HACKDIR "/nh361-hdf"
 #endif
 
 /*
