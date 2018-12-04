@@ -58,6 +58,7 @@ nhrgb orig_hiwhite;
 #define NETHACK_SPLASH_F \
 "|_| \\_| \\___| \\__||_|  |_| \\__,_| \\___||_|\\_\\"
 
+
 /* win* is size and placement of window to change, x/y/w/h is baseline which can
    decrease depending on alignment of win* in orientation.
    Negative minh/minw: as much as possible, but at least as much as specified. */

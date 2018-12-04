@@ -499,10 +499,10 @@ int nondefault;
         if (SYMHANDLING(H_DEC) && decgraphics_mode_callback)
             (*decgraphics_mode_callback)();
 #endif
-#ifdef CURSES_GRAPHICS
+# ifdef CURSES_GRAPHICS
         if (SYMHANDLING(H_CURS) && cursesgraphics_mode_callback)
             (*cursesgraphics_mode_callback)();		
-#endif
+# endif
     } else
         init_symbols();
 }
