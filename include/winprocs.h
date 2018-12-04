@@ -211,7 +211,7 @@ extern
 #define WC2_HILITE_STATUS 0x0008L /* 04 hilite fields in status         */
 #define WC2_SELECTSAVED   0x0010L /* 05 saved game selection menu       */
 #define WC2_DARKGRAY      0x0020L /* 06 use bold black for black glyphs */
-#define WC2_HITPOINTBAR   0x0040L /* 07 show bar representing hit points*/
+#define WC2_HITPOINTBAR   0x0040L /* 07 show bar representing hit points */
 #define WC2_FLUSH_STATUS  0x0080L /* 08 call status_update(BL_FLUSH)
                                         after updating status window fields */
 #define WC2_RESET_STATUS  0x0100L /* 09 call status_update(BL_RESET) to indicate

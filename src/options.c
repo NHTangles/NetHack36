@@ -104,11 +104,6 @@ static struct Bool_Opt {
 #else
     { "checkspace", (boolean *) 0, FALSE, SET_IN_FILE },
 #endif
-#ifdef CURSES_GRAPHICS
-    { "classic_status", &iflags.classic_status, TRUE, SET_IN_FILE },
-#else
-    { "classic_status", (boolean *) 0, TRUE, SET_IN_FILE },
-#endif
     { "clicklook", &iflags.clicklook, FALSE, SET_IN_GAME },
     { "cmdassist", &iflags.cmdassist, TRUE, SET_IN_GAME },
 #if defined(MICRO) || defined(WIN32) || defined(CURSES_GRAPHICS)

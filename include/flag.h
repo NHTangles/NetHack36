@@ -328,9 +328,6 @@ struct instance_flags {
 #if defined(TTY_GRAPHICS) || defined(CURSES_GRAPHICS)
     boolean extmenu;     /* extended commands use menu interface */
 #endif
-#ifdef CURSES_GRAPHICS
-    boolean classic_status;  /* use 3-line NH4 status bar if false */
-#endif
 
 #ifdef MFLOPPY
     boolean checkspace; /* check disk space before writing files */
