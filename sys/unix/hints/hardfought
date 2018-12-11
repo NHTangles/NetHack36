@@ -12,7 +12,7 @@
 COMPILEREVISION?=1
 
 # this is the chroot dir
-PREFIX=/opt/nethack/hardfought.org
+PREFIX=/opt/nethack/chroot
 
 # this is the dir where NetHack is inside the chroot
 HACKDIR=/nh361-hdf
