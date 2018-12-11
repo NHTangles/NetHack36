@@ -1,4 +1,4 @@
-/* NetHack 3.6	objnam.c	$NHDT-Date: 1539938837 2018/10/19 08:47:17 $  $NHDT-Branch: NetHack-3.6.2-beta01 $:$NHDT-Revision: 1.214 $ */
+/* NetHack 3.6	objnam.c	$NHDT-Date: 1543745355 2018/12/02 10:09:15 $  $NHDT-Branch: NetHack-3.6.2-beta01 $:$NHDT-Revision: 1.227 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Robert Patrick Rankin, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -1150,15 +1150,16 @@ unsigned doname_flags;
 
             if (bimanual(obj))
                 hand_s = makeplural(hand_s);
+            /* note: Sting's glow message, if added, will insert text
+               in front of "(weapon in hand)"'s closing paren */
             Sprintf(eos(bp), " (%sweapon in %s)",
                     (obj->otyp == AKLYS) ? "tethered " : "", hand_s);
 
             if (warn_obj_cnt && obj == uwep && (EWarn_of_mon & W_WEP) != 0L) {
-                /* presumably can be felt when blind */
-                Strcat(bp, " (glowing");
-                if (!Blind)
-                    Sprintf(eos(bp), " %s", glow_color(obj->oartifact));
-                Strcat(bp, ")");
+                if (!Blind) /* we know bp[] ends with ')'; overwrite that */
+                    Sprintf(eos(bp) - 1, ", %s %s)",
+                            glow_verb(warn_obj_cnt, TRUE),
+                            glow_color(obj->oartifact));
             }
         }
     }
@@ -2086,6 +2087,7 @@ const char *const *alt_as_is; /* another set like as_is[] */
     const struct sing_plur *sp;
     const char *same, *other, *const *as;
     int al;
+    int baselen = strlen(basestr);
 
     for (as = as_is; *as; ++as) {
         al = (int) strlen(*as);
@@ -2112,20 +2114,20 @@ const char *const *alt_as_is; /* another set like as_is[] */
     }
     /* skip "ox" -> "oxen" entry when pluralizing "<something>ox"
        unless it is muskox */
-    if (to_plural && strlen(basestr) > 2 && !strcmpi(endstring - 2, "ox")
-        && strcmpi(endstring - 6, "muskox")) {
+    if (to_plural && baselen > 2 && !strcmpi(endstring - 2, "ox")
+        && !(baselen > 5 && !strcmpi(endstring - 6, "muskox"))) {
         /* "fox" -> "foxes" */
         Strcasecpy(endstring, "es");
         return TRUE;
     }
     if (to_plural) {
-        if (!strcmpi(endstring - 3, "man")
+        if (baselen > 2 && !strcmpi(endstring - 3, "man")
             && badman(basestr, to_plural)) {
             Strcasecpy(endstring, "s");
             return TRUE;
         }
     } else {
-        if (!strcmpi(endstring - 3, "men")
+        if (baselen > 2 && !strcmpi(endstring - 3, "men")
             && badman(basestr, to_plural))
             return TRUE;
     }
@@ -2483,8 +2485,6 @@ badman(basestr, to_plural)
 const char *basestr;
 boolean to_plural;            /* true => makeplural, false => makesingular */
 {
-    int i, al;
-    char *endstr, *spot;
     /* these are all the prefixes for *man that don't have a *men plural */
     static const char *no_men[] = {
         "albu", "antihu", "anti", "ata", "auto", "bildungsro", "cai", "cay",
@@ -2500,11 +2500,13 @@ boolean to_plural;            /* true => makeplural, false => makesingular */
         "tegu", "vela", "da", "hy", "lu", "no", "nu", "ra", "ru", "se", "vi",
         "ya", "o", "a",
     };
+    int i, al;
+    const char *endstr, *spot;
 
     if (!basestr || strlen(basestr) < 4)
         return FALSE;
 
-    endstr = eos((char *)basestr);
+    endstr = eos((char *) basestr);
 
     if (to_plural) {
         for (i = 0; i < SIZE(no_men); i++) {

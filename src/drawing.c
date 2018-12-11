@@ -26,7 +26,8 @@ nhsym l_syms[SYM_MAX] = DUMMY;   /* loaded symbols          */
 nhsym r_syms[SYM_MAX] = DUMMY;   /* rogue symbols           */
 
 nhsym warnsyms[WARNCOUNT] = DUMMY; /* the current warning display symbols */
-const char invisexplain[] = "remembered, unseen, creature";
+const char invisexplain[] = "remembered, unseen, creature",
+           altinvisexplain[] = "unseen creature"; /* for clairvoyance */
 
 /* Default object class symbols.  See objclass.h.
  * {symbol, name, explain}
@@ -263,6 +264,10 @@ void NDECL((*ibmgraphics_mode_callback)) = 0; /* set in tty_start_screen() */
 void NDECL((*ascgraphics_mode_callback)) = 0; /* set in tty_start_screen() */
 #endif
 
+#ifdef CURSES_GRAPHICS
+void NDECL((*cursesgraphics_mode_callback)) = 0;
+#endif
+
 /*
  * Convert the given character to an object class.  If the character is not
  * recognized, then MAXOCLASSES is returned.  Used in detect.c, invent.c,
@@ -494,6 +499,10 @@ int nondefault;
         if (SYMHANDLING(H_DEC) && decgraphics_mode_callback)
             (*decgraphics_mode_callback)();
 #endif
+# ifdef CURSES_GRAPHICS
+        if (SYMHANDLING(H_CURS) && cursesgraphics_mode_callback)
+            (*cursesgraphics_mode_callback)();		
+# endif
     } else
         init_symbols();
 }
@@ -543,9 +552,10 @@ boolean name_too;
  * to this array at the matching offset.
  */
 const char *known_handling[] = {
-    "UNKNOWN", /* H_UNK */
-    "IBM",     /* H_IBM */
-    "DEC",     /* H_DEC */
+    "UNKNOWN", /* H_UNK  */
+    "IBM",     /* H_IBM  */
+    "DEC",     /* H_DEC  */
+    "CURS",    /* H_CURS */
     (const char *) 0,
 };
 

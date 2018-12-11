@@ -1,4 +1,4 @@
-/* NetHack 3.6	makemon.c	$NHDT-Date: 1539804904 2018/10/17 19:35:04 $  $NHDT-Branch: keni-makedefsm $:$NHDT-Revision: 1.127 $ */
+/* NetHack 3.6	makemon.c	$NHDT-Date: 1542798623 2018/11/21 11:10:23 $  $NHDT-Branch: NetHack-3.6.2-beta01 $:$NHDT-Revision: 1.128 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Robert Patrick Rankin, 2012. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -18,15 +18,15 @@ STATIC_DCL boolean FDECL(uncommon, (int));
 STATIC_DCL int FDECL(align_shift, (struct permonst *));
 STATIC_DCL boolean FDECL(mk_gen_ok, (int, int, int));
 STATIC_DCL boolean FDECL(wrong_elem_type, (struct permonst *));
-STATIC_DCL void FDECL(m_initgrp, (struct monst *, int, int, int));
+STATIC_DCL void FDECL(m_initgrp, (struct monst *, int, int, int, int));
 STATIC_DCL void FDECL(m_initthrow, (struct monst *, int, int));
 STATIC_DCL void FDECL(m_initweap, (struct monst *));
 STATIC_DCL void FDECL(m_initinv, (struct monst *));
 STATIC_DCL boolean FDECL(makemon_rnd_goodpos, (struct monst *,
                                                unsigned, coord *));
 
-#define m_initsgrp(mtmp, x, y) m_initgrp(mtmp, x, y, 3)
-#define m_initlgrp(mtmp, x, y) m_initgrp(mtmp, x, y, 10)
+#define m_initsgrp(mtmp, x, y, mmf) m_initgrp(mtmp, x, y, 3, mmf)
+#define m_initlgrp(mtmp, x, y, mmf) m_initgrp(mtmp, x, y, 10, mmf)
 #define toostrong(monindx, lev) (mons[monindx].difficulty > lev)
 #define tooweak(monindx, lev) (mons[monindx].difficulty < lev)
 
@@ -76,9 +76,9 @@ struct permonst *ptr;
 
 /* make a group just like mtmp */
 STATIC_OVL void
-m_initgrp(mtmp, x, y, n)
-register struct monst *mtmp;
-register int x, y, n;
+m_initgrp(mtmp, x, y, n, mmflags)
+struct monst *mtmp;
+int x, y, n, mmflags;
 {
     coord mm;
     register int cnt = rnd(n);
@@ -129,7 +129,7 @@ register int x, y, n;
          * smaller group.
          */
         if (enexto(&mm, mm.x, mm.y, mtmp->data)) {
-            mon = makemon(mtmp->data, mm.x, mm.y, NO_MM_FLAGS);
+            mon = makemon(mtmp->data, mm.x, mm.y, (mmflags | MM_NOGRP));
             if (mon) {
                 mon->mpeaceful = FALSE;
                 mon->mavenge = 0;
@@ -280,7 +280,8 @@ register struct monst *mtmp;
                 if (rn2(2))
                     (void) mongets(mtmp, rn2(3) ? DAGGER : KNIFE);
                 if (rn2(5))
-                    (void) mongets(mtmp, rn2(3) ? LEATHER_JACKET : LEATHER_CLOAK);
+                    (void) mongets(mtmp, rn2(3) ? LEATHER_JACKET
+                                                : LEATHER_CLOAK);
                 if (rn2(3))
                     (void) mongets(mtmp, rn2(3) ? LOW_BOOTS : HIGH_BOOTS);
                 if (rn2(3))
@@ -304,7 +305,8 @@ register struct monst *mtmp;
             case PM_HUNTER:
                 (void) mongets(mtmp, rn2(3) ? SHORT_SWORD : DAGGER);
                 if (rn2(2))
-                    (void) mongets(mtmp, rn2(2) ? LEATHER_JACKET : LEATHER_ARMOR);
+                    (void) mongets(mtmp, rn2(2) ? LEATHER_JACKET
+                                                : LEATHER_ARMOR);
                 (void) mongets(mtmp, BOW);
                 m_initthrow(mtmp, ARROW, 12);
                 break;
@@ -744,9 +746,21 @@ register struct monst *mtmp;
         break;
     case S_QUANTMECH:
         if (!rn2(20)) {
+            struct obj *catcorpse;
+
             otmp = mksobj(LARGE_BOX, FALSE, FALSE);
-            otmp->spe = 1; /* flag for special box */
-            otmp->owt = weight(otmp);
+            /* we used to just set the flag, which resulted in weight()
+               treating the box as being heavier by the weight of a cat;
+               now we include a cat corpse that won't rot; when opening or
+               disclosing the box's contents, the corpse might be revived,
+               otherwise it's given a rot timer; weight is now ordinary */
+            if ((catcorpse = mksobj(CORPSE, TRUE, FALSE)) != 0) {
+                otmp->spe = 1; /* flag for special SchroedingersBox */
+                set_corpsenm(catcorpse, PM_HOUSECAT);
+                (void) stop_timer(ROT_CORPSE, obj_to_any(catcorpse));
+                add_to_container(otmp, catcorpse);
+                otmp->owt = weight(otmp);
+            }
             (void) mpickobj(mtmp, otmp);
         }
         break;
@@ -1179,7 +1193,8 @@ int mmflags;
         newemin(mtmp);
     if (mmflags & MM_EDOG)
         newedog(mtmp);
-
+    if (mmflags & MM_ASLEEP)
+        mtmp->msleeping = 1;
     mtmp->nmon = fmon;
     fmon = mtmp;
     mtmp->m_id = context.ident++;
@@ -1350,14 +1365,14 @@ int mmflags;
                               : eminp->renegade;
     }
     set_malign(mtmp); /* having finished peaceful changes */
-    if (anymon) {
+    if (anymon && !(mmflags & MM_NOGRP)) {
         if ((ptr->geno & G_SGROUP) && rn2(2)) {
-            m_initsgrp(mtmp, mtmp->mx, mtmp->my);
+            m_initsgrp(mtmp, mtmp->mx, mtmp->my, mmflags);
         } else if (ptr->geno & G_LGROUP) {
             if (rn2(3))
-                m_initlgrp(mtmp, mtmp->mx, mtmp->my);
+                m_initlgrp(mtmp, mtmp->mx, mtmp->my, mmflags);
             else
-                m_initsgrp(mtmp, mtmp->mx, mtmp->my);
+                m_initsgrp(mtmp, mtmp->mx, mtmp->my, mmflags);
         }
     }
 

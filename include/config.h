@@ -45,6 +45,7 @@
 #if !defined(NOTTYGRAPHICS)
 #define TTY_GRAPHICS /* good old tty based graphics */
 #endif
+/* #define CURSES_GRAPHICS *//* Curses interface - Karl Garrison*/
 /* #define X11_GRAPHICS */   /* X11 interface */
 /* #define QT_GRAPHICS */    /* Qt interface */
 /* #define GNOME_GRAPHICS */ /* Gnome interface */
@@ -116,6 +117,12 @@
 
 #ifndef DEFAULT_WINDOW_SYS
 #define DEFAULT_WINDOW_SYS "tty"
+#endif
+
+#ifdef CURSES_GRAPHICS
+#ifndef DEFAULT_WINDOW_SYS
+#define DEFAULT_WINDOW_SYS "curses"
+#endif
 #endif
 
 #ifdef X11_GRAPHICS
@@ -524,6 +531,10 @@ typedef unsigned char uchar;
 /* FREE_ALL_MEMORY is neither experimental nor inadequately tested,
    but it isn't necessary for successful operation of the program */
 #define FREE_ALL_MEMORY             /* free all memory at exit */
+
+/* EXTRA_SANITY_CHECKS adds extra impossible calls,
+ * probably not useful for normal play */
+/* #define EXTRA_SANITY_CHECKS */
 
 /* EDIT_GETLIN makes the string input in TTY, Qt4, and X11
    so some prompts will remember the previously input text
