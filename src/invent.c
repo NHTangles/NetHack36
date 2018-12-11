@@ -825,7 +825,7 @@ struct obj *obj;
        nor be a leash (corpsenm overloaded for m_id of leashed
        monster) or a novel (corpsenm overloaded for novel index) */
     if (is_mines_prize(obj)) {
-        if(!u.uachieve.mines_luckstone) 
+        if(!u.uachieve.mines_luckstone) /* This is spoily if player can see livelog */
             livelog_write_string(LL_ACHIEVE, "acquired the luckstone from Mines' End");
         u.uachieve.mines_luckstone = 1;
         obj->record_achieve_special = NON_PM;
