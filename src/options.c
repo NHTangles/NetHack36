@@ -1,4 +1,4 @@
-/* NetHack 3.6	options.c	$NHDT-Date: 1526112322 2018/05/12 08:05:22 $  $NHDT-Branch: master $:$NHDT-Revision: 1.323 $ */
+/* NetHack 3.6	options.c	$NHDT-Date: 1544396581 2018/12/09 23:03:01 $  $NHDT-Branch: NetHack-3.6.2-beta01 $:$NHDT-Revision: 1.340 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Michael Allison, 2008. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -20,7 +20,6 @@ NEARDATA struct instance_flags iflags; /* provide linkage */
 #endif
 
 #define BACKWARD_COMPAT
-#define WINTYPELEN 16
 
 #ifdef DEFAULT_WC_TILED_MAP
 #define PREFER_TILED TRUE
@@ -171,11 +170,6 @@ static struct Bool_Opt {
     { "menu_overlay", (boolean *) 0, FALSE, SET_IN_FILE },
 #endif
     { "monpolycontrol", &iflags.mon_polycontrol, FALSE, SET_IN_WIZGAME },
-#ifdef CURSES_GRAPHICS
-    { "mouse_support", &iflags.wc_mouse_support, FALSE, DISP_IN_GAME }, /*WC*/
-#else
-    { "mouse_support", &iflags.wc_mouse_support, TRUE, DISP_IN_GAME }, /*WC*/
-#endif
 #ifdef NEWS
     { "news", &iflags.news, TRUE, DISP_IN_GAME },
 #else
@@ -347,6 +341,7 @@ static struct Comp_Opt {
 #endif
     { "name", "your character's name (e.g., name:Merlin-W)", PL_NSIZ,
       DISP_IN_GAME },
+    { "mouse_support", "game receives click info from mouse", 0, SET_IN_GAME },
     { "number_pad", "use the number pad for movement", 1, SET_IN_GAME },
     { "objects", "the symbols to use for objects", MAXOCLASSES, SET_IN_FILE },
     { "packorder", "the inventory order of the items in your pack",
@@ -757,8 +752,6 @@ initoptions_init()
         warnsyms[i] = def_warnsyms[i].sym;
     iflags.bouldersym = 0;
 
-    iflags.travelcc.x = iflags.travelcc.y = -1;
-
     /* for "special achievement" tracking (see obj.h,
        create_object(sp_lev.c), addinv_core1(invent.c) */
     iflags.mines_prize_type = LUCKSTONE;
@@ -885,16 +878,23 @@ initoptions_finish()
      * A multi-interface binary might only support status highlighting
      * for some of the interfaces; check whether we asked for it but are
      * using one which doesn't.
+     *
+     * Option processing can take place before a user-decided WindowPort
+     * is even initialized, so check for that too.
      */
-    if (iflags.hilite_delta && !wc2_supported("statushilites")) {
-        raw_printf("Status highlighting not supported for %s interface.",
-                   windowprocs.name);
-        iflags.hilite_delta = 0;
+    if (!WINDOWPORT("safe-startup")) {
+        if (iflags.hilite_delta && !wc2_supported("statushilites")) {
+            raw_printf("Status highlighting not supported for %s interface.",
+                       windowprocs.name);
+            iflags.hilite_delta = 0;
+        }
     }
 #endif
     return;
 }
 
+/* copy up to maxlen-1 characters; 'dest' must be able to hold maxlen;
+   treat comma as alternate end of 'src' */
 STATIC_OVL void
 nmcpy(dest, src, maxlen)
 char *dest;
@@ -908,7 +908,7 @@ int maxlen;
             break; /*exit on \0 terminator*/
         *dest++ = *src++;
     }
-    *dest = 0;
+    *dest = '\0';
 }
 
 /*
@@ -2217,6 +2217,35 @@ boolean tinitial, tfrom_file;
         return retval;
     }
 
+    fullname = "mouse_support";
+    if (match_optname(opts, fullname, 13, TRUE)) {
+        boolean compat = (strlen(opts) <= 13);
+
+        if (duplicate)
+            complain_about_duplicate(opts, 1);
+        op = string_for_opt(opts, (compat || !initial));
+        if (!op) {
+            if (compat || negated || initial) {
+                /* for backwards compatibility, "mouse_support" without a
+                   value is a synonym for mouse_support:1 */
+                iflags.wc_mouse_support = !negated;
+            }
+        } else if (negated) {
+            bad_negation(fullname, TRUE);
+            return FALSE;
+        } else {
+            int mode = atoi(op);
+
+            if (mode < 0 || mode > 2 || (mode == 0 && *op != '0')) {
+                config_error_add("Illegal %s parameter '%s'", fullname, op);
+                return FALSE;
+            } else { /* mode >= 0 */
+                iflags.wc_mouse_support = mode;
+            }
+        }
+        return retval;
+    }
+
     fullname = "number_pad";
     if (match_optname(opts, fullname, 10, TRUE)) {
         boolean compat = (strlen(opts) <= 10);
@@ -2271,8 +2300,9 @@ boolean tinitial, tfrom_file;
             symset[ROGUESET].name = dupstr(op);
             if (!read_sym_file(ROGUESET)) {
                 clear_symsetentry(ROGUESET, TRUE);
-                config_error_add("Unable to load symbol set \"%s\" from \"%s\"",
-                           op, SYMBOLS);
+                config_error_add(
+                               "Unable to load symbol set \"%s\" from \"%s\"",
+                                 op, SYMBOLS);
                 return FALSE;
             } else {
                 if (!initial && Is_rogue_level(&u.uz))
@@ -2567,7 +2597,7 @@ boolean tinitial, tfrom_file;
 
         if (duplicate)
             complain_about_duplicate(opts, 1);
-        op = string_for_opt(opts, negated);
+        op = string_for_opt(opts, negated || !initial);
         if (negated) {
             if (op) {
                 bad_negation("fruit", TRUE);
@@ -2578,6 +2608,8 @@ boolean tinitial, tfrom_file;
         }
         if (!op)
             return FALSE;
+        /* 3.6.2: strip leading and trailing spaces, condense internal ones */
+        mungspaces(op);
         if (!initial) {
             struct fruit *f;
             int fnum = 0;
@@ -3498,10 +3530,14 @@ boolean tinitial, tfrom_file;
             bad_negation(fullname, FALSE);
             return FALSE;
         } else if ((op = string_for_env_opt(fullname, opts, FALSE)) != 0) {
-            char buf[WINTYPELEN];
+            if (!iflags.windowtype_deferred) {
+                char buf[WINTYPELEN];
 
-            nmcpy(buf, op, WINTYPELEN);
-            choose_windows(buf);
+                nmcpy(buf, op, WINTYPELEN);
+                choose_windows(buf);
+            } else {
+                nmcpy(chosen_windowtype, op, WINTYPELEN);
+	    }
         } else
             return FALSE;
         return retval;
@@ -4332,7 +4368,7 @@ static struct other_opts {
     int NDECL((*othr_count_func));
 } othropt[] = {
     { "autopickup exceptions", SET_IN_GAME, OPT_OTHER_APEXC, count_apes },
-    { "menucolors", SET_IN_GAME, OPT_OTHER_MENUCOLOR, count_menucolors },
+    { "menu colors", SET_IN_GAME, OPT_OTHER_MENUCOLOR, count_menucolors },
     { "message types", SET_IN_GAME, OPT_OTHER_MSGTYPE, msgtype_count },
 #ifdef STATUS_HILITES
     { "status hilite rules", SET_IN_GAME, OPT_OTHER_STATHILITE,
@@ -4506,7 +4542,7 @@ doset() /* changing options via menu by Per Liboriussen */
                 }
 #endif
             } else if (opt_indx == OPT_OTHER_MENUCOLOR) {
-                    (void) special_handling("menucolors", setinitial,
+                    (void) special_handling("menu_colors", setinitial,
                                             fromfile);
             } else if (opt_indx == OPT_OTHER_MSGTYPE) {
                     (void) special_handling("msgtype", setinitial, fromfile);
@@ -4514,7 +4550,7 @@ doset() /* changing options via menu by Per Liboriussen */
                 /* boolean option */
                 Sprintf(buf, "%s%s", *boolopt[opt_indx].addr ? "!" : "",
                         boolopt[opt_indx].name);
-                parseoptions(buf, setinitial, fromfile);
+                (void) parseoptions(buf, setinitial, fromfile);
                 if (wc_supported(boolopt[opt_indx].name)
                     || wc2_supported(boolopt[opt_indx].name))
                     preference_update(boolopt[opt_indx].name);
@@ -4530,7 +4566,7 @@ doset() /* changing options via menu by Per Liboriussen */
                         continue;
                     Sprintf(buf, "%s:%s", compopt[opt_indx].name, buf2);
                     /* pass the buck */
-                    parseoptions(buf, setinitial, fromfile);
+                    (void) parseoptions(buf, setinitial, fromfile);
                 }
                 if (wc_supported(compopt[opt_indx].name)
                     || wc2_supported(compopt[opt_indx].name))
@@ -4688,7 +4724,8 @@ boolean setinitial, setfromfile;
         destroy_nhwindow(tmpwin);
     } else if (!strcmp("pickup_types", optname)) {
         /* parseoptions will prompt for the list of types */
-        parseoptions(strcpy(buf, "pickup_types"), setinitial, setfromfile);
+        (void) parseoptions(strcpy(buf, "pickup_types"),
+                            setinitial, setfromfile);
     } else if (!strcmp("disclose", optname)) {
         /* order of disclose_names[] must correspond to
            disclosure_options in decl.c */
@@ -5085,7 +5122,7 @@ boolean setinitial, setfromfile;
             if (pick_cnt >= 0)
                 goto msgtypes_again;
         }
-    } else if (!strcmp("menucolors", optname)) {
+    } else if (!strcmp("menu_colors", optname)) {
         int opt_idx, nmc, mcclr, mcattr;
         char mcbuf[BUFSZ] = DUMMY;
 
@@ -5093,11 +5130,15 @@ boolean setinitial, setfromfile;
         nmc = count_menucolors();
         opt_idx = handle_add_list_remove("menucolor", nmc);
         if (opt_idx == 3) { /* done */
+    menucolors_done:
+            if (nmc > 0 && !iflags.use_menu_color)
+                pline(
+    "To have menu colors become active, toggle 'menucolors' option to True.");
             return TRUE;
         } else if (opt_idx == 0) { /* add new */
             getlin("What new menucolor pattern?", mcbuf);
             if (*mcbuf == '\033')
-                return TRUE;
+                goto menucolors_done;
             if (*mcbuf
                 && test_regex_pattern(mcbuf, (const char *)0)
                 && (mcclr = query_color((char *) 0)) != -1
@@ -5411,10 +5452,10 @@ get_compopt_value(optname, buf)
 const char *optname;
 char *buf;
 {
-    char ocl[MAXOCLASSES + 1];
     static const char none[] = "(none)", randomrole[] = "random",
-                      to_be_done[] = "(to be done)", defopt[] = "default",
-                      defbrief[] = "def";
+                      to_be_done[] = "(to be done)",
+                      defopt[] = "default", defbrief[] = "def";
+    char ocl[MAXOCLASSES + 1];
     int i;
 
     buf[0] = '\0';
@@ -5569,6 +5610,25 @@ char *buf;
 #endif
     } else if (!strcmp(optname, "name")) {
         Sprintf(buf, "%s", plname);
+    } else if (!strcmp(optname, "mouse_support")) {
+#ifdef WIN32
+#define MOUSEFIX1 ", QuickEdit off"
+#define MOUSEFIX2 ", QuickEdit unchanged"
+#else
+#define MOUSEFIX1 ", O/S adjusted"
+#define MOUSEFIX2 ", O/S unchanged"
+#endif
+        static const char *mousemodes[][2] = {
+            { "0=off", "" },
+            { "1=on",  MOUSEFIX1 },
+            { "2=on",  MOUSEFIX2 },
+        };
+#undef MOUSEFIX1
+#undef MOUSEFIX2
+        int ms = iflags.wc_mouse_support;
+
+        if (ms >= 0 && ms <= 2)
+            Sprintf(buf, "%s%s", mousemodes[ms][0], mousemodes[ms][1]);
     } else if (!strcmp(optname, "number_pad")) {
         static const char *numpadmodes[] = {
             "0=off", "1=on", "2=on, MSDOS compatible",

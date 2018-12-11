@@ -1,4 +1,7 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
+/* NetHack 3.6 cursmisc.c */
+/* Copyright (c) Karl Garrison, 2010. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #include "curses.h"
 #include "hack.h"
@@ -89,9 +92,9 @@ curses_toggle_color_attr(WINDOW * win, int color, int attr, int onoff)
     }
 
     /* GUI color disabled */
-    /*  if ((!iflags.wc2_guicolor) && (win != mapwin)) {
-          return;
-    } */
+    if ((!iflags.wc2_guicolor) && (win != mapwin)) {
+        return;
+    }
 
     if (color == 0) {           /* make black fg visible */
 # ifdef USE_DARKGRAY
@@ -99,7 +102,6 @@ curses_toggle_color_attr(WINDOW * win, int color, int attr, int onoff)
             if (can_change_color() && (COLORS > 16)) {
                 /* colorpair for black is already darkgray */
             } else {            /* Use bold for a bright black */
-
                 wattron(win, A_BOLD);
             }
         } else
@@ -185,8 +187,8 @@ curses_get_wid(int type)
         ret = text_wid;
         break;
     default:
-        panic("curses_get_wid: unsupported window type");
-        ret = -1;               /* Not reached */
+        impossible("curses_get_wid: unsupported window type");
+        ret = -1;
     }
 
     while (curses_window_exists(ret)) {

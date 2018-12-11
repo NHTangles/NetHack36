@@ -1,4 +1,4 @@
-/* NetHack 3.6	mon.c	$NHDT-Date: 1539479657 2018/10/14 01:14:17 $  $NHDT-Branch: NetHack-3.6.2-beta01 $:$NHDT-Revision: 1.260 $ */
+/* NetHack 3.6	mon.c	$NHDT-Date: 1543455827 2018/11/29 01:43:47 $  $NHDT-Branch: NetHack-3.6.2-beta01 $:$NHDT-Revision: 1.272 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Derek S. Ray, 2015. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -483,13 +483,18 @@ register struct monst *mtmp;
 
     /* [what about ceiling clingers?] */
     inpool = (is_pool(mtmp->mx, mtmp->my)
-              && !(is_flyer(mtmp->data) || is_floater(mtmp->data)));
+              && (!(is_flyer(mtmp->data) || is_floater(mtmp->data))
+                  /* there's no "above the surface" on the plane of water */
+                  || Is_waterlevel(&u.uz)));
     inlava = (is_lava(mtmp->mx, mtmp->my)
               && !(is_flyer(mtmp->data) || is_floater(mtmp->data)));
     infountain = IS_FOUNTAIN(levl[mtmp->mx][mtmp->my].typ);
 
-    /* Flying and levitation keeps our steed out of the liquid */
-    /* (but not water-walking or swimming) */
+    /* Flying and levitation keeps our steed out of the liquid
+       (but not water-walking or swimming; note: if hero is in a
+       water location on the Plane of Water, flight and levitating
+       are blocked so this (Flying || Levitation) test fails there
+       and steed will be subject to water effects, as intended) */
     if (mtmp == u.usteed && (Flying || Levitation))
         return 0;
 
@@ -1618,8 +1623,9 @@ struct monst *mon;
 struct monst **monst_list; /* &migrating_mons or &mydogs or null */
 {
     struct monst *mtmp;
-    boolean unhide = (monst_list != 0);
     int mx = mon->mx, my = mon->my;
+    boolean on_map = (m_at(mx, my) == mon),
+            unhide = (monst_list != 0);
 
     if (!fmon)
         panic("relmon: no fmon available.");
@@ -1633,10 +1639,12 @@ struct monst **monst_list; /* &migrating_mons or &mydogs or null */
             seemimic(mon);
     }
 
-    if (mon->wormno)
-        remove_worm(mon);
-    else
-        remove_monster(mx, my);
+    if (on_map) {
+        if (mon->wormno)
+            remove_worm(mon);
+        else
+            remove_monster(mx, my);
+    }
 
     if (mon == fmon) {
         fmon = fmon->nmon;
@@ -1652,7 +1660,8 @@ struct monst **monst_list; /* &migrating_mons or &mydogs or null */
     }
 
     if (unhide) {
-        newsym(mx, my);
+        if (on_map)
+            newsym(mx, my);
         /* insert into mydogs or migrating_mons */
         mon->nmon = *monst_list;
         *monst_list = mon;
@@ -2529,7 +2538,7 @@ struct monst *mtmp;
 {
     unstuck(mtmp);
     mdrop_special_objs(mtmp);
-    migrate_to_level(mtmp, ledger_no(&u.uz), MIGR_APPROX_XY, NULL);
+    migrate_to_level(mtmp, ledger_no(&u.uz), MIGR_APPROX_XY, (coord *) 0);
 }
 
 /* make monster mtmp next to you (if possible);
@@ -2837,40 +2846,34 @@ boolean via_attack;
 void
 wake_nearby()
 {
-    register struct monst *mtmp;
-
-    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
-        if (DEADMONSTER(mtmp))
-            continue;
-        if (distu(mtmp->mx, mtmp->my) < u.ulevel * 20) {
-            mtmp->msleeping = 0;
-            if (!unique_corpstat(mtmp->data))
-                mtmp->mstrategy &= ~STRAT_WAITMASK;
-            if (mtmp->mtame) {
-                if (!mtmp->isminion)
-                    EDOG(mtmp)->whistletime = moves;
-                /* Clear mtrack. This is to fix up a pet who is
-                   stuck "fleeing" its master. */
-                memset(mtmp->mtrack, 0, sizeof(mtmp->mtrack));
-            }
-        }
-    }
+    wake_nearto(u.ux, u.uy, u.ulevel * 20);
 }
 
 /* Wake up monsters near some particular location. */
 void
 wake_nearto(x, y, distance)
-register int x, y, distance;
+int x, y, distance;
 {
-    register struct monst *mtmp;
+    struct monst *mtmp;
 
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp))
             continue;
         if (distance == 0 || dist2(mtmp->mx, mtmp->my, x, y) < distance) {
-            mtmp->msleeping = 0;
-            if (!unique_corpstat(mtmp->data))
-                mtmp->mstrategy &= ~STRAT_WAITMASK;
+            /* sleep for N turns uses mtmp->mfrozen, but so does paralysis
+               so we leave mfrozen monsters alone */
+            mtmp->msleeping = 0; /* wake indeterminate sleep */
+            if (!(mtmp->data->geno & G_UNIQ))
+                mtmp->mstrategy &= ~STRAT_WAITMASK; /* wake 'meditation' */
+            if (context.mon_moving)
+                continue;
+            if (mtmp->mtame) {
+                if (!mtmp->isminion)
+                    EDOG(mtmp)->whistletime = moves;
+                /* Clear mtrack. This is to fix up a pet who is
+                   stuck "fleeing" its master. */
+                memset(mtmp->mtrack, 0, sizeof mtmp->mtrack);
+            }
         }
     }
 }
