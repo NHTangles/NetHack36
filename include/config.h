@@ -473,7 +473,7 @@ typedef unsigned char uchar;
  *  FALSE: Show all errors as normal, with line numbers and context.
  */
 #ifndef CONFIG_ERROR_SECURE
-# define CONFIG_ERROR_SECURE FALSE
+# define CONFIG_ERROR_SECURE TRUE
 #endif
 
 /*
