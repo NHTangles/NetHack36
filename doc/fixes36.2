@@ -268,6 +268,9 @@ if levitating hero poly'd into pass-wall creature jumped or teleported from
 	blocking of levitation wasn't updated properly
 clairvoyance revealing underwater or under-lava objects left object displayed
 	instead of restoring the water or lava
+make it easier to clear 'pickup_types' (menustyles Traditional and Combination
+	could do so by setting it to 'a'; now ' ' works too; Full and Partial
+	allowed unselecting every object class; now 'all classes' is a choice)
 
 
 Fixes to Post-3.6.1 Problems that Were Exposed Via git Repository
@@ -293,6 +296,9 @@ changing Sting's description to be "(weapon in hand) (light blue aura)" was
 fix bit-use collision between WC2_TERM_SIZE and WC2_RESET_STATUS in
 	include/winprocs.h following a recent merge
 fix foxen pluralization again after underflow remedy reintroduced the problem
+fix "placing monster over another?" warning for vault guards
+status highlighting classified gold, time, and experience-points as data type
+	'long' but when selecting hilite rule to use treated them as 'int'
 tty: turn off an optimization that is the suspected cause of Windows reported 
 	partial status lines following level changes
 tty: ensure that current status fields are always copied to prior status
@@ -348,6 +354,8 @@ tty: significant optimizations for performance and per field rendering
 tty: use WC2_FLUSH_STATUS to buffer changes until BL_FLUSH is received
 tty: support BL_RESET in status_update to force an update to all status fields
 tty: stop hitpointbar from jumping to 100% health at zero hit points
+tty: try harder to prevent a disconnected terminal (SIGHUP) from running amok
+	and using up all available CPU time
 MacOSX: add curses window port
 MacOSX: add Xcode project to sys/unixNetHack.xcodeproj
 MacOSX: add Xcode supporting files README.xcode and XCode.xcconfig
@@ -405,6 +413,7 @@ for ^X and enlightenment, display the information in a menu rather than a
 	'<' (menu_previous_page) and '^' (menu_first_page) menu keys;
 	needed for interfaces (tty) without text popup scrollbar support;
 	end of game disclosure of attributes remains single-forward-pass
+for ^X, include current state of 'autopickup'
 
 
 NetHack Community Patches (or Variation) Included
