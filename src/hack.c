@@ -1,4 +1,4 @@
-/* NetHack 3.6	hack.c	$NHDT-Date: 1546656413 2019/01/05 02:46:53 $  $NHDT-Branch: NetHack-3.6.2-beta01 $:$NHDT-Revision: 1.203 $ */
+/* NetHack 3.6	hack.c	$NHDT-Date: 1549231692 2019/02/03 22:08:12 $  $NHDT-Branch: NetHack-3.6.2-beta01 $:$NHDT-Revision: 1.207 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Derek S. Ray, 2015. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -1477,7 +1477,7 @@ domove_core()
             if (context.run >= 2) {
                 if (iflags.mention_walls) {
                     if (trap && trap->tseen) {
-                        int tt = what_trap(trap->ttyp);
+                        int tt = what_trap(trap->ttyp, rn2_on_display_rng);
 
                         You("stop in front of %s.",
                             an(defsyms[trap_to_defsym(tt)].explanation));
@@ -2281,9 +2281,9 @@ register int typewanted;
     int typefound, min_x, min_y, max_x, max_y_offset, step;
     register struct rm *lev;
 
-#define goodtype(rno)   \
-    (!typewanted                                                    \
-     || (typefound = rooms[rno - ROOMOFFSET].rtype) == typewanted   \
+#define goodtype(rno) \
+    (!typewanted                                                   \
+     || (typefound = rooms[rno - ROOMOFFSET].rtype) == typewanted  \
      || (typewanted == SHOPBASE && typefound > SHOPBASE))
 
     switch (rno = levl[x][y].roomno) {
@@ -2721,7 +2721,7 @@ lookaround()
                     goto bcorr; /* if you must */
                 if (x == u.ux + u.dx && y == u.uy + u.dy) {
                     if (iflags.mention_walls) {
-                        int tt = what_trap(trap->ttyp);
+                        int tt = what_trap(trap->ttyp, rn2_on_display_rng);
                         You("stop in front of %s.",
                             an(defsyms[trap_to_defsym(tt)].explanation));
                     }
