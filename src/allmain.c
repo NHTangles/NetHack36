@@ -1,4 +1,4 @@
-/* NetHack 3.6	allmain.c	$NHDT-Date: 1539804859 2018/10/17 19:34:19 $  $NHDT-Branch: keni-makedefsm $:$NHDT-Revision: 1.89 $ */
+/* NetHack 3.6	allmain.c	$NHDT-Date: 1553363414 2019/03/23 17:50:14 $  $NHDT-Branch: NetHack-3.6.2-beta01 $:$NHDT-Revision: 1.95 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Robert Patrick Rankin, 2012. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -190,7 +190,7 @@ boolean resuming;
                     if (u.ublesscnt)
                         u.ublesscnt--;
                     if (flags.time && !context.run)
-                        context.botl = 1;
+                        context.botl = TRUE;
 #ifdef EXTRAINFO_FN
                     if ((prev_dgl_extrainfo == 0) || (prev_dgl_extrainfo < (moves + 250))) {
                         prev_dgl_extrainfo = moves;
@@ -240,7 +240,7 @@ boolean resuming;
                             (int) (ACURR(A_WIS) + ACURR(A_INT)) / 15 + 1, 1);
                         if (u.uen > u.uenmax)
                             u.uen = u.uenmax;
-                        context.botl = 1;
+                        context.botl = TRUE;
                         if (u.uen == u.uenmax)
                             interrupt_multi("You feel full of energy.");
                     }
@@ -419,7 +419,7 @@ boolean resuming;
                 /* lookaround may clear multi */
                 context.move = 0;
                 if (flags.time)
-                    context.botl = 1;
+                    context.botl = TRUE;
                 continue;
             }
             if (context.mv) {
@@ -441,7 +441,7 @@ boolean resuming;
             deferred_goto(); /* after rhack() */
         /* !context.move here: multiple movement command stopped */
         else if (flags.time && (!context.move || !context.mv))
-            context.botl = 1;
+            context.botl = TRUE;
 
         if (vision_full_recalc)
             vision_recalc(0); /* vision! */
@@ -449,7 +449,8 @@ boolean resuming;
         if ((!context.run || flags.runmode == RUN_TPORT)
             && (multi && (!context.travel ? !(multi % 7) : !(moves % 7L)))) {
             if (flags.time && context.run)
-                context.botl = 1;
+                context.botl = TRUE;
+            /* [should this be flush_screen() instead?] */
             display_nhwindow(WIN_MAP, FALSE);
         }
     }
@@ -479,7 +480,7 @@ int wtcap;
                 heal = 1;
         }
         if (heal) {
-            context.botl = 1;
+            context.botl = TRUE;
             u.mh += heal;
             reached_full = (u.mh == u.mhmax);
         }
@@ -511,7 +512,7 @@ int wtcap;
                 heal = 1;
 
             if (heal) {
-                context.botl = 1;
+                context.botl = TRUE;
                 u.uhp += heal;
                 if (u.uhp > u.uhpmax)
                     u.uhp = u.uhpmax;
@@ -532,7 +533,7 @@ stop_occupation()
         if (!maybe_finished_meal(TRUE))
             You("stop %s.", occtxt);
         occupation = 0;
-        context.botl = 1; /* in case u.uhs changed */
+        context.botl = TRUE; /* in case u.uhs changed */
         nomul(0);
         pushch(0);
     } else if (multi >= 0) {
@@ -585,7 +586,7 @@ newgame()
     gameDiskPrompt();
 #endif
 
-    context.botlx = 1;
+    context.botlx = TRUE;
     context.ident = 1;
     context.stethoscope_move = -1L;
     context.warnlevel = 1;
