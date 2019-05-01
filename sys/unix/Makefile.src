@@ -202,7 +202,7 @@ REGEXOBJ = posixregex.o
 # files for a straight tty port using no native windowing system
 WINTTYSRC = ../win/tty/getline.c ../win/tty/termcap.c ../win/tty/topl.c \
 	../win/tty/wintty.c
-WINTTYOBJ = getline.o termcap.o topl.o wintty.o tile.o
+WINTTYOBJ = getline.o termcap.o topl.o wintty.o
 # Files for curses interface
 WINCURSESSRC = ../win/curses/cursmain.c ../win/curses/curswins.c \
 	../win/curses/cursmisc.c ../win/curses/cursdial.c \
