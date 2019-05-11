@@ -82,7 +82,7 @@
 #define BEOS_GRAPHICS             /* (optional) */
 #define DEFAULT_WINDOW_SYS "BeOS" /* "tty" */
 #ifndef HACKDIR                   /* override the default hackdir below */
-#define HACKDIR "/nh361-hdf"
+#define HACKDIR "/boot/apps/NetHack"
 #endif
 #endif
 
@@ -363,7 +363,7 @@
  * otherwise it will be the current directory.
  */
 #ifndef HACKDIR
-#define HACKDIR "/nh361-hdf"
+#define HACKDIR "/usr/games/lib/nethackdir"
 #endif
 
 /*

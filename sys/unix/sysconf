@@ -122,7 +122,7 @@ LLC_TURNS=3000
 #   %D current time, YYYYMMDDhhmmss format
 #   %n player name
 #   %N first character of player name
-DUMPLOGFILE=/dgldir/userdata/%N/%n/nh361/dumplog/%t.nh361.txt
+DUMPLOGFILE=/dgldir/userdata/%N/%n/nethack/dumplog/%t.nh.txt
 
 # Number of bones file pools.
 # The pool you belong to is determined at game start. You will
