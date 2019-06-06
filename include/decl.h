@@ -436,6 +436,7 @@ struct plinemsg_type {
 
 E struct plinemsg_type *plinemsg_types;
 
+enum bcargs {override_restriction = -1};
 struct breadcrumbs {
     const char *funcnm;
     int linenum;
