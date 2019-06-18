@@ -61,7 +61,7 @@ extern void *FDECL(trace_procs_chain, (int, int, void *, void *, void *));
 STATIC_DCL void FDECL(def_raw_print, (const char *s));
 STATIC_DCL void NDECL(def_wait_synch);
 
-#ifdef DUMPLOG
+#if defined(DUMPLOG) || defined(DUMPHTML)
 STATIC_DCL winid FDECL(dump_create_nhwindow, (int));
 STATIC_DCL void FDECL(dump_clear_nhwindow, (winid));
 STATIC_DCL void FDECL(dump_display_nhwindow, (winid, BOOLEAN_P));
@@ -1087,8 +1087,9 @@ unsigned long *colormasks UNUSED;
 
 STATIC_VAR struct window_procs dumplog_windowprocs_backup;
 STATIC_VAR FILE *dumplog_file;
+STATIC_VAR FILE *dumphtml_file;
 
-#ifdef DUMPLOG
+#if defined(DUMPLOG) || defined(DUMPHTML)
 STATIC_VAR time_t dumplog_now;
 
 STATIC_DCL char *FDECL(dump_fmtstr, (const char *, char *));
@@ -1175,30 +1176,41 @@ char *buf;
     *bp = '\0';
     return buf;
 }
-#endif /* DUMPLOG */
+#endif /* DUMPLOG || DUMPHTML */
 
 void
 dump_open_log(now)
 time_t now;
 {
-#ifdef DUMPLOG
+#if defined(DUMPLOG) || defined(DUMPHTML)
     char buf[BUFSZ];
-    char *fname;
+    char *fname = (char *)0;
 
     dumplog_now = now;
 #ifdef SYSCF
-    if (!sysopt.dumplogfile)
-        return;
+#ifdef DUMPLOG
     fname = dump_fmtstr(sysopt.dumplogfile, buf);
-#else
-    fname = dump_fmtstr(DUMPLOG_FILE, buf);
+    if(fname) dumplog_file = fopen(fname, "w");
 #endif
-    dumplog_file = fopen(fname, "w");
-    dumplog_windowprocs_backup = windowprocs;
-
-#else /*!DUMPLOG*/
+#ifdef DUMPHTML
+    fname = dump_fmtstr(sysopt.dumphtmlfile, buf);
+    if(fname) dumphtml_file = fopen(fname, "w");
+#endif
+#else /* !SYSCF */
+#ifdef DUMPLOG
+    fname = dump_fmtstr(DUMPLOG_FILE, buf);
+    if(fname) dumplog_file = fopen(fname, "w");
+#endif
+#ifdef DUMPHTML
+    fname = dump_fmtstr(DUMPHTML_FILE, buf);
+    if(fname) dumphtml_file = fopen(fname, "w");
+#endif
+#endif /* SYSCF */
+    if (dumplog_file || dumphtml_file) 
+        dumplog_windowprocs_backup = windowprocs;
+#else /*!DUMPLOG/HTML*/
     nhUse(now);
-#endif /*?DUMPLOG*/
+#endif /*?DUMPLOG/HTML*/
 }
 
 void
@@ -1207,6 +1219,10 @@ dump_close_log()
     if (dumplog_file) {
         (void) fclose(dumplog_file);
         dumplog_file = (FILE *) 0;
+    }
+    if (dumphtml_file) {
+        (void) fclose(dumphtml_file);
+        dumphtml_file = (FILE *) 0;
     }
 }
 
@@ -1219,6 +1235,8 @@ int no_forward;
 {
     if (dumplog_file)
         fprintf(dumplog_file, "%s\n", str);
+    if (dumphtml_file)
+        fprintf(dumphtml_file, "%s\n", str); /* TODO: HTML */
     if (!no_forward)
         putstr(win, attr, str);
 }
@@ -1232,6 +1250,8 @@ const char *str;
 {
     if (dumplog_file)
         fprintf(dumplog_file, "%s\n", str);
+    if (dumphtml_file)
+        fprintf(dumphtml_file, "%s\n", str);  /* TODO: HTML */
 }
 
 STATIC_OVL winid
@@ -1292,6 +1312,7 @@ boolean preselected UNUSED;
         else
             fprintf(dumplog_file, "  %c - %s\n", ch, str);
     }
+    /* TODO: HTML */
 }
 
 /*ARGSUSED*/
@@ -1306,6 +1327,7 @@ const char *str;
         else
             fputs("\n", dumplog_file);
     }
+    /* TODO: HTML */
 }
 
 STATIC_OVL int
@@ -1322,7 +1344,7 @@ void
 dump_redirect(onoff_flag)
 boolean onoff_flag;
 {
-    if (dumplog_file) {
+    if (dumplog_file || dumphtml_file) {
         if (onoff_flag) {
             windowprocs.win_create_nhwindow = dump_create_nhwindow;
             windowprocs.win_clear_nhwindow = dump_clear_nhwindow;

@@ -59,7 +59,7 @@ STATIC_DCL int NDECL(set_vanq_order);
 STATIC_DCL void FDECL(list_vanquished, (CHAR_P, BOOLEAN_P));
 STATIC_DCL void FDECL(list_genocided, (CHAR_P, BOOLEAN_P));
 STATIC_DCL boolean FDECL(should_query_disclose_option, (int, char *));
-#ifdef DUMPLOG
+#if defined(DUMPLOG) || defined(DUMPHTML)
 STATIC_DCL void NDECL(dump_plines);
 #endif
 STATIC_DCL void FDECL(dump_everything, (int, time_t));
@@ -689,7 +689,7 @@ char *defquery;
     return TRUE;
 }
 
-#ifdef DUMPLOG
+#if defined(DUMPLOG) || defined(DUMPHTML)
 STATIC_OVL void
 dump_plines()
 {
@@ -720,7 +720,7 @@ dump_everything(how, when)
 int how;
 time_t when; /* date+time at end of game */
 {
-#ifdef DUMPLOG
+#if defined(DUMPLOG) || defined(DUMPHTML)
     char pbuf[BUFSZ], datetimebuf[24]; /* [24]: room for 64-bit bogus value */
 
     dump_redirect(TRUE);
@@ -1438,7 +1438,7 @@ int how;
     } else
         done_stopprint = 1; /* just avoid any more output */
 
-#ifdef DUMPLOG
+#if defined(DUMPLOG) || defined(DUMPHTML)
     /* 'how' reasons beyond genocide shouldn't show tombstone;
        for normal end of game, genocide doesn't either */
     if (how <= GENOCIDED) {
@@ -1523,7 +1523,7 @@ int how;
 
         if (!done_stopprint)
             artifact_score(invent, FALSE, endwin); /* list artifacts */
-#ifdef DUMPLOG
+#if defined(DUMPLOG) || defined(DUMPHTML)
         dump_redirect(TRUE);
         if (iflags.in_dumplog)
             artifact_score(invent, FALSE, 0);
@@ -1994,7 +1994,7 @@ boolean ask;
     } else if (defquery == 'a') {
         /* #dovanquished rather than final disclosure, so pline() is ok */
         pline("No creatures have been vanquished.");
-#ifdef DUMPLOG
+#if defined(DUMPLOG) || defined(DUMPHTML)
     } else if (dumping) {
         putstr(0, 0, "No creatures were vanquished."); /* not pline() */
 #endif
@@ -2101,7 +2101,7 @@ boolean ask;
             display_nhwindow(klwin, TRUE);
             destroy_nhwindow(klwin);
         }
-#ifdef DUMPLOG
+#if defined (DUMPLOG) || defined (DUMPHTML)
     } else if (dumping) {
         putstr(0, 0, "No species were genocided or became extinct.");
 #endif

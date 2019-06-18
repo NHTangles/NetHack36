@@ -5894,7 +5894,7 @@ const char *query, *resp;
 char def;
 {
     char res, qbuf[QBUFSZ];
-#ifdef DUMPLOG
+#if defined(DUMPLOG) || defined(DUMPHTML)
     extern unsigned saved_pline_index; /* pline.c */
     unsigned idx = saved_pline_index;
     /* buffer to hold query+space+formatted_single_char_response */
@@ -5912,7 +5912,7 @@ char def;
         query = qbuf;
     }
     res = (*windowprocs.win_yn_function)(query, resp, def);
-#ifdef DUMPLOG
+#if defined(DUMPLOG) || defined(DUMPHTML)
     if (idx == saved_pline_index) {
         /* when idx is still the same as saved_pline_index, the interface
            didn't put the prompt into saved_plines[]; we put a simplified

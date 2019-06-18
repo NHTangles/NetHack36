@@ -1886,7 +1886,7 @@ int default_glyph, which_subset;
     return glyph;
 }
 
-#ifdef DUMPLOG
+#if defined(DUMPLOG) || defined(DUMPHTML)
 void
 dump_map()
 {
@@ -1939,7 +1939,7 @@ dump_map()
     if (skippedrows)
         putstr(0, 0, "");
 }
-#endif /* DUMPLOG */
+#endif /* DUMPLOG || DUMPHTML */
 
 /* idea from crawl; show known portion of map without any monsters,
    objects, or traps occluding the view of the underlying terrain */
