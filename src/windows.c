@@ -72,6 +72,10 @@ STATIC_DCL void FDECL(dump_add_menu, (winid, int, const ANY_P *, CHAR_P,
 STATIC_DCL void FDECL(dump_end_menu, (winid, const char *));
 STATIC_DCL int FDECL(dump_select_menu, (winid, int, MENU_ITEM_P **));
 STATIC_DCL void FDECL(dump_putstr, (winid, int, const char *));
+STATIC_DCL void NDECL(dump_headers);
+STATIC_DCL void NDECL(dump_footers);
+STATIC_DCL void NDECL(dump_css);
+
 #endif /* DUMPLOG */
 
 #ifdef HANGUPHANDLING
@@ -1180,7 +1184,7 @@ char *buf;
 }
 #endif /* DUMPLOG || DUMPHTML */
 
-static const char *html_heading_tags[][2] = { {"<h2>", "</h2>"}, {"<h3>", "</h3>"}, {"", ""} };
+static const char *html_heading_tags[][2] = { {"<h2>", "</h2>"}, {"<h3>", "</h3>"}, {"", "<br />"} };
 
 STATIC_OVL const char **
 html_attr_tags(attr)
@@ -1234,7 +1238,7 @@ const char *str;
     fprintf(fp, "%s", tags[0]);
     html_dump_str(fp, str);
     fprintf(fp, "%s", tags[1]);
-    html_dump_str(fp, "\n");
+    //html_dump_str(fp, "\n");
 }
 
 void
@@ -1269,6 +1273,7 @@ time_t now;
         dumplog_windowprocs_backup = windowprocs;
         menu_headings_backup = iflags.menu_headings;
     }
+    dump_headers();
 #else /*!DUMPLOG/HTML*/
     nhUse(now);
 #endif /*?DUMPLOG/HTML*/
@@ -1277,6 +1282,7 @@ time_t now;
 void
 dump_close_log()
 {
+    dump_footers();
     if (dumplog_file) {
         (void) fclose(dumplog_file);
         dumplog_file = (FILE *) 0;
@@ -1285,6 +1291,66 @@ dump_close_log()
         (void) fclose(dumphtml_file);
         dumphtml_file = (FILE *) 0;
     }
+}
+
+STATIC_OVL void
+dump_headers()
+{
+#ifdef DUMPHTML
+    /* TODO: make portable routine for getting iso8601 datetime */ 
+    struct tm *t;
+    char iso8601[32];
+    char vers[16]; /* buffer for short version string */
+    
+    if (!dumphtml_file) return;
+ 
+    fprintf(dumphtml_file, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
+    fprintf(dumphtml_file, "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n");
+    fprintf(dumphtml_file, "<head>\n");
+    fprintf(dumphtml_file, "<title>NetHack %s</title>\n",  version_string(vers)); 
+    fprintf(dumphtml_file, "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\" />\n");
+    fprintf(dumphtml_file, "<meta name=\"generator\" content=\"NetHack %s \" />\n", vers);
+
+    /* TODO: make portable routine for getting iso8601 datetime */ 
+    t = localtime(&dumplog_now); 
+    strftime(iso8601, 32, "%Y-%m-%dT%H:%M:%S%z", t);
+    fprintf(dumphtml_file,"<meta name=\"date\" content=\"%s\" />\n", iso8601);
+    /* non-embedded CSS is not currently supported */
+    fprintf(dumphtml_file, "<style type=\"text/css\">\n");
+    /* copy css file in-line here */
+    dump_css();
+    fprintf(dumphtml_file, "</style>\n</head>\n<body>\n");
+
+#endif
+}
+
+STATIC_OVL void
+dump_footers()
+{
+#ifdef DUMPHTML
+    if (dumphtml_file) {
+        fprintf(dumphtml_file, "</body>\n</html>\n");
+    }
+#endif
+}
+
+STATIC_OVL void
+dump_css()
+{
+    int c = 0;
+    FILE *css;
+    if (!dumphtml_file) return;
+    /* TODO: Make CSS filename definable in sysconf */
+    css = fopen_datafile("NetHack-dump.css", "r", DATAPREFIX);
+    if (!css) {
+        pline("Can't open css file for input.");
+        pline("CSS file not included.");
+        return;
+    }
+    while ((c=fgetc(css))!=EOF) {
+        fputc(c, dumphtml_file);
+    }
+    fclose(css);
 }
 
 void
