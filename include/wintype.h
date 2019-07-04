@@ -84,6 +84,10 @@ typedef struct mi {
    can be masked with one regular display attribute */
 #define ATR_URGENT    16
 #define ATR_NOHISTORY 32
+/* Style-attributes - windowports can render these as they see fit,
+   or ignore them */
+#define ATR_HEADING   64 /* rendered as <h2> in HTML dump */
+#define ATR_SUBHEAD  128 /* rendered as <h3> in HTML dump */
 
 /* nh_poskey() modifier types */
 #define CLICK_1 1

@@ -2947,7 +2947,7 @@ boolean printdun;
             Sprintf(buf, "%s: levels %d to %d",
                     dungeons[dnum].dname, depthstart,
                     depthstart + dungeons[dnum].dunlev_ureached - 1);
-        putstr(win, !final ? ATR_INVERSE : 0, buf);
+        putstr(win, !final ? ATR_INVERSE : ATR_SUBHEAD, buf);
     }
 
     /* calculate level number */

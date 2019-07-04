@@ -699,7 +699,7 @@ dump_plines()
     extern unsigned saved_pline_index;
 
     Strcpy(buf, " "); /* one space for indentation */
-    putstr(0, 0, "Latest messages:");
+    putstr(0, ATR_HEADING, "Latest messages:");
     for (i = 0, j = (int) saved_pline_index; i < DUMPLOG_MSG_COUNT;
          ++i, j = (j + 1) % DUMPLOG_MSG_COUNT) {
         strp = &saved_plines[j];
@@ -733,7 +733,7 @@ time_t when; /* date+time at end of game */
        it's conceivable that the game started with a different
        build date+time or even with an older nethack version,
        but we only have access to the one it finished under */
-    putstr(0, 0, getversionstring(pbuf));
+    putstr(0, ATR_SUBHEAD, getversionstring(pbuf));
     putstr(0, 0, "");
 
     /* game start and end date+time to disambiguate version date+time */
@@ -745,7 +745,7 @@ time_t when; /* date+time at end of game */
     Sprintf(eos(pbuf), ", ended %4.4s-%2.2s-%2.2s %2.2s:%2.2s:%2.2s.",
             &datetimebuf[0], &datetimebuf[4], &datetimebuf[6],
             &datetimebuf[8], &datetimebuf[10], &datetimebuf[12]);
-    putstr(0, 0, pbuf);
+    putstr(0, ATR_SUBHEAD, pbuf);
     putstr(0, 0, "");
 
     /* character name and basic role info */
@@ -754,17 +754,19 @@ time_t when; /* date+time at end of game */
             genders[flags.female].adj,
             urace.adj,
             (flags.female && urole.name.f) ? urole.name.f : urole.name.m);
-    putstr(0, 0, pbuf);
+    putstr(0, ATR_SUBHEAD, pbuf);
     putstr(0, 0, "");
 
+    /* TODO: html_dump_map() */
     dump_map();
+    /* TODO: Make update status routines for dumplog windowport */
     putstr(0, 0, do_statusline1());
     putstr(0, 0, do_statusline2());
     putstr(0, 0, "");
 
     dump_plines();
     putstr(0, 0, "");
-    putstr(0, 0, "Inventory:");
+    putstr(0, ATR_HEADING, "Inventory:");
     (void) display_inventory((char *) 0, TRUE);
     container_contents(invent, TRUE, TRUE, FALSE);
     enlightenment((BASICENLIGHTENMENT | MAGICENLIGHTENMENT),
@@ -1644,7 +1646,7 @@ boolean identified, all_containers, reportempty;
                 cat = SchroedingersBox(box);
 
                 Sprintf(buf, "Contents of %s:", the(xname(box)));
-                putstr(tmpwin, 0, buf);
+                putstr(tmpwin, ATR_SUBHEAD, buf);
                 if (!dumping)
                     putstr(tmpwin, 0, "");
                 buf[0] = buf[1] = ' '; /* two leading spaces */
@@ -1922,7 +1924,7 @@ boolean ask;
                             || vanq_sortmode == VANQ_MCLS_HTOL);
 
             klwin = create_nhwindow(NHW_MENU);
-            putstr(klwin, 0, "Vanquished creatures:");
+            putstr(klwin, ATR_HEADING, "Vanquished creatures:");
             if (!dumping)
                 putstr(klwin, 0, "");
 
@@ -2065,7 +2067,7 @@ boolean ask;
             Sprintf(buf, "%s%s species:",
                     (ngenocided) ? "Genocided" : "Extinct",
                     (nextinct && ngenocided) ? " or extinct" : "");
-            putstr(klwin, 0, buf);
+            putstr(klwin, ATR_SUBHEAD, buf);
             if (!dumping)
                 putstr(klwin, 0, "");
 

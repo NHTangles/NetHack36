@@ -1086,6 +1086,8 @@ unsigned long *colormasks UNUSED;
 }
 
 STATIC_VAR struct window_procs dumplog_windowprocs_backup;
+STATIC_VAR int menu_headings_backup;
+
 STATIC_VAR FILE *dumplog_file;
 STATIC_VAR FILE *dumphtml_file;
 
@@ -1178,6 +1180,63 @@ char *buf;
 }
 #endif /* DUMPLOG || DUMPHTML */
 
+static const char *html_heading_tags[][2] = { {"<h2>", "</h2>"}, {"<h3>", "</h3>"}, {"", ""} };
+
+STATIC_OVL const char **
+html_attr_tags(attr)
+int attr;
+{
+    return html_heading_tags [(attr & ATR_HEADING) ? 0 : ((attr & ATR_SUBHEAD) ? 1 : 2)];
+}
+
+
+
+/** Write HTML-escaped string to a file */
+STATIC_OVL void
+html_dump_str(fp, str)
+FILE *fp;
+const char *str;
+{
+    const char *c;
+    if (!fp) return;
+    for (c = str; *c; c++)
+        switch (*c) {
+            case '<':
+                fprintf(fp, "&lt;");
+                break;
+            case '>':
+                fprintf(fp, "&gt;");
+                break;
+            case '&':
+                fprintf(fp, "&amp;");
+                break;
+            case '\"':
+                fprintf(fp, "&quot;");
+                break;
+            case '\'':
+                fprintf(fp, "&#39;");
+                break;
+            case '\n':
+                fprintf(fp, "<br />\n");
+                break;
+            default:
+                fprintf(fp, "%c", *c);
+        }
+}
+
+STATIC_OVL void
+html_dump_line(fp, attr, str)
+FILE *fp;
+int attr;
+const char *str;
+{
+    const char **tags = html_attr_tags(attr);
+    fprintf(fp, "%s", tags[0]);
+    html_dump_str(fp, str);
+    fprintf(fp, "%s", tags[1]);
+    html_dump_str(fp, "\n");
+}
+
 void
 dump_open_log(now)
 time_t now;
@@ -1206,8 +1265,10 @@ time_t now;
     if(fname) dumphtml_file = fopen(fname, "w");
 #endif
 #endif /* SYSCF */
-    if (dumplog_file || dumphtml_file) 
+    if (dumplog_file || dumphtml_file) {
         dumplog_windowprocs_backup = windowprocs;
+        menu_headings_backup = iflags.menu_headings;
+    }
 #else /*!DUMPLOG/HTML*/
     nhUse(now);
 #endif /*?DUMPLOG/HTML*/
@@ -1236,7 +1297,7 @@ int no_forward;
     if (dumplog_file)
         fprintf(dumplog_file, "%s\n", str);
     if (dumphtml_file)
-        fprintf(dumphtml_file, "%s\n", str); /* TODO: HTML */
+        html_dump_line(dumphtml_file, attr, str);
     if (!no_forward)
         putstr(win, attr, str);
 }
@@ -1245,13 +1306,13 @@ int no_forward;
 STATIC_OVL void
 dump_putstr(win, attr, str)
 winid win UNUSED;
-int attr UNUSED;
+int attr;
 const char *str;
 {
     if (dumplog_file)
         fprintf(dumplog_file, "%s\n", str);
     if (dumphtml_file)
-        fprintf(dumphtml_file, "%s\n", str);  /* TODO: HTML */
+        html_dump_line(dumphtml_file, attr, str);
 }
 
 STATIC_OVL winid
@@ -1302,7 +1363,7 @@ int glyph;
 const anything *identifier UNUSED;
 char ch;
 char gch UNUSED;
-int attr UNUSED;
+int attr;
 const char *str;
 boolean preselected UNUSED;
 {
@@ -1312,7 +1373,23 @@ boolean preselected UNUSED;
         else
             fprintf(dumplog_file, "  %c - %s\n", ch, str);
     }
-    /* TODO: HTML */
+
+    if (dumphtml_file) {
+        //char *link = html_link(dump_typename(obj->otyp), str); // TODO - somehow use object selection to poke links in here
+        int color;
+        boolean iscolor = FALSE;
+        const char **tags = html_attr_tags(attr);
+        fprintf(dumphtml_file, "%s", tags[0]);
+        if (iflags.use_menu_color && get_menu_coloring(str, &color, &attr)) {
+            iscolor = TRUE;
+            fprintf(dumphtml_file, "<span class=\"nh_color_%d\">", color);
+        }
+        if (glyph != NO_GLYPH) {
+            fprintf(dumphtml_file, "<span class=\"nh_item_letter\">%c</span> - ", ch);
+        }
+        html_dump_str(dumphtml_file, str);
+        fprintf(dumphtml_file, "%s%s<br />\n", iscolor ? "</span>" : "", tags[1]);
+    }
 }
 
 /*ARGSUSED*/
@@ -1327,7 +1404,8 @@ const char *str;
         else
             fputs("\n", dumplog_file);
     }
-    /* TODO: HTML */
+    if (dumphtml_file)
+        html_dump_line(dumphtml_file, 0, str ? str : "");
 }
 
 STATIC_OVL int
@@ -1355,8 +1433,10 @@ boolean onoff_flag;
             windowprocs.win_end_menu = dump_end_menu;
             windowprocs.win_select_menu = dump_select_menu;
             windowprocs.win_putstr = dump_putstr;
+            iflags.menu_headings |= ATR_SUBHEAD;
         } else {
             windowprocs = dumplog_windowprocs_backup;
+            iflags.menu_headings = menu_headings_backup;
         }
         iflags.in_dumplog = onoff_flag;
     } else {
