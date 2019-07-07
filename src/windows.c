@@ -1184,13 +1184,46 @@ char *buf;
 }
 #endif /* DUMPLOG || DUMPHTML */
 
-static const char *html_heading_tags[][2] = { {"<h2>", "</h2>"}, {"<h3>", "</h3>"}, {"", "<br />"} };
+#ifdef DUMPHTML
+/* If we're using the NHW_MENU window,
+ * try to make a bullet-list of the contents.
+ * note the inventory code uses the add_menu codepath
+ * and is not processed here. This is for container contents,
+ * dungeon overciew, conduct, etc
+ * When we get a heading or subheading we close any existing list with </ul>,
+ * Then print the heading.
+ * For non-headings, we start a list if we don't already have one with <ul>
+ * then delimit the item with <li></li>
+ */
+static const char *html_heading_tags[][2] = {
+    {"</ul>\n<h2>", "</h2>"}, /* Heading */
+    {"</ul>\n<h3>", "</h3>"}, /* Subheading */
+    {"<ul>\n<li>", "</li>"}, /* item in list */
+    {"", "<br />"}  /* Regular line with break */
+};
+static boolean in_list = FALSE;
 
 STATIC_OVL const char **
-html_attr_tags(attr)
+html_attr_tags(win, attr)
 int attr;
 {
-    return html_heading_tags [(attr & ATR_HEADING) ? 0 : ((attr & ATR_SUBHEAD) ? 1 : 2)];
+    const char **tagref;
+    static const char *tags[2]; /* returning a static array is gross but convenient here */
+    if (attr & (ATR_HEADING | ATR_SUBHEAD)) {
+        tagref = html_heading_tags [(attr & ATR_HEADING) ? 0 : 1 ];
+        tags[0] = tagref[0], tags[1] = tagref[1];
+        if (!in_list) tags[0] += strlen("</ul>"); /* move pointer so </ul> is NOT included */
+        in_list = FALSE;
+        return tags;
+    }
+    if (win == NHW_MENU) {
+        tagref = html_heading_tags[2];
+        tags[0] = tagref[0], tags[1] = tagref[1];
+        if (in_list) tags[0] += strlen("<ul>"); /* move pointer so <ul> is NOT included */
+        in_list = TRUE;
+        return tags;
+    }
+    return html_heading_tags[3];
 }
 
 
@@ -1229,17 +1262,26 @@ const char *str;
 }
 
 STATIC_OVL void
-html_dump_line(fp, attr, str)
+html_dump_line(fp, win, attr, str)
 FILE *fp;
+winid win;
 int attr;
 const char *str;
 {
-    const char **tags = html_attr_tags(attr);
+    const char **tags;
+    if (strlen(str) == 0) {
+       /* if it's a blank line, just print a blank line */
+       fprintf(fp, "<br />\n");
+       return;
+    }
+    tags = html_attr_tags(win,attr);
     fprintf(fp, "%s", tags[0]);
     html_dump_str(fp, str);
     fprintf(fp, "%s", tags[1]);
     //html_dump_str(fp, "\n");
 }
+
+#endif /* DUMPHTML */
 
 void
 dump_open_log(now)
@@ -1297,22 +1339,22 @@ STATIC_OVL void
 dump_headers()
 {
 #ifdef DUMPHTML
-    /* TODO: make portable routine for getting iso8601 datetime */ 
+    /* TODO: make portable routine for getting iso8601 datetime */
     struct tm *t;
     char iso8601[32];
     char vers[16]; /* buffer for short version string */
-    
+
     if (!dumphtml_file) return;
- 
+
     fprintf(dumphtml_file, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
     fprintf(dumphtml_file, "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n");
     fprintf(dumphtml_file, "<head>\n");
-    fprintf(dumphtml_file, "<title>NetHack %s</title>\n",  version_string(vers)); 
+    fprintf(dumphtml_file, "<title>NetHack %s</title>\n",  version_string(vers));
     fprintf(dumphtml_file, "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\" />\n");
     fprintf(dumphtml_file, "<meta name=\"generator\" content=\"NetHack %s \" />\n", vers);
 
-    /* TODO: make portable routine for getting iso8601 datetime */ 
-    t = localtime(&dumplog_now); 
+    /* TODO: make portable routine for getting iso8601 datetime */
+    t = localtime(&dumplog_now);
     strftime(iso8601, 32, "%Y-%m-%dT%H:%M:%S%z", t);
     fprintf(dumphtml_file,"<meta name=\"date\" content=\"%s\" />\n", iso8601);
     /* non-embedded CSS is not currently supported */
@@ -1329,6 +1371,7 @@ dump_footers()
 {
 #ifdef DUMPHTML
     if (dumphtml_file) {
+        if (in_list) fprintf(dumphtml_file, "</ul>\n");
         fprintf(dumphtml_file, "</body>\n</html>\n");
     }
 #endif
@@ -1337,6 +1380,7 @@ dump_footers()
 STATIC_OVL void
 dump_css()
 {
+#ifdef DUMPHTML
     int c = 0;
     FILE *css;
     if (!dumphtml_file) return;
@@ -1351,6 +1395,7 @@ dump_css()
         fputc(c, dumphtml_file);
     }
     fclose(css);
+#endif
 }
 
 void
@@ -1363,7 +1408,7 @@ int no_forward;
     if (dumplog_file)
         fprintf(dumplog_file, "%s\n", str);
     if (dumphtml_file)
-        html_dump_line(dumphtml_file, attr, str);
+        html_dump_line(dumphtml_file, win, attr, str);
     if (!no_forward)
         putstr(win, attr, str);
 }
@@ -1371,14 +1416,14 @@ int no_forward;
 /*ARGSUSED*/
 STATIC_OVL void
 dump_putstr(win, attr, str)
-winid win UNUSED;
+winid win;
 int attr;
 const char *str;
 {
     if (dumplog_file)
         fprintf(dumplog_file, "%s\n", str);
     if (dumphtml_file)
-        html_dump_line(dumphtml_file, attr, str);
+        html_dump_line(dumphtml_file, win, attr, str);
 }
 
 STATIC_OVL winid
@@ -1424,7 +1469,7 @@ winid win UNUSED;
 /*ARGSUSED*/
 STATIC_OVL void
 dump_add_menu(win, glyph, identifier, ch, gch, attr, str, preselected)
-winid win UNUSED;
+winid win;
 int glyph;
 const anything *identifier UNUSED;
 char ch;
@@ -1444,7 +1489,7 @@ boolean preselected UNUSED;
         //char *link = html_link(dump_typename(obj->otyp), str); // TODO - somehow use object selection to poke links in here
         int color;
         boolean iscolor = FALSE;
-        const char **tags = html_attr_tags(attr);
+        const char **tags = html_attr_tags(win, attr);
         fprintf(dumphtml_file, "%s", tags[0]);
         if (iflags.use_menu_color && get_menu_coloring(str, &color, &attr)) {
             iscolor = TRUE;
@@ -1454,7 +1499,7 @@ boolean preselected UNUSED;
             fprintf(dumphtml_file, "<span class=\"nh_item_letter\">%c</span> - ", ch);
         }
         html_dump_str(dumphtml_file, str);
-        fprintf(dumphtml_file, "%s%s<br />\n", iscolor ? "</span>" : "", tags[1]);
+        fprintf(dumphtml_file, "%s%s\n", iscolor ? "</span>" : "", tags[1]);
     }
 }
 
@@ -1484,6 +1529,25 @@ menu_item **item;
     return 0;
 }
 
+STATIC_OVL void
+dump_outrip(win, how, when)
+winid win;
+int how;
+time_t when;
+{
+   if (dumphtml_file) {
+       if (in_list) {
+           fprintf(dumphtml_file, "</ul>\n");
+           in_list = FALSE;
+       }
+       fprintf(dumphtml_file, "<pre>\n");
+   }
+   genl_outrip(win, how, when);
+   if (dumphtml_file)
+       fprintf(dumphtml_file, "</pre>\n");
+
+}
+
 void
 dump_redirect(onoff_flag)
 boolean onoff_flag;
@@ -1499,6 +1563,7 @@ boolean onoff_flag;
             windowprocs.win_end_menu = dump_end_menu;
             windowprocs.win_select_menu = dump_select_menu;
             windowprocs.win_putstr = dump_putstr;
+            windowprocs.win_outrip = dump_outrip;
             iflags.menu_headings |= ATR_SUBHEAD;
         } else {
             windowprocs = dumplog_windowprocs_backup;

@@ -61,7 +61,6 @@ STATIC_DCL void FDECL(list_genocided, (CHAR_P, BOOLEAN_P));
 STATIC_DCL boolean FDECL(should_query_disclose_option, (int, char *));
 #if defined(DUMPLOG) || defined(DUMPHTML)
 STATIC_DCL void NDECL(dump_plines);
-extern void NDECL(dump_headers);
 #endif
 STATIC_DCL void FDECL(dump_everything, (int, time_t));
 STATIC_DCL int NDECL(num_extinct);
@@ -1447,7 +1446,7 @@ int how;
     if (how <= GENOCIDED) {
         dump_redirect(TRUE);
         if (iflags.in_dumplog)
-            genl_outrip(0, how, endtime);
+            outrip(0, how, endtime);
         dump_redirect(FALSE);
     }
 #endif
@@ -1467,7 +1466,7 @@ int how;
                     ? urole.name.f
                     : urole.name.m)
                 : (const char *) (flags.female ? "Demigoddess" : "Demigod"));
-    dump_forward_putstr(endwin, 0, pbuf, done_stopprint);
+    dump_forward_putstr(endwin, ATR_SUBHEAD, pbuf, done_stopprint);
     dump_forward_putstr(endwin, 0, "", done_stopprint);
 
     if (how == ESCAPED || how == ASCENDED) {
