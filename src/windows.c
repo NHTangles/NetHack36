@@ -1198,6 +1198,7 @@ char *buf;
 static const char *html_heading_tags[][2] = {
     {"</ul>\n<h2>", "</h2>"}, /* Heading */
     {"</ul>\n<h3>", "</h3>"}, /* Subheading */
+    {"<pre>", "</pre>"}, /* Preformatted line */
     {"<ul>\n<li>", "</li>"}, /* item in list */
     {"", "<br />"}  /* Regular line with break */
 };
@@ -1216,14 +1217,19 @@ int attr;
         in_list = FALSE;
         return tags;
     }
+
+    if (attr & ATR_PREFORM) {
+        return html_heading_tags[2];
+    }
+
     if (win == NHW_MENU) {
-        tagref = html_heading_tags[2];
+        tagref = html_heading_tags[3];
         tags[0] = tagref[0], tags[1] = tagref[1];
         if (in_list) tags[0] += strlen("<ul>"); /* move pointer so <ul> is NOT included */
         in_list = TRUE;
         return tags;
     }
-    return html_heading_tags[3];
+    return html_heading_tags[4];
 }
 
 

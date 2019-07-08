@@ -84,10 +84,14 @@ typedef struct mi {
    can be masked with one regular display attribute */
 #define ATR_URGENT    16
 #define ATR_NOHISTORY 32
-/* Style-attributes - windowports can render these as they see fit,
-   or ignore them */
-#define ATR_HEADING   64 /* rendered as <h2> in HTML dump */
-#define ATR_SUBHEAD  128 /* rendered as <h3> in HTML dump */
+
+/* Style attributes for HTML dumplogs. Currently masked if not
+   dumping because other window ports don't define how they are
+   handled.  This masking could be generalised with a WC#_ flag
+   to allow other windowports to support them. */
+#define ATR_HEADING   (iflags.in_dumplog ?  64 : 0) /* rendered as <h2> in HTML dump */
+#define ATR_SUBHEAD   (iflags.in_dumplog ? 128 : 0) /* rendered as <h3> in HTML dump */
+#define ATR_PREFORM   (iflags.in_dumplog ? 256 : 0) /* preformatted - for preserving indentation */
 
 /* nh_poskey() modifier types */
 #define CLICK_1 1
