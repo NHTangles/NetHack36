@@ -71,6 +71,7 @@ STATIC_DCL void FDECL(dump_add_menu, (winid, int, const ANY_P *, CHAR_P,
                                       CHAR_P, int, const char *, BOOLEAN_P));
 STATIC_DCL void FDECL(dump_end_menu, (winid, const char *));
 STATIC_DCL int FDECL(dump_select_menu, (winid, int, MENU_ITEM_P **));
+STATIC_DCL void FDECL(dump_outrip, (winid, int, time_t));
 STATIC_DCL void FDECL(dump_putstr, (winid, int, const char *));
 STATIC_DCL void NDECL(dump_headers);
 STATIC_DCL void NDECL(dump_footers);
@@ -1186,53 +1187,108 @@ char *buf;
 
 #ifdef DUMPHTML
 /* If we're using the NHW_MENU window,
- * try to make a bullet-list of the contents.
- * note the inventory code uses the add_menu codepath
- * and is not processed here. This is for container contents,
- * dungeon overciew, conduct, etc
- * When we get a heading or subheading we close any existing list with </ul>,
- * Then print the heading.
- * For non-headings, we start a list if we don't already have one with <ul>
- * then delimit the item with <li></li>
- */
-static const char *html_heading_tags[][2] = {
-    {"</ul>\n<h2>", "</h2>"}, /* Heading */
-    {"</ul>\n<h3>", "</h3>"}, /* Subheading */
-    {"<pre>", "</pre>"}, /* Preformatted line */
-    {"<ul>\n<li>", "</li>"}, /* item in list */
-    {"", "<br />"}  /* Regular line with break */
-};
-static boolean in_list = FALSE;
-
-STATIC_OVL const char **
-html_attr_tags(win, attr)
+   try to make a bullet-list of the contents.
+   note the inventory code uses the add_menu codepath
+   and is not processed here. This is for container contents,
+   dungeon overview, conduct, etc
+   When we get a heading or subheading we close any existing list with </ul>,
+   Then print the heading.
+   For non-headings, we start a list if we don't already have one with <ul>
+   then delimit the item with <li></li>
+   for preformatted text, we don't mess with any existing bullet list, but try to
+   keep consecutive preformatted strings in a single block.  */
+STATIC_OVL
+void
+html_write_tags(fp, win, attr, before)
+FILE *fp;
+winid win;
 int attr;
+boolean before; /* Tags before/after string */
 {
-    const char **tagref;
-    static const char *tags[2]; /* returning a static array is gross but convenient here */
-    if (attr & (ATR_HEADING | ATR_SUBHEAD)) {
-        tagref = html_heading_tags [(attr & ATR_HEADING) ? 0 : 1 ];
-        tags[0] = tagref[0], tags[1] = tagref[1];
-        if (!in_list) tags[0] += strlen("</ul>"); /* move pointer so </ul> is NOT included */
-        in_list = FALSE;
-        return tags;
+    static boolean in_list = FALSE;
+    static boolean in_preform = FALSE;
+    static const char *htmltags[][2] = {
+        {"<h2>", "</h2>"},        /* 0 Heading                 */
+        {"<h3>", "</h3>"},        /* 1 Subheading              */
+        {"<pre>", "</pre>"},      /* 2 Preformatted block      */
+        {"<ul>", "</ul>"},        /* 3 list                    */
+        {"<li>", "</li>"},        /* 4 list item               */
+        {"", "<br />"}            /* 5 Regular line with break */
+    };
+    if (before) { /* before next string is written,
+                     close any finished blocks
+                     and open a new block if necessary */
+        if (attr & ATR_PREFORM) {
+            if (!in_preform) {
+                fprintf(fp, "%s", htmltags[2][0]);
+                in_preform = TRUE;
+            }
+            return;
+        }
+        if (in_preform) {
+            fprintf(fp, "%s", htmltags[2][1]);
+            in_preform = FALSE;
+        }
+        if (!(attr & (ATR_HEADING | ATR_SUBHEAD)) && win == NHW_MENU) {
+            /* This is a bullet point */
+            if (!in_list) {
+                fprintf(fp, "%s\n", htmltags[3][0]);
+                in_list = TRUE;
+            }
+            fprintf(fp, "%s", htmltags[4][0]);
+            return;
+        }
+        if (in_list) {
+            fprintf(fp, "%s\n", htmltags[3][1]);
+            in_list = FALSE;
+        }
+        fprintf(fp, "%s", htmltags[attr & ATR_HEADING ? 0 :
+                                   attr & ATR_SUBHEAD ? 1 : 5][0]);
+        return;
     }
-
-    if (attr & ATR_PREFORM) {
-        return html_heading_tags[2];
+    /* after string is written */
+    if (in_preform) {
+        fprintf(fp, "%s", htmltags[5][1]); /* preform still gets <br /> at end of line */
+        return; /* don't write </pre> until we get the next thing */
     }
-
-    if (win == NHW_MENU) {
-        tagref = html_heading_tags[3];
-        tags[0] = tagref[0], tags[1] = tagref[1];
-        if (in_list) tags[0] += strlen("<ul>"); /* move pointer so <ul> is NOT included */
-        in_list = TRUE;
-        return tags;
+    if (in_list) {
+        fprintf (fp, "%s\n", htmltags[4][1]); /* </li>, but not </ul> yet */
+        return;
     }
-    return html_heading_tags[4];
+    fprintf(fp, "%s", htmltags[attr & ATR_HEADING ? 0 :
+                               attr & ATR_SUBHEAD ? 1 : 5][1]);
 }
 
-
+/** Write HTML-escaped char to a file */
+STATIC_OVL void
+html_dump_char(fp, c)
+FILE *fp;
+char c;
+{
+    if (!fp) return;
+    switch (c) {
+        case '<':
+            fprintf(fp, "&lt;");
+            break;
+        case '>':
+            fprintf(fp, "&gt;");
+            break;
+        case '&':
+            fprintf(fp, "&amp;");
+            break;
+        case '\"':
+            fprintf(fp, "&quot;");
+            break;
+        case '\'':
+            fprintf(fp, "&#39;");
+            break;
+        case '\n':
+            fprintf(fp, "<br />\n");
+            break;
+        default:
+            fprintf(fp, "%c", c);
+    }
+}
 
 /** Write HTML-escaped string to a file */
 STATIC_OVL void
@@ -1240,31 +1296,10 @@ html_dump_str(fp, str)
 FILE *fp;
 const char *str;
 {
-    const char *c;
+    const char *p;
     if (!fp) return;
-    for (c = str; *c; c++)
-        switch (*c) {
-            case '<':
-                fprintf(fp, "&lt;");
-                break;
-            case '>':
-                fprintf(fp, "&gt;");
-                break;
-            case '&':
-                fprintf(fp, "&amp;");
-                break;
-            case '\"':
-                fprintf(fp, "&quot;");
-                break;
-            case '\'':
-                fprintf(fp, "&#39;");
-                break;
-            case '\n':
-                fprintf(fp, "<br />\n");
-                break;
-            default:
-                fprintf(fp, "%c", *c);
-        }
+    for (p = str; *p; p++)
+        html_dump_char(fp, *p);
 }
 
 STATIC_OVL void
@@ -1274,17 +1309,14 @@ winid win;
 int attr;
 const char *str;
 {
-    const char **tags;
     if (strlen(str) == 0) {
        /* if it's a blank line, just print a blank line */
        fprintf(fp, "<br />\n");
        return;
     }
-    tags = html_attr_tags(win,attr);
-    fprintf(fp, "%s", tags[0]);
+    html_write_tags(fp,win,attr,TRUE);
     html_dump_str(fp, str);
-    fprintf(fp, "%s", tags[1]);
-    //html_dump_str(fp, "\n");
+    html_write_tags(fp,win,attr,FALSE);
 }
 
 #endif /* DUMPHTML */
@@ -1377,7 +1409,7 @@ dump_footers()
 {
 #ifdef DUMPHTML
     if (dumphtml_file) {
-        if (in_list) fprintf(dumphtml_file, "</ul>\n");
+        html_write_tags(dumphtml_file, 0, 0, TRUE); /* close </ul> and </pre> if open */
         fprintf(dumphtml_file, "</body>\n</html>\n");
     }
 #endif
@@ -1405,6 +1437,56 @@ dump_css()
 }
 
 void
+html_start_map()
+{
+    if (dumphtml_file)
+        fprintf(dumphtml_file, "<pre class=\"nh_screen\">\n");
+}
+
+void
+html_end_map()
+{
+    if (dumphtml_file)
+        fprintf(dumphtml_file, "</pre>\n");
+}
+
+void
+html_dump_glyph(x, y, ch, color)
+int x, y, ch, color;
+{
+    char buf[BUFSZ]; /* do_screen_description requires this :( */
+    const char *firstmatch = "unknown"; /* and this */
+    coord cc;
+    int desc_found = 0;
+
+    if (!dumphtml_file) return;
+
+
+    if (x == 1) /* start row */
+        fprintf(dumphtml_file, "<span class=\"nh_screen\">&nbsp;&nbsp;"); /* 2 space left margin */
+    if (ch == ' ')
+        fprintf(dumphtml_file, "&nbsp;");
+    else {
+        cc.x = x;
+        cc.y = y;
+        desc_found = do_screen_description(cc, TRUE, ch, buf, &firstmatch, (struct permonst **) 0);
+        if (desc_found)
+            fprintf(dumphtml_file, "<div class=\"tooltip\">");
+        if (color)
+            fprintf(dumphtml_file, "<span class=\"nh_color_%d\">", color);
+        html_dump_char(dumphtml_file, (char)ch);
+        if (color)
+            fprintf(dumphtml_file, "</span>");
+        if (desc_found)
+           fprintf(dumphtml_file, "<span class=\"tooltiptext\">%s</span></div>", firstmatch);
+        //(void) coord_desc(cx, cy, buf, iflags.getpos_coords);
+        //            "%s%s%s", firstmatch, *buf ? " " : "", buf,
+    }
+    if (x == COLNO-1)
+        fprintf(dumphtml_file, "&nbsp;&nbsp;</span>\n"); /* \n actually terminates line here */
+}
+
+void
 dump_forward_putstr(win, attr, str, no_forward)
 winid win;
 int attr;
@@ -1428,7 +1510,7 @@ const char *str;
 {
     if (dumplog_file)
         fprintf(dumplog_file, "%s\n", str);
-    if (dumphtml_file)
+    if (dumphtml_file && win != NHW_MAP)
         html_dump_line(dumphtml_file, win, attr, str);
 }
 
@@ -1495,8 +1577,7 @@ boolean preselected UNUSED;
         //char *link = html_link(dump_typename(obj->otyp), str); // TODO - somehow use object selection to poke links in here
         int color;
         boolean iscolor = FALSE;
-        const char **tags = html_attr_tags(win, attr);
-        fprintf(dumphtml_file, "%s", tags[0]);
+        html_write_tags(dumphtml_file, win, attr, TRUE);
         if (iflags.use_menu_color && get_menu_coloring(str, &color, &attr)) {
             iscolor = TRUE;
             fprintf(dumphtml_file, "<span class=\"nh_color_%d\">", color);
@@ -1505,7 +1586,8 @@ boolean preselected UNUSED;
             fprintf(dumphtml_file, "<span class=\"nh_item_letter\">%c</span> - ", ch);
         }
         html_dump_str(dumphtml_file, str);
-        fprintf(dumphtml_file, "%s%s\n", iscolor ? "</span>" : "", tags[1]);
+        fprintf(dumphtml_file, "%s", iscolor ? "</span>" : "");
+        html_write_tags(dumphtml_file, win, attr, FALSE);
     }
 }
 
@@ -1522,7 +1604,7 @@ const char *str;
             fputs("\n", dumplog_file);
     }
     if (dumphtml_file)
-        html_dump_line(dumphtml_file, 0, str ? str : "");
+        html_dump_line(dumphtml_file, 0, 0, str ? str : "");
 }
 
 STATIC_OVL int
@@ -1542,10 +1624,7 @@ int how;
 time_t when;
 {
    if (dumphtml_file) {
-       if (in_list) {
-           fprintf(dumphtml_file, "</ul>\n");
-           in_list = FALSE;
-       }
+       html_write_tags(dumphtml_file, 0, 0, TRUE); /* </ul> if needed */
        fprintf(dumphtml_file, "<pre>\n");
    }
    genl_outrip(win, how, when);
@@ -1570,12 +1649,12 @@ boolean onoff_flag;
             windowprocs.win_select_menu = dump_select_menu;
             windowprocs.win_putstr = dump_putstr;
             windowprocs.win_outrip = dump_outrip;
-            iflags.menu_headings |= ATR_SUBHEAD;
         } else {
             windowprocs = dumplog_windowprocs_backup;
             iflags.menu_headings = menu_headings_backup;
         }
         iflags.in_dumplog = onoff_flag;
+        iflags.menu_headings |= ATR_SUBHEAD; /* ATR_SUBHEAD changes with in_dumplog */
     } else {
         iflags.in_dumplog = FALSE;
     }

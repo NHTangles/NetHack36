@@ -29,6 +29,12 @@ STATIC_DCL int FDECL(mfind0, (struct monst *, BOOLEAN_P));
 STATIC_DCL int FDECL(reveal_terrain_getglyph, (int, int, int,
                                                unsigned, int, int));
 
+#ifdef DUMPHTML
+extern void NDECL(html_start_map);
+extern void NDECL(html_end_map);
+extern void FDECL(html_dump_glyph, (int, int, int, int));
+#endif
+
 /* bring hero out from underwater or underground or being engulfed;
    return True iff any change occurred */
 STATIC_OVL boolean
@@ -1902,10 +1908,14 @@ dump_map()
      * (our caller has already printed a separator).  If there is
      * more than one blank map row at the bottom, keep just one.
      * Any blank rows within the middle of the map are kept.
-     * Note: putstr() with winid==0 is for dumplog.
+     * Note: putstr() to NHW_MAP will go only to ASCII dumplog;
+     * Separate functions handle the HTML map.
      */
     skippedrows = 0;
     toprow = TRUE;
+#ifdef DUMPHTML
+    html_start_map();
+#endif
     for (y = 0; y < ROWNO; y++) {
         blankrow = TRUE; /* assume blank until we discover otherwise */
         lastnonblank = -1; /* buf[] index rather than map's x */
@@ -1916,6 +1926,12 @@ dump_map()
             glyph = reveal_terrain_getglyph(x, y, FALSE, u.uswallow,
                                             default_glyph, subset);
             (void) mapglyph(glyph, &ch, &color, &special, x, y);
+
+#ifdef DUMPHTML
+            /* HTML map prints in a defined rectangle, so
+               just render every glyph - no skipping. */
+            html_dump_glyph(x, y, ch, color);
+#endif
             buf[x - 1] = ch;
             if (ch != ' ') {
                 blankrow = FALSE;
@@ -1929,15 +1945,18 @@ dump_map()
                 toprow = FALSE;
             }
             for (x = 0; x < skippedrows; x++)
-                putstr(0, 0, "");
-            putstr(0, 0, buf); /* map row #y */
+                putstr(NHW_MAP, 0, "");
+            putstr(NHW_MAP, 0, buf); /* map row #y */
             skippedrows = 0;
         } else {
             ++skippedrows;
         }
     }
     if (skippedrows)
-        putstr(0, 0, "");
+        putstr(NHW_MAP, 0, "");
+#ifdef DUMPHTML
+    html_end_map();
+#endif
 }
 #endif /* DUMPLOG || DUMPHTML */
 

@@ -1466,7 +1466,16 @@ int how;
                     ? urole.name.f
                     : urole.name.m)
                 : (const char *) (flags.female ? "Demigoddess" : "Demigod"));
-    dump_forward_putstr(endwin, ATR_SUBHEAD, pbuf, done_stopprint);
+
+#if defined(DUMPLOG) || defined(DUMPHTML)
+    dump_redirect(TRUE);
+    if (iflags.in_dumplog)
+        /* dump attributes don't work in dump_forward_putstr */
+        putstr(endwin, ATR_SUBHEAD, pbuf);
+    dump_redirect(FALSE);
+#endif
+
+    if (!done_stopprint) putstr(endwin, 0, pbuf);
     dump_forward_putstr(endwin, 0, "", done_stopprint);
 
     if (how == ESCAPED || how == ASCENDED) {
@@ -1988,7 +1997,7 @@ boolean ask;
                 if (!dumping)
                     putstr(klwin, 0, "");
                 Sprintf(buf, "%ld creatures vanquished.", total_killed);
-                putstr(klwin, 0, buf);
+                putstr(klwin, ATR_PREFORM, buf);
             }
             display_nhwindow(klwin, TRUE);
             destroy_nhwindow(klwin);
@@ -2093,11 +2102,11 @@ boolean ask;
                 putstr(klwin, 0, "");
             if (ngenocided > 0) {
                 Sprintf(buf, "%d species genocided.", ngenocided);
-                putstr(klwin, 0, buf);
+                putstr(klwin, ATR_PREFORM, buf);
             }
             if (nextinct > 0) {
                 Sprintf(buf, "%d species extinct.", nextinct);
-                putstr(klwin, 0, buf);
+                putstr(klwin, ATR_PREFORM, buf);
             }
 
             display_nhwindow(klwin, TRUE);
