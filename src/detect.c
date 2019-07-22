@@ -30,9 +30,7 @@ STATIC_DCL int FDECL(reveal_terrain_getglyph, (int, int, int,
                                                unsigned, int, int));
 
 #ifdef DUMPHTML
-extern void NDECL(html_start_map);
-extern void NDECL(html_end_map);
-extern void FDECL(html_dump_glyph, (int, int, int, int));
+extern void FDECL(html_dump_glyph, (int, int, int, int, int));
 #endif
 
 /* bring hero out from underwater or underground or being engulfed;
@@ -1913,24 +1911,21 @@ dump_map()
      */
     skippedrows = 0;
     toprow = TRUE;
-#ifdef DUMPHTML
-    html_start_map();
-#endif
     for (y = 0; y < ROWNO; y++) {
         blankrow = TRUE; /* assume blank until we discover otherwise */
         lastnonblank = -1; /* buf[] index rather than map's x */
         for (x = 1; x < COLNO; x++) {
-            int ch, color;
+            int ch, color, sym;
             unsigned special;
 
             glyph = reveal_terrain_getglyph(x, y, FALSE, u.uswallow,
                                             default_glyph, subset);
-            (void) mapglyph(glyph, &ch, &color, &special, x, y);
+            sym = mapglyph(glyph, &ch, &color, &special, x, y);
 
 #ifdef DUMPHTML
             /* HTML map prints in a defined rectangle, so
                just render every glyph - no skipping. */
-            html_dump_glyph(x, y, ch, color);
+            html_dump_glyph(x, y, sym, ch, color);
 #endif
             buf[x - 1] = ch;
             if (ch != ' ') {
@@ -1954,9 +1949,6 @@ dump_map()
     }
     if (skippedrows)
         putstr(NHW_MAP, 0, "");
-#ifdef DUMPHTML
-    html_end_map();
-#endif
 }
 #endif /* DUMPLOG || DUMPHTML */
 

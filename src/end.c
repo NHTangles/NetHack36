@@ -757,11 +757,13 @@ time_t when; /* date+time at end of game */
     putstr(0, ATR_SUBHEAD, pbuf);
     putstr(0, 0, "");
 
-    /* TODO: html_dump_map() */
+    dump_start_screendump();
     dump_map();
-    /* TODO: Make update status routines for dumplog windowport */
-    putstr(0, 0, do_statusline1());
-    putstr(0, 0, do_statusline2());
+    //putstr(0, 0, do_statusline1());
+    //putstr(0, 0, do_statusline2());
+    status_initialize(TRUE);
+    bot();
+    dump_end_screendump();
     putstr(0, 0, "");
 
     dump_plines();
