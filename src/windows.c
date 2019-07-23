@@ -1349,6 +1349,9 @@ html_init_sym()
     htmlsym[S_sw_mr] = 9474;
     htmlsym[S_explode4] = 9474;
     htmlsym[S_explode6] = 9474;
+    /* and some extras */
+    htmlsym[S_corr] = 9617;
+    htmlsym[S_litcorr] = 9618;
 }
 
 void
