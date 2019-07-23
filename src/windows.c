@@ -76,6 +76,7 @@ STATIC_DCL void FDECL(dump_putstr, (winid, int, const char *));
 STATIC_DCL void NDECL(dump_headers);
 STATIC_DCL void NDECL(dump_footers);
 STATIC_DCL void NDECL(dump_css);
+STATIC_DCL void FDECL(html_set_color_attr, (int, int, BOOLEAN_P));
 
 #endif /* DUMPLOG */
 
@@ -1325,7 +1326,7 @@ const char *str;
 
 static int htmlsym[SYM_MAX] = DUMMY;
 
-static void
+STATIC_OVL void
 html_init_sym()
 {
     /* Minimal set, based on IBMGraphics_1 set.
@@ -1365,14 +1366,34 @@ dump_end_screendump()
         fprintf(dumphtml_file, "</pre>\n");
 }
 
+/* convert 'special' flags returned from mapglyph to
+  highlight attrs (currently just inverse) */
+STATIC_OVL unsigned
+mg_hl_attr(special)
+unsigned special;
+{
+    unsigned hl = 0;
+    if ((special & MG_PET) && iflags.hilite_pet)
+        hl |= HL_INVERSE; /* Could use wc2_petattr from curses here */
+    if ((special & MG_DETECT) && iflags.use_inverse)
+        hl |= HL_INVERSE;
+    if ((special & MG_OBJPILE) && iflags.hilite_pile)
+        hl |= HL_INVERSE;
+    if ((special & MG_BW_LAVA) && iflags.use_inverse)
+        hl |= HL_INVERSE;
+    return hl;
+}
+
 void
-html_dump_glyph(x, y, sym, ch, color)
+html_dump_glyph(x, y, sym, ch, color, special)
 int x, y, sym, ch, color;
+unsigned special;
 {
     char buf[BUFSZ]; /* do_screen_description requires this :( */
     const char *firstmatch = "unknown"; /* and this */
     coord cc;
     int desc_found = 0;
+    unsigned attr;
 
     if (!dumphtml_file) return;
 
@@ -1383,14 +1404,13 @@ int x, y, sym, ch, color;
     desc_found = do_screen_description(cc, TRUE, ch, buf, &firstmatch, (struct permonst **) 0);
     if (desc_found)
         fprintf(dumphtml_file, "<div class=\"tooltip\">");
-    if (color)
-        fprintf(dumphtml_file, "<span class=\"nh_color_%d\">", color);
+    attr = mg_hl_attr(special);
+    html_set_color_attr(color, attr, TRUE);
     if (htmlsym[sym])
         fprintf(dumphtml_file, "&#%d;", htmlsym[sym]);
     else
         html_dump_char(dumphtml_file, (char)ch);
-    if (color)
-        fprintf(dumphtml_file, "</span>");
+    html_set_color_attr(color, attr, FALSE);
     if (desc_found)
        fprintf(dumphtml_file, "<span class=\"tooltiptext\">%s</span></div>", firstmatch);
     //(void) coord_desc(cx, cy, buf, iflags.getpos_coords);

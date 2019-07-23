@@ -30,7 +30,7 @@ STATIC_DCL int FDECL(reveal_terrain_getglyph, (int, int, int,
                                                unsigned, int, int));
 
 #ifdef DUMPHTML
-extern void FDECL(html_dump_glyph, (int, int, int, int, int));
+extern void FDECL(html_dump_glyph, (int, int, int, int, int, unsigned));
 #endif
 
 /* bring hero out from underwater or underground or being engulfed;
@@ -1925,7 +1925,7 @@ dump_map()
 #ifdef DUMPHTML
             /* HTML map prints in a defined rectangle, so
                just render every glyph - no skipping. */
-            html_dump_glyph(x, y, sym, ch, color);
+            html_dump_glyph(x, y, sym, ch, color, special);
 #endif
             buf[x - 1] = ch;
             if (ch != ' ') {
