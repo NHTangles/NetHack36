@@ -564,8 +564,8 @@ typedef unsigned char uchar;
 
 #define WHEREIS_FILE "whereis/%n.whereis" /* Write out player's current location to player.whereis */
 
-/* #define DUMPLOG */  /* End-of-game dump logs */
-/* #define DUMPHTML */ /* End-of-game HTML dumps */
+#define DUMPLOG  /* End-of-game dump logs */
+#define DUMPHTML /* End-of-game HTML dumps */
 #if defined(DUMPLOG) || defined(DUMPHTML)
 
 #ifndef DUMPLOG_MSG_COUNT

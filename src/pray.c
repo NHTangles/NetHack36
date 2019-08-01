@@ -813,7 +813,7 @@ gcrownu()
                    || class_gift != STRANGE_OBJECT) ? "take lives"
                   : "steal souls");
         livelog_printf(LL_DIVINEGIFT, "was chosen to %s for the Glory of %s",
-                       ((already_exists && !in_hand || class_gift != STRANGE_OBJECT)
+                       ((already_exists && !in_hand) || class_gift != STRANGE_OBJECT)
                        ? "take lives" : "steal souls", u_gname());
         break;
     }
