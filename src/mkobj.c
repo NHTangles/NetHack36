@@ -1,4 +1,4 @@
-/* NetHack 3.6	mkobj.c	$NHDT-Date: 1570569798 2019/10/08 21:23:18 $  $NHDT-Branch: NetHack-3.6 $:$NHDT-Revision: 1.153 $ */
+/* NetHack 3.6	mkobj.c	$NHDT-Date: 1570872702 2019/10/12 09:31:42 $  $NHDT-Branch: NetHack-3.6 $:$NHDT-Revision: 1.155 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Derek S. Ray, 2015. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -1534,29 +1534,29 @@ unsigned corpstatflags;
             (void) rloco(otmp);
     } else
         otmp = mksobj_at(objtype, x, y, init, FALSE);
-    if (otmp) {
-        if (mtmp) {
-            struct obj *otmp2;
+    }
 
-            if (!ptr)
-                ptr = mtmp->data;
-            /* save_mtraits frees original data pointed to by otmp */
-            otmp2 = save_mtraits(otmp, mtmp);
-            if (otmp2)
-                otmp = otmp2;
-        }
-        /* use the corpse or statue produced by mksobj() as-is
-           unless `ptr' is non-null */
-        if (ptr) {
-            int old_corpsenm = otmp->corpsenm;
+    /* when 'mtmp' is non-null save the monster's details with the
+       corpse or statue; it will also force the 'ptr' override below */
+    if (mtmp) {
+        /* save_mtraits updates otmp->oextra->omonst in place */
+        (void) save_mtraits(otmp, mtmp);
 
-            otmp->corpsenm = monsndx(ptr);
-            otmp->owt = weight(otmp);
-            if (otmp->otyp == CORPSE && (special_corpse(old_corpsenm)
-                                         || special_corpse(otmp->corpsenm))) {
-                obj_stop_timers(otmp);
-                start_corpse_timeout(otmp);
-            }
+        if (!ptr)
+            ptr = mtmp->data;
+    }
+
+    /* when 'ptr' is non-null it comes from our caller or from 'mtmp';
+       override mkobjs()'s initialization of a random monster type */
+    if (ptr) {
+        int old_corpsenm = otmp->corpsenm;
+
+        otmp->corpsenm = monsndx(ptr);
+        otmp->owt = weight(otmp);
+        if (otmp->otyp == CORPSE && (special_corpse(old_corpsenm)
+                                     || special_corpse(otmp->corpsenm))) {
+            obj_stop_timers(otmp);
+            start_corpse_timeout(otmp);
         }
     }
     return otmp;
