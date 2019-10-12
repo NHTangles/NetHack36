@@ -1523,16 +1523,15 @@ struct permonst *ptr;
 int x, y;
 unsigned corpstatflags;
 {
-    register struct obj *otmp;
+    struct obj *otmp;
     boolean init = ((corpstatflags & CORPSTAT_INIT) != 0);
 
     if (objtype != CORPSE && objtype != STATUE)
         impossible("making corpstat type %d", objtype);
     if (x == 0 && y == 0) { /* special case - random placement */
         otmp = mksobj(objtype, init, FALSE);
-        if (otmp)
-            (void) rloco(otmp);
-    } else
+        (void) rloco(otmp);
+    } else {
         otmp = mksobj_at(objtype, x, y, init, FALSE);
     }
 
