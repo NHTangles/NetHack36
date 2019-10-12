@@ -235,15 +235,14 @@ boolean init, artif;
     struct obj *otmp;
 
     otmp = mksobj(otyp, init, artif);
-    if (otmp) {
-        add_to_migration(otmp);
-        otmp->owornmask = (long) MIGR_TO_SPECIES;
-        otmp->corpsenm = mflags2;
-    }
+    add_to_migration(otmp);
+    otmp->owornmask = (long) MIGR_TO_SPECIES;
+    otmp->corpsenm = mflags2;
     return otmp;
 }
 
-/* mkobj(): select a type of item from a class, use mksobj() to create it */
+/* mkobj(): select a type of item from a class, use mksobj() to create it;
+   result is always non-Null */
 struct obj *
 mkobj(oclass, artif)
 char oclass;
@@ -309,8 +308,7 @@ struct obj *box;
 
     for (n = rn2(n + 1); n > 0; n--) {
         if (box->otyp == ICE_BOX) {
-            if (!(otmp = mksobj(CORPSE, TRUE, TRUE)))
-                continue;
+            otmp = mksobj(CORPSE, TRUE, TRUE);
             /* Note: setting age to 0 is correct.  Age has a different
              * from usual meaning for objects stored in ice boxes. -KAA
              */
@@ -768,7 +766,8 @@ static const char dknowns[] = { WAND_CLASS,   RING_CLASS, POTION_CLASS,
                                 SCROLL_CLASS, GEM_CLASS,  SPBOOK_CLASS,
                                 WEAPON_CLASS, TOOL_CLASS, 0 };
 
-/* mksobj(): create a specific type of object */
+/* mksobj(): create a specific type of object;
+   result it always non-Null */
 struct obj *
 mksobj(otyp, init, artif)
 int otyp;
@@ -1062,10 +1061,12 @@ boolean artif;
         case COIN_CLASS:
             break; /* do nothing */
         default:
-            impossible("impossible mkobj %d, sym '%c'.", otmp->otyp,
-                       objects[otmp->otyp].oc_class);
-            dealloc_obj(otmp); /* free() would suffice here */
-            return (struct obj *) 0;
+            /* 3.6.3: this used to be impossible() followed by return 0
+               but most callers aren't prepared to deal with Null result
+               and cluttering them up to do so is pointless */
+            panic("mksobj tried to make type %d, class %d.",
+                  (int) otmp->otyp, (int) objects[otmp->otyp].oc_class);
+            /*NOTREACHED*/
         }
     }
 
@@ -1473,6 +1474,7 @@ register struct obj *obj;
 
 static int treefruits[] = { APPLE, ORANGE, PEAR, BANANA, EUCALYPTUS_LEAF };
 
+/* called when a tree is kicked; never returns Null */
 struct obj *
 rnd_treefruit_at(x, y)
 int x, y;
@@ -1480,15 +1482,17 @@ int x, y;
     return mksobj_at(treefruits[rn2(SIZE(treefruits))], x, y, TRUE, FALSE);
 }
 
+/* create a stack of N gold pieces; never returns Null */
 struct obj *
 mkgold(amount, x, y)
 long amount;
 int x, y;
 {
-    register struct obj *gold = g_at(x, y);
+    struct obj *gold = g_at(x, y);
 
     if (amount <= 0L) {
         long mul = rnd(30 / max(12-depth(&u.uz), 2));
+
         amount = (long) (1 + rnd(level_difficulty() + 2) * mul);
     }
     if (gold) {
@@ -1501,12 +1505,14 @@ int x, y;
     return gold;
 }
 
-/* return TRUE if the corpse has special timing */
-#define special_corpse(num)                                                 \
-    (((num) == PM_LIZARD) || ((num) == PM_LICHEN) || (is_rider(&mons[num])) \
-     || (mons[num].mlet == S_TROLL))
+/* return TRUE if the corpse has special timing;
+   lizards and lichen don't rot, trolls and Riders auto-revive */
+#define special_corpse(num) \
+    (((num) == PM_LIZARD || (num) == PM_LICHEN)                 \
+     || (mons[num].mlet == S_TROLL || is_rider(&mons[num])))
 
-/*
+/* mkcorpstat: make a corpse or statue; never returns Null.
+ *
  * OEXTRA note: Passing mtmp causes mtraits to be saved
  * even if ptr passed as well, but ptr is always used for
  * the corpse type (corpsenm). That allows the corpse type
@@ -1573,15 +1579,14 @@ int
 corpse_revive_type(obj)
 struct obj *obj;
 {
-    int revivetype;
+    int revivetype = obj->corpsenm;
     struct monst *mtmp;
-    if (has_omonst(obj)
-        && ((mtmp = get_mtraits(obj, FALSE)) != (struct monst *) 0)) {
+
+    if (has_omonst(obj) && ((mtmp = get_mtraits(obj, FALSE)) != 0)) {
         /* mtmp is a temporary pointer to a monster's stored
         attributes, not a real monster */
         revivetype = mtmp->mnum;
-    } else
-        revivetype = obj->corpsenm;
+    }
     return revivetype;
 }
 
@@ -1657,26 +1662,29 @@ boolean copyof;
     return mnew;
 }
 
-/* make an object named after someone listed in the scoreboard file */
+/* make an object named after someone listed in the scoreboard file;
+   never returns Null */
 struct obj *
 mk_tt_object(objtype, x, y)
 int objtype; /* CORPSE or STATUE */
-register int x, y;
+int x, y;
 {
-    register struct obj *otmp, *otmp2;
+    struct obj *otmp;
     boolean initialize_it;
 
     /* player statues never contain books */
     initialize_it = (objtype != STATUE);
-    if ((otmp = mksobj_at(objtype, x, y, initialize_it, FALSE)) != 0) {
-        /* tt_oname will return null if the scoreboard is empty */
-        if ((otmp2 = tt_oname(otmp)) != 0)
-            otmp = otmp2;
-    }
+    otmp = mksobj_at(objtype, x, y, initialize_it, FALSE);
+    /* tt_oname() will return null if the scoreboard is empty;
+       assigning an object name used to allocate a new obj but
+       doesn't any more so we can safely ignore the return value */
+    (void) tt_oname(otmp);
+
     return otmp;
 }
 
-/* make a new corpse or statue, uninitialized if a statue (i.e. no books) */
+/* make a new corpse or statue, uninitialized if a statue (i.e. no books);
+   never returns Null */
 struct obj *
 mk_named_object(objtype, ptr, x, y, nm)
 int objtype; /* CORPSE or STATUE */
@@ -1685,8 +1693,8 @@ int x, y;
 const char *nm;
 {
     struct obj *otmp;
-    unsigned corpstatflags =
-        (objtype != STATUE) ? CORPSTAT_INIT : CORPSTAT_NONE;
+    unsigned corpstatflags = (objtype != STATUE) ? CORPSTAT_INIT
+                                                 : CORPSTAT_NONE;
 
     otmp = mkcorpstat(objtype, (struct monst *) 0, ptr, x, y, corpstatflags);
     if (nm)
