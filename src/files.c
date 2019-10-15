@@ -796,7 +796,7 @@ boolean playing; /**< True if game is running.  */
 /** Signal handler to update whereis information. */
 void
 signal_whereis(sig_unused)
-int sig_unused;
+int sig_unused UNUSED;
 {
 	touch_whereis();
 }
@@ -3679,7 +3679,9 @@ const char *reason; /* explanation */
 {
 #ifdef PANICLOG
     FILE *lfile;
-    char buf[BUFSZ];
+    /* 363-hdf by default will always use PANICLOG_FMT2,
+       commenting the below out to silence a compiler warning */
+    /* char buf[BUFSZ]; */
 
     if (!program_state.in_paniclog) {
         program_state.in_paniclog = 1;
@@ -3687,7 +3689,8 @@ const char *reason; /* explanation */
         if (lfile) {
 #ifdef PANICLOG_FMT2
             (void) fprintf(lfile, "%ld %s: %s %s\n",
-                           ubirthday, (plname ? plname : "(none)"),
+                           ubirthday, plname,
+                           /* ubirthday, (plname ? plname : "(none)"), */
                            type, reason);
 #else
             time_t now = getnow();
@@ -4300,7 +4303,7 @@ int bufsz;
 void
 livelog_write_string(ll_type, buffer)
 unsigned int ll_type;
-char *buffer;
+const char *buffer;
 {
 #define LLOG_SEP '\t' /* livelog field separator */
     FILE* livelogfile;
