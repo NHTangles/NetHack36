@@ -402,6 +402,9 @@ E const char *const monexplain[], invisexplain[], *const oclass_names[];
 #endif
 
 E char *fqn_prefix[PREFIX_COUNT];
+#ifdef WIN32
+E boolean fqn_prefix_locked[PREFIX_COUNT];
+#endif
 #ifdef PREFIXES_IN_USE
 E const char *fqn_prefix_names[PREFIX_COUNT];
 #endif
@@ -452,7 +455,7 @@ struct breadcrumbs {
 E const char *ARGV0;
 #endif
 
-enum earlyarg {ARG_DEBUG, ARG_VERSION
+enum earlyarg {ARG_DEBUG, ARG_VERSION, ARG_SHOWPATHS
 #ifdef WIN32
     ,ARG_WINDOWS
 #endif
