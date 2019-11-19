@@ -1965,7 +1965,7 @@ time_t now;
     fname = dump_fmtstr(DUMPLOG_FILE, buf, TRUE);
 #endif
 #ifdef DUMPHTML
-    fname = dump_fmtstr(DUMPHTML_FILE, buf);
+    fname = dump_fmtstr(DUMPHTML_FILE, buf, TRUE);
     if(fname) dumphtml_file = fopen(fname, "w");
 #endif
     if (dumplog_file || dumphtml_file) {
@@ -2180,7 +2180,7 @@ mk_dgl_extrainfo()
 #endif
     char new_fn[512];
 
-    dump_fmtstr(EXTRAINFO_FN,new_fn);
+    dump_fmtstr(EXTRAINFO_FN, new_fn, TRUE);
 
     extrai = fopen(new_fn, "w");
     if (!extrai) {
@@ -2230,9 +2230,9 @@ unsigned int llflags;
 #ifdef SYSCF
     if (!sysopt.dumplogurl)
         return;
-    dumpurl = dump_fmtstr(sysopt.dumplogurl, buf);
+    dumpurl = dump_fmtstr(sysopt.dumplogurl, buf, TRUE);
 #else
-    dumpurl = dump_fmtstr(DUMPLOG_URL, buf);
+    dumpurl = dump_fmtstr(DUMPLOG_URL, buf, TRUE);
 #endif
     livelog_write_string(llflags,dumpurl);
 #else

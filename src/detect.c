@@ -1937,7 +1937,7 @@ dump_map()
 
             glyph = reveal_terrain_getglyph(x, y, FALSE, u.uswallow,
                                             default_glyph, subset);
-            (void) mapglyph(glyph, &ch, &color, &special, x, y, 0);
+            sym = mapglyph(glyph, &ch, &color, &special, x, y, 0);
 
 #ifdef DUMPHTML
             /* HTML map prints in a defined rectangle, so
