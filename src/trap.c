@@ -1,4 +1,4 @@
-/* NetHack 3.6	trap.c	$NHDT-Date: 1569189770 2019/09/22 22:02:50 $  $NHDT-Branch: NetHack-3.6 $:$NHDT-Revision: 1.317 $ */
+/* NetHack 3.6	trap.c	$NHDT-Date: 1576274483 2019/12/13 22:01:23 $  $NHDT-Branch: NetHack-3.6 $:$NHDT-Revision: 1.325 $ */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Robert Patrick Rankin, 2013. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -1591,7 +1591,7 @@ struct obj *otmp;
     switch (tt) {
     case ARROW_TRAP:
         if (!otmp) {
-            impossible("steed hit by non-existant arrow?");
+            impossible("steed hit by non-existent arrow?");
             return 0;
         }
         trapkilled = thitm(8, steed, otmp, 0, FALSE);
@@ -1599,7 +1599,7 @@ struct obj *otmp;
         break;
     case DART_TRAP:
         if (!otmp) {
-            impossible("steed hit by non-existant dart?");
+            impossible("steed hit by non-existent dart?");
             return 0;
         }
         trapkilled = thitm(7, steed, otmp, 0, FALSE);
@@ -1627,13 +1627,20 @@ struct obj *otmp;
         break;
     case POLY_TRAP:
         if (!resists_magm(steed) && !resist(steed, WAND_CLASS, 0, NOTELL)) {
+            struct permonst *mdat = steed->data;
+
             (void) newcham(steed, (struct permonst *) 0, FALSE, FALSE);
-            if (!can_saddle(steed) || !can_ride(steed))
+            if (!can_saddle(steed) || !can_ride(steed)) {
                 dismount_steed(DISMOUNT_POLY);
-            else
-                You("have to adjust yourself in the saddle on %s.",
-                    x_monnam(steed, ARTICLE_A, (char *) 0, SUPPRESS_SADDLE,
-                             FALSE));
+            } else {
+                char buf[BUFSZ];
+
+                Strcpy(buf, x_monnam(steed, ARTICLE_YOUR, (char *) 0,
+                                            SUPPRESS_SADDLE, FALSE));
+                if (mdat != steed->data)
+                    (void) strsubst(buf, "your ", "your new ");
+                You("adjust yourself in the saddle on %s.", buf);
+            }
         }
         steedhit = TRUE;
         break;
